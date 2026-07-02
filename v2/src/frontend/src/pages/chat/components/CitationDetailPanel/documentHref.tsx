@@ -18,25 +18,24 @@
  *   file route from the blob name in `title`;
  * - nothing usable -> `null` (caller omits the link).
  *
- * The backend file route is absolute (prefixed with `VITE_BACKEND_URL`)
- * because the link is a top-level navigation: in the deployed topology
- * the frontend and backend are separate origins, and a relative
- * `/api/files/...` would resolve against the static frontend host.
+ * The backend file route is absolute (prefixed with the runtime
+ * `getBackendUrl()` origin from `/config`, not the build-time
+ * `VITE_BACKEND_URL`) because the link is a top-level navigation: in the
+ * deployed split-host topology the frontend and backend are separate
+ * origins, and a relative `/api/files/...` would resolve against the
+ * static frontend host (which serves the SPA, not the file).
  */
 import type { Citation } from "@/models/chat";
+import { getBackendUrl } from "@/api/runtimeConfig";
 
 const BLOB_HOST_FRAGMENT = ".blob.core.windows.net";
-
-function backendUrl(): string {
-  return (import.meta.env.VITE_BACKEND_URL as string | undefined) ?? "";
-}
 
 function isHttpUrl(value: string): boolean {
   return value.startsWith("http://") || value.startsWith("https://");
 }
 
 function filesHref(filename: string): string {
-  return `${backendUrl()}/api/files/${encodeURIComponent(filename)}`;
+  return `${getBackendUrl()}/api/files/${encodeURIComponent(filename)}`;
 }
 
 function lastPathSegment(rawUrl: string): string {
