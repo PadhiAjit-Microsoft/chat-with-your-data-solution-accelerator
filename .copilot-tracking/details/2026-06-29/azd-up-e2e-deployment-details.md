@@ -373,7 +373,7 @@ Validation commands:
 
 ### Step 6.1: `searchServiceLocation` Bicep param (AI Search region override)
 
-Why: Step 5.2's `azd up` provisioned the entire v2 stack in `eastus2` EXCEPT `srch-cwyd2bh3kb` (Azure AI Search, standard SKU), which failed with `InsufficientResourcesAvailable` — `eastus2` is physically out of AI Search capacity (a capacity wall, not a raisable quota). User chose Option A: deploy AI Search in a capacity region (uksouth) while keeping the rest (incl. the proven OpenAI/AI-Services quota) in `eastus2`.
+Why: Step 5.2's `azd up` provisioned the entire v2 stack in `eastus2` EXCEPT `srch-<SUFFIX>` (Azure AI Search, standard SKU), which failed with `InsufficientResourcesAvailable` — `eastus2` is physically out of AI Search capacity (a capacity wall, not a raisable quota). User chose Option A: deploy AI Search in a capacity region (uksouth) while keeping the rest (incl. the proven OpenAI/AI-Services quota) in `eastus2`.
 
 Change (Configuration Layer pillar — operator-tunable infra knob):
 * `v2/infra/main.bicep`:
@@ -392,14 +392,14 @@ Validation:
 ### Step 6.2: Set region env var + re-run `azd up`
 
 Execute (Task Implementor ops):
-* `azd env set AZURE_ENV_SEARCH_SERVICE_LOCATION uksouth` (uksouth = proven AI Search capacity; the old `srch-cwydcdbv23ane6` already runs there).
+* `azd env set AZURE_ENV_SEARCH_SERVICE_LOCATION uksouth` (uksouth = proven AI Search capacity; the old `srch-<OLD_SUFFIX>` already runs there).
 * `azd up` from `v2/` (Set-Location chained so it can't drift to the repo-root v1 `azure.yaml`).
-* Confirm `srch-cwyd2bh3kb` provisions in uksouth and the full provision + 3-service deploy completes green.
+* Confirm `srch-<SUFFIX>` provisions in uksouth and the full provision + 3-service deploy completes green.
 * Then proceed to the Step 5.2 end-to-end verification (seed ran, queues drained, frontend no auth wall, chat + admin work, health 200s).
 
 ### Step 6.3: Grant the deployer principal storage data-plane roles (fix the seed `AuthorizationPermissionMismatch`)
 
-Why: Step 6.2's `azd up` deployed the whole stack green, but the post-deploy seed hook (`upload-sample-data.ps1` → `upload_sample_data.py`) failed with `AuthorizationPermissionMismatch` on `stcwyd2bh3kb`. Root cause (confirmed by reading `main.bicep`): the storage account `roleAssignments` grant the three storage roles **only to the UAMI** (`userAssignedIdentity.outputs.principalId`); the seed runs locally under the **deployer identity** (`DefaultAzureCredential` → the human/CI principal running `azd up`), which has **no** storage data-plane RBAC. There is no `deployer()`-based role assignment on the storage module today (only `postgresAdminPrincipalId` uses that pattern, for Postgres). This is an IaC defect, not a propagation race (the error is an RBAC denial, not a transient 404). A fresh default `azd up` therefore cannot seed sample data.
+Why: Step 6.2's `azd up` deployed the whole stack green, but the post-deploy seed hook (`upload-sample-data.ps1` → `upload_sample_data.py`) failed with `AuthorizationPermissionMismatch` on `st<SUFFIX>`. Root cause (confirmed by reading `main.bicep`): the storage account `roleAssignments` grant the three storage roles **only to the UAMI** (`userAssignedIdentity.outputs.principalId`); the seed runs locally under the **deployer identity** (`DefaultAzureCredential` → the human/CI principal running `azd up`), which has **no** storage data-plane RBAC. There is no `deployer()`-based role assignment on the storage module today (only `postgresAdminPrincipalId` uses that pattern, for Postgres). This is an IaC defect, not a propagation race (the error is an RBAC denial, not a transient 404). A fresh default `azd up` therefore cannot seed sample data.
 
 Change (Configuration Layer pillar — deployer bootstrap RBAC; mirrors the existing UAMI grants + the `postgresAdminPrincipal*` deployer pattern already in the file):
 * `v2/infra/main.bicep`:
@@ -458,21 +458,21 @@ Validation:
 
 Note (defect tracking): record as new `BUG-####` rows in `v2/docs/bugs.md` (deployer search-read RBAC false-negative seed verify; `AZURE_AI_SEARCH_INDEX` not exported to seed) + worklog, per Hard Rule #19 (flagged, out-of-scope for the Task Implementor file-write boundary).
 
-### Step 6.6: Delete the old `cwydcdbv23ane6` resource set
+### Step 6.6: Delete the old `<OLD_SUFFIX>` resource set
 
 > Executes LAST — after Steps 6.4 and 6.5 are deployed green.
 
 
-User-consented destructive cleanup (answered "Yes — delete the old set"). Delete ONLY the `cwydcdbv23ane6`-suffixed resources (old v1-style set: incl. Key Vault, `-docker` apps, uksouth search, AI Foundry + project, OpenAI, Cognitive Services, Doc Intelligence, Speech, Event Grid, Cosmos, Storage, App Service Plan, managed identity). NEVER touch any `cwyd2bh3kb`-suffixed (current v2) resource.
+User-consented destructive cleanup (answered "Yes — delete the old set"). Delete ONLY the `<OLD_SUFFIX>`-suffixed resources (old v1-style set: incl. Key Vault, `-docker` apps, uksouth search, AI Foundry + project, OpenAI, Cognitive Services, Doc Intelligence, Speech, Event Grid, Cosmos, Storage, App Service Plan, managed identity). NEVER touch any `<SUFFIX>`-suffixed (current v2) resource.
 
 Execute:
 * Enumerate old-suffix resources, delete child/dependent resources before parents where ordering matters (AI Foundry project before account; apps before plan).
 * Do this AFTER Step 6.2 is green (working deploy first), per cleanup-before-next-step.
-* Soft-delete shells (Key Vault / Cognitive Services / OpenAI / AI Foundry) are harmless — they carry the old suffix and cannot collide with the new `cwyd2bh3kb` names; purge is optional and out of scope.
+* Soft-delete shells (Key Vault / Cognitive Services / OpenAI / AI Foundry) are harmless — they carry the old suffix and cannot collide with the new `<SUFFIX>` names; purge is optional and out of scope.
 
 Validation:
-* `az resource list -g <RESOURCE_GROUP> --query "[?contains(name,'cwydcdbv23ane6')]"` returns empty (or only soft-deleted shells).
-* `az resource list` confirms all `cwyd2bh3kb` resources remain intact.
+* `az resource list -g <RESOURCE_GROUP> --query "[?contains(name,'<OLD_SUFFIX>')]"` returns empty (or only soft-deleted shells).
+* `az resource list` confirms all `<SUFFIX>` resources remain intact.
 
 ## Dependencies
 

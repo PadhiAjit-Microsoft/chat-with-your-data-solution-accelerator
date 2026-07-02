@@ -82,7 +82,7 @@ File: `v2/src/backend/core/settings.py`.
 - Bicep param `param ingestionTrigger string = 'direct_enqueue'` — line **100**, `@allowed(['direct_enqueue','event_grid'])` lines 95–98.
 - Bound onto the **backend Container App** appSettings: `{ name: 'AZURE_INGESTION_TRIGGER', value: ingestionTrigger }` — line **1945**.
 - The param value sources from azd env: `main.parameters.json` / `main.waf.parameters.json` line 21 → `"${AZURE_ENV_INGESTION_TRIGGER=direct_enqueue}"`.
-- Live azd env: `v2/.azure/cwyd-cdb-v2/.env` line 45 → `AZURE_INGESTION_TRIGGER="direct_enqueue"` (still default).
+- Live azd env: `v2/.azure/<AZD_ENV_NAME>/.env` line 45 → `AZURE_INGESTION_TRIGGER="direct_enqueue"` (still default).
 - The **Function App** appSettings (block starting ~line 2290) deliberately do **NOT** carry `AZURE_INGESTION_TRIGGER` — only the backend consumes it; the function host always translates whatever lands on `blob-events`.
 
 ---

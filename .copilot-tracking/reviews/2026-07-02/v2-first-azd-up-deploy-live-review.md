@@ -10,7 +10,7 @@
 
 ## Scope
 
-Live review of the executed **Phase 3 (`azd up`)** + **Phase 4 (post-deploy validation)** on the new tenant/subscription (SS1-Eng-Dev, eastus2, cosmosdb profile). The earlier review (2026-07-01) covered the Phase 1 code fix; this one covers the actual deployment.
+Live review of the executed **Phase 3 (`azd up`)** + **Phase 4 (post-deploy validation)** on the new tenant/subscription (`<AZURE_SUBSCRIPTION_NAME>`, eastus2, cosmosdb profile). The earlier review (2026-07-01) covered the Phase 1 code fix; this one covers the actual deployment.
 
 ## Severity Summary
 
@@ -23,7 +23,7 @@ Live review of the executed **Phase 3 (`azd up`)** + **Phase 4 (post-deploy vali
 ## Phase 3 — Provision + deploy: ✅ SUCCESS
 
 `azd up` (run from the v2 sync terminal) provisioned + deployed cleanly:
-- All infra: Log Analytics, ACR (`crcwyd2wrypa`), App Insights, Speech, Storage, Foundry + project, **gpt-5.1** + embedding model deployments, Content Safety, Container Apps Environment, Cosmos DB, Search, Foundry↔Search connection.
+- All infra: Log Analytics, ACR (`cr<SUFFIX>`), App Insights, Speech, Storage, Foundry + project, **gpt-5.1** + embedding model deployments, Content Safety, Container Apps Environment, Cosmos DB, Search, Foundry↔Search connection.
 - All three Container Apps deployed with real ACR images (backend image tag `azd-deploy-1782949425`, targetPort 8000).
 - Post-provision seeded `cwyd-index` (1536-dim) + `cwyd-kb` knowledge base + KB-MCP connection.
 - Endpoints emitted (backend/frontend/function FQDNs).
@@ -71,6 +71,15 @@ Make Cosmos + Storage honor `publicNetworkAccess: Enabled` in the non-private-ne
 - Re-run the sample-data seed non-interactively (`--set default`) after the backend is up, then grounding smoke test.
 - Confirm `text-embedding-3-small` is the intended embedding model (research assumed `-large`; index is 1536-dim which matches `-small`).
 
+## Findings Resolution (2026-07-02)
+
+The two non-Critical follow-ups are closed (the Critical BUG-0093 was already fixed + verified live, and the durable `post_provision.py` re-assert landed):
+
+* **Minor — embedding model: RESOLVED (confirmed `text-embedding-3-small` is intended).** The deployed model is `text-embedding-3-small` v1 on `aisa-<SUFFIX>` (native 1536-dim, matching the `cwyd-index`), deliberately pinned via `AZURE_ENV_EMBEDDING_MODEL_NAME=text-embedding-3-small` / `AZURE_OPENAI_EMBEDDING_DEPLOYMENT=text-embedding-3-small` in the azd env, which overrides the bicep `embeddingModelName` default (`text-embedding-3-large`). Grounding was verified end-to-end, so this is the operator's intended choice for this deployment — the research doc's `-large` was an assumption, not intent. No infra change: the env override reproduces `-small` on any `azd up` of this env; the bicep default stays `-large` as the general default (which reduces to 1536 via `dimensions`). OBS-01 in the worklog is marked resolved.
+* **Cleanup — smoke-test conversation: DELETED.** Removed the grounding smoke-test conversation (`"What does the Northwind Health Plus plan cover?"`, user `local-dev`) and its 2 messages from the Cosmos `conversations` container. A second test conversation (`"tell me about employee benefits"`, guest user `00000000-…`) remains — not part of this finding's scope, flagged for the operator.
+
 ## Overall Status
 
 🚫→✅ **Deployment recovered via live hotfix; durable fix still pending (BUG-0093 open).** Phase 3 (provision/deploy) was a clean success. Phase 4 initially failed on the Critical Cosmos/Storage public-access lockout, which was **unblocked live** (2026-07-02): Cosmos + Storage `publicNetworkAccess` set to `Enabled`, backend revision restarted → `/api/health` + `/api/health/ready` return `200 {"status":"pass"}` (foundry_iq / database / search all pass), frontend serves `200`. **Grounding validated end-to-end:** seeded 6 benefits PDFs (index reached 15 docs), and `POST /api/conversation` ("What does the Northwind Health Plus plan cover?") returned a grounded answer with a `[doc1]` citation to `Benefit_Options.pdf`. The **durable fix (BUG-0093) landed 2026-07-02**: `post_provision.py` re-asserts `publicNetworkAccess: Enabled` on Cosmos + Storage after every provision (MACAE `selecting_team_config_and_data.sh` parity; no-op under private networking), verified live -- a fresh `azd up` now self-heals the AVM `Disabled` quirk. Also open: confirm `text-embedding-3-small` intent; delete the smoke-test conversation.
+
+**Both follow-ups resolved 2026-07-02** (see Findings Resolution above): confirmed `text-embedding-3-small` is the intended embedding model (pinned via the azd env override; 1536-dim, grounding verified — no infra change) and deleted the smoke-test conversation from Cosmos. One additional guest test conversation (`tell me about employee benefits`) remains, flagged for the operator. All review findings are now closed.

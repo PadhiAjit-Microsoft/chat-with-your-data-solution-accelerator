@@ -1,7 +1,7 @@
 <!-- markdownlint-disable-file -->
 # Task Research: CWYD v2 dev-cloud morning resilience (subscription disable + environment wipe)
 
-Every morning the CWYD v2 cloud environment is "messed up": the resource group `<RESOURCE_GROUP>` is emptied and the Azure subscription `<AZURE_SUBSCRIPTION_ID>` (`CSA-CTO-Engineering-Dev`) is read-only (`ReadOnlyDisabledSubscription`, observed state `Warned`). This research determines the root-cause mechanism, how to diagnose/confirm it, how to minimize or avoid the recurrence, and how to make the rebuild a single low-friction command so a daily teardown stops blocking work (e.g., the BUG-0054 live close-out).
+Every morning the CWYD v2 cloud environment is "messed up": the resource group `<RESOURCE_GROUP>` is emptied and the Azure subscription `<AZURE_SUBSCRIPTION_ID>` (`<AZURE_SUBSCRIPTION_NAME>`) is read-only (`ReadOnlyDisabledSubscription`, observed state `Warned`). This research determines the root-cause mechanism, how to diagnose/confirm it, how to minimize or avoid the recurrence, and how to make the rebuild a single low-friction command so a daily teardown stops blocking work (e.g., the BUG-0054 live close-out).
 
 ## Task Implementation Requests
 
@@ -13,7 +13,7 @@ Every morning the CWYD v2 cloud environment is "messed up": the resource group `
 
 * Scope: Azure subscription disablement mechanics for credit/budget-governed dev subscriptions; CWYD v2 deployment cost drivers (which resources bill 24/7 idle); `azd` ephemeral-environment lifecycle (`azd down` / `--purge`, soft-delete purge protection); a robust one-command rebuild script design. Excludes: changing the org's subscription governance (owned by the CSA CTO Engineering team) and the BUG-0054 cutover wiring (already researched).
 * Assumptions:
-  * The subscription is an org-managed, credit/budget-governed shared dev subscription (name `CSA-CTO-Engineering-Dev`, governance policies observed in the activity log).
+  * The subscription is an org-managed, credit/budget-governed shared dev subscription (name `<AZURE_SUBSCRIPTION_NAME>`, governance policies observed in the activity log).
   * The activity log showed zero resource-`delete` events → resources vanished via billing-plane subscription disable, not a cleanup script.
   * The user can read the subscription in the portal and can ask the subscription administrator about governance.
 * Success Criteria:

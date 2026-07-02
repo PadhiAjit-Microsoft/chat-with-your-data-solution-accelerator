@@ -170,8 +170,8 @@ needed targeted `az` for (B), plus `azd env set` to keep (A) durable.
 
 ## 6. Live-cloud state (read-only; partially blocked)
 
-Auth confirmed: `az account show` → subscription `CSA-CTO-Engineering-Dev`,
-user `friesco@...`, correct tenant.
+Auth confirmed: `az account show` → subscription `<AZURE_SUBSCRIPTION_NAME>`,
+user `<AZURE_PRINCIPAL_UPN>`, correct tenant.
 
 Observed (intermittently — see caveat) from prior read-only `az` calls this
 session:

@@ -1,5 +1,5 @@
 <!-- markdownlint-disable-file -->
-# Research: Azure Subscription Disable Mechanics (`CSA-CTO-Engineering-Dev` going read-only overnight)
+# Research: Azure Subscription Disable Mechanics (`<AZURE_SUBSCRIPTION_NAME>` going read-only overnight)
 
 Status: Complete (high confidence on Q1, Q2, Q3, Q5, Q6, Q7; Q4 answered with documented cadence mechanics; the specific automation that fires nightly on THIS subscription can only be confirmed by running the disambiguating checks in the Q5 section against the live sub)
 
@@ -115,7 +115,7 @@ Returns `state` (`Enabled|Warned|PastDue|Disabled|Deleted`), `subscriptionPolici
 
 Decision rule from this one call:
 - `spendingLimit = On` (and a credit quotaId) → spending-limit class is in play (monthly cadence; a nightly recovery would require external re-enable automation).
-- `spendingLimit = Off`/`CurrentPeriodOff` with `EnterpriseAgreement`/`PayAsYouGo`/`Internal` quotaId → **spending-limit credit exhaustion is impossible**; the nightly read-only flip is therefore necessarily caused by **external automation** (budget action group or a governance/cost runbook). For a sub named `CSA-CTO-Engineering-Dev`, an `Internal_*` quotaId is the likely result, pointing at internal cost-governance automation.
+- `spendingLimit = Off`/`CurrentPeriodOff` with `EnterpriseAgreement`/`PayAsYouGo`/`Internal` quotaId → **spending-limit credit exhaustion is impossible**; the nightly read-only flip is therefore necessarily caused by **external automation** (budget action group or a governance/cost runbook). For a sub named `<AZURE_SUBSCRIPTION_NAME>`, an `Internal_*` quotaId is the likely result, pointing at internal cost-governance automation.
 
 **Other read-only CLI checks:**
 ```bash
@@ -206,14 +206,14 @@ This one call splits the two top hypotheses; the activity-log Administrative fil
 
 ## Recommended next research (not completed here)
 
-- [ ] Run the Q5 disambiguating commands against the live `CSA-CTO-Engineering-Dev` sub to read `state`/`quotaId`/`spendingLimit`, list budgets + action groups, and pull the Administrative activity-log entry at the disable timestamp (identifies the exact caller/automation). Requires the real subscription ID — out of scope for read-only doc research; do not commit the ID (repo Hard Rule #18).
+- [ ] Run the Q5 disambiguating commands against the live `<AZURE_SUBSCRIPTION_NAME>` sub to read `state`/`quotaId`/`spendingLimit`, list budgets + action groups, and pull the Administrative activity-log entry at the disable timestamp (identifies the exact caller/automation). Requires the real subscription ID — out of scope for read-only doc research; do not commit the ID (repo Hard Rule #18).
 - [ ] If the trigger is an internal/org cost-governance system, confirm the owning team's documented schedule + opt-out/exclusion process (not on public Microsoft Learn).
 - [ ] Confirm whether a subscription cancel/disable surfaces in the Activity Log under `Microsoft.Subscription`/Administrative for this tenant (tenant-config dependent) to set expectations for future timestamp triangulation.
 
 ## Clarifying questions
 
 - Do you have the live subscription ID and Owner/Reader access to run the Q5 read-only checks (so the trigger can be named), or is this purely an "explain the mechanism" request? (No code/commands were run this session — research is doc-only.)
-- Is `CSA-CTO-Engineering-Dev` an internal Microsoft subscription (likely `Internal_*` quotaId) governed by a central cost-control system, or a customer/credit offer? That determines whether the fix is "ask the owning team to exclude your RG" vs "remove spending limit / move to PAYG."
+- Is `<AZURE_SUBSCRIPTION_NAME>` an internal Microsoft subscription (likely `Internal_*` quotaId) governed by a central cost-control system, or a customer/credit offer? That determines whether the fix is "ask the owning team to exclude your RG" vs "remove spending limit / move to PAYG."
 
 ## Sources
 

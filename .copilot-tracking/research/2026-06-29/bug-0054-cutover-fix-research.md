@@ -27,7 +27,7 @@ This research drives to one fix that lets the cutover complete.
 * Assumptions:
   * Today is 2026-06-29; active phase is Phase 6.
   * The `blob_event` translator + `ingestion_trigger` flag are deployed (BUG-0080, 6 functions on the cloud Function App).
-  * Subscription `CSA-CTO-Engineering-Dev` (`<AZURE_SUBSCRIPTION_ID>`), resource group `<RESOURCE_GROUP>`, suffix `<SUFFIX>` — real values live only in `.azure/<AZD_ENV_NAME>/.env`.
+  * Subscription `<AZURE_SUBSCRIPTION_NAME>` (`<AZURE_SUBSCRIPTION_ID>`), resource group `<RESOURCE_GROUP>`, suffix `<SUFFIX>` — real values live only in `.azure/<AZD_ENV_NAME>/.env`.
   * The conflicting role assignment name (GUID) is `70d96d3a-34c9-4887-8eb2-04191fdec8b1`.
 * Success Criteria:
   * The exact non-idempotent role-assignment Bicep block is identified, with the principal + role + scope it targets.
