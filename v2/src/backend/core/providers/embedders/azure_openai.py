@@ -24,6 +24,11 @@ from .registry import registry
 
 logger = logging.getLogger(__name__)
 
+# Azure OpenAI rejects an embeddings request whose ``input`` array is longer
+# than this; larger chunk sets are embedded in batches of this size and their
+# vectors concatenated by the caller.
+_MAX_EMBED_INPUTS = 2048
+
 
 @registry.register("azure_openai")
 class AzureOpenAIEmbedder(BaseEmbedder):
@@ -54,31 +59,46 @@ class AzureOpenAIEmbedder(BaseEmbedder):
         if not chunks:
             return []
 
-        inputs = [chunk.content for chunk in chunks]
         provider = self._get_llm_provider()
-        try:
-            result = await provider.embed(
-                inputs,
-                deployment=self._settings.openai.embedding_deployment or None,
-            )
-        except AzureError:
-            logger.exception(
-                "azure_openai embed failed",
-                extra={
-                    "operation": "embed",
-                    "provider": "azure_openai",
-                    "deployment": self._settings.openai.embedding_deployment,
-                },
-            )
-            raise
+        deployment = self._settings.openai.embedding_deployment or None
+        results: list[EmbeddingResult] = []
+        total_vectors = 0
+        # A single document can exceed the Azure OpenAI input-array cap when a
+        # pageless format (e.g. DOCX) is split into thousands of paragraph
+        # chunks, so the inputs are embedded in bounded batches.
+        for start in range(0, len(chunks), _MAX_EMBED_INPUTS):
+            batch = chunks[start : start + _MAX_EMBED_INPUTS]
+            inputs = [chunk.content for chunk in batch]
+            try:
+                result = await provider.embed(inputs, deployment=deployment)
+            except AzureError:
+                logger.exception(
+                    "azure_openai embed failed",
+                    extra={
+                        "operation": "embed",
+                        "provider": "azure_openai",
+                        "deployment": self._settings.openai.embedding_deployment,
+                        "batch_start": start,
+                        "batch_size": len(batch),
+                    },
+                )
+                raise
 
-        if len(result.vectors) != len(chunks):
+            if len(result.vectors) != len(batch):
+                raise RuntimeError(
+                    "Embedding vector count mismatch: expected "
+                    f"{len(batch)} vectors, got {len(result.vectors)} for the "
+                    f"batch starting at index {start}."
+                )
+            results.append(result)
+            total_vectors += len(result.vectors)
+
+        if total_vectors != len(chunks):
             raise RuntimeError(
                 "Embedding vector count mismatch: expected "
-                f"{len(chunks)} vectors, got {len(result.vectors)}."
+                f"{len(chunks)} vectors, got {total_vectors}."
             )
-
-        return [result]
+        return results
 
     async def aclose(self) -> None:
         if self._llm_provider is not None and self._llm_provider_override is None:

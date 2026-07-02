@@ -30,8 +30,14 @@ per Document Intelligence page, joining ``page.lines[*].content`` with
 Office and HTML formats (DOCX, PPTX, XLSX, HTML) are "pageless" -- the
 service returns their text in ``result.paragraphs`` and leaves
 ``page.lines`` empty, so when the page pass yields nothing the parser
-falls back to one ``Chunk`` per paragraph (the same semantic unit
-``TextParser`` uses). Either way ``index`` stays dense across emitted
+falls back to grouping consecutive ``result.paragraphs`` into chunks of
+up to ``_FALLBACK_CHUNK_TARGET_CHARS`` characters (joined with a blank
+line). Document Intelligence segments text far more finely than a
+semantic paragraph -- one entry per heading, list item, or table cell --
+so grouping approximates the paragraph-as-semantic-unit granularity
+``TextParser`` produces instead of thousands of sub-sentence chunks; a
+single paragraph longer than the target stays a whole chunk. Either way
+``index`` stays dense across emitted
 chunks so re-ingesting the same document produces stable, Search-safe
 document keys via ``BaseParser.make_chunk_id(source, index)``.
 """
@@ -50,6 +56,12 @@ from backend.core.types import Chunk
 from .registry import registry
 
 logger = logging.getLogger(__name__)
+
+# Target chunk size (characters) for the pageless paragraph fallback:
+# consecutive Document Intelligence paragraphs are grouped up to this budget so
+# a large document yields retrieval-friendly chunks instead of thousands of
+# sub-sentence ones.
+_FALLBACK_CHUNK_TARGET_CHARS = 2000
 
 
 @registry.register(ParserKey.DOCX)
@@ -142,21 +154,43 @@ class DocumentIntelligenceParser(BaseParser):
         # Office and HTML formats (DOCX, PPTX, XLSX, HTML) are "pageless":
         # Document Intelligence returns their text in ``result.paragraphs``
         # and leaves ``page.lines`` empty, so the page pass above yields no
-        # chunks. Fall back to one ``Chunk`` per paragraph -- the same
-        # semantic unit ``TextParser`` uses. The fallback runs only when the
-        # page pass produced nothing, so paginated formats (PDF, images) keep
-        # their one-chunk-per-page shape and never double-emit (a PDF returns
-        # both ``page.lines`` and ``paragraphs``, but its page chunks suppress
-        # this branch).
+        # chunks. Group consecutive paragraphs into chunks of up to
+        # ``_FALLBACK_CHUNK_TARGET_CHARS`` characters -- Document Intelligence
+        # segments text per heading / list item / table cell, so one chunk
+        # per paragraph would explode a large document into thousands of
+        # sub-sentence chunks. The fallback runs only when the page pass
+        # produced nothing, so paginated formats (PDF, images) keep their
+        # one-chunk-per-page shape and never double-emit.
         if not chunks:
+            group: list[str] = []
+            group_len = 0
             for paragraph in result.paragraphs or []:
                 paragraph_text = (paragraph.content or "").strip()
                 if not paragraph_text:
                     continue
+                if (
+                    group
+                    and group_len + len(paragraph_text)
+                    > _FALLBACK_CHUNK_TARGET_CHARS
+                ):
+                    chunks.append(
+                        Chunk(
+                            id=self.make_chunk_id(source, index),
+                            content="\n\n".join(group),
+                            source=source,
+                            index=index,
+                        )
+                    )
+                    index += 1
+                    group = []
+                    group_len = 0
+                group.append(paragraph_text)
+                group_len += len(paragraph_text)
+            if group:
                 chunks.append(
                     Chunk(
                         id=self.make_chunk_id(source, index),
-                        content=paragraph_text,
+                        content="\n\n".join(group),
                         source=source,
                         index=index,
                     )

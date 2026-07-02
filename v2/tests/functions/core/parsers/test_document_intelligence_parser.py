@@ -297,6 +297,8 @@ async def test_parse_returns_empty_list_when_result_has_no_pages_or_paragraphs()
 async def test_parse_falls_back_to_paragraphs_when_pages_have_no_lines() -> None:
     # Office / HTML shape: Document Intelligence returns a single pageless
     # page with empty lines and puts the extracted text in `paragraphs`.
+    # Short paragraphs are grouped into one chunk (joined with a blank line)
+    # rather than emitted one per paragraph.
     fake_result = SimpleNamespace(
         pages=[SimpleNamespace(lines=[])],
         paragraphs=[
@@ -314,17 +316,64 @@ async def test_parse_falls_back_to_paragraphs_when_pages_have_no_lines() -> None
     assert chunks == [
         Chunk(
             id=BaseParser.make_chunk_id("press.docx", 0),
-            content="First paragraph.",
+            content="First paragraph.\n\nSecond paragraph.",
             source="press.docx",
             index=0,
         ),
-        Chunk(
-            id=BaseParser.make_chunk_id("press.docx", 1),
-            content="Second paragraph.",
-            source="press.docx",
-            index=1,
-        ),
     ]
+
+
+@pytest.mark.asyncio
+async def test_parse_groups_paragraphs_to_target_char_budget(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # With a small target budget, consecutive paragraphs pack into
+    # size-bounded chunks (fewer chunks than paragraphs, dense index) instead
+    # of one chunk per Document Intelligence paragraph.
+    monkeypatch.setattr(di_parser_module, "_FALLBACK_CHUNK_TARGET_CHARS", 15)
+    fake_result = SimpleNamespace(
+        pages=[SimpleNamespace(lines=[])],
+        paragraphs=[_make_fake_paragraph(f"para-{n}") for n in range(1, 6)],
+    )
+    parser = DocumentIntelligenceParser(
+        settings=_make_settings(),
+        credential=_make_credential(),
+        client=_make_fake_client_with_result(fake_result),
+    )
+    chunks = await parser.parse(b"...", source="big.docx")
+    # 5 paragraphs (6 chars each), target 15 -> groups of [2, 2, 1] = 3 chunks.
+    assert [chunk.content for chunk in chunks] == [
+        "para-1\n\npara-2",
+        "para-3\n\npara-4",
+        "para-5",
+    ]
+    assert [chunk.index for chunk in chunks] == [0, 1, 2]
+
+
+@pytest.mark.asyncio
+async def test_parse_keeps_over_long_paragraph_as_whole_chunk(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A single paragraph longer than the target is never split; it becomes
+    # its own chunk, and neighbours group around it.
+    monkeypatch.setattr(di_parser_module, "_FALLBACK_CHUNK_TARGET_CHARS", 15)
+    long_paragraph = "x" * 40
+    fake_result = SimpleNamespace(
+        pages=[SimpleNamespace(lines=[])],
+        paragraphs=[
+            _make_fake_paragraph("head"),
+            _make_fake_paragraph(long_paragraph),
+            _make_fake_paragraph("tail"),
+        ],
+    )
+    parser = DocumentIntelligenceParser(
+        settings=_make_settings(),
+        credential=_make_credential(),
+        client=_make_fake_client_with_result(fake_result),
+    )
+    chunks = await parser.parse(b"...", source="long.docx")
+    assert [chunk.content for chunk in chunks] == ["head", long_paragraph, "tail"]
+    assert [chunk.index for chunk in chunks] == [0, 1, 2]
 
 
 @pytest.mark.asyncio
@@ -365,11 +414,12 @@ async def test_parse_paragraph_fallback_skips_empty_and_keeps_indices_dense() ->
         client=fake_client,
     )
     chunks = await parser.parse(b"...", source="sparse.docx")
+    # Empty / whitespace / None paragraphs are skipped; the two real
+    # paragraphs group into a single size-bounded chunk.
     assert [c.id for c in chunks] == [
         BaseParser.make_chunk_id("sparse.docx", 0),
-        BaseParser.make_chunk_id("sparse.docx", 1),
     ]
-    assert [c.content for c in chunks] == ["real one", "real two"]
+    assert [c.content for c in chunks] == ["real one\n\nreal two"]
 
 
 

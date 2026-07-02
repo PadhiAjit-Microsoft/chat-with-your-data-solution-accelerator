@@ -96,6 +96,54 @@ async def test_embed_forwards_chunk_content_to_llm_provider(
 
 
 @pytest.mark.asyncio
+async def test_embed_batches_inputs_over_the_array_cap(
+    settings: AppSettings,
+    fake_credential: MagicMock,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # A document whose chunk count exceeds the Azure OpenAI input-array cap
+    # must be embedded in bounded batches (each request <= the cap) and its
+    # vectors concatenated, not sent as one over-long request.
+    monkeypatch.setattr(
+        "backend.core.providers.embedders.azure_openai._MAX_EMBED_INPUTS", 2
+    )
+
+    async def fake_embed(
+        inputs: list[str], *, deployment: str | None
+    ) -> EmbeddingResult:
+        return EmbeddingResult(
+            vectors=[[float(len(text))] for text in inputs],
+            model="text-embedding-3-small",
+        )
+
+    llm_provider = MagicMock()
+    llm_provider.embed = AsyncMock(side_effect=fake_embed)
+
+    embedder = AzureOpenAIEmbedder(
+        settings=settings,
+        credential=fake_credential,
+        llm_provider=llm_provider,
+    )
+    chunks = [
+        Chunk(id=f"a__{i}", content=f"chunk-{i}", source="a", index=i)
+        for i in range(5)
+    ]
+
+    results = await embedder.embed(chunks)
+
+    # 5 chunks, cap 2 -> batches of [2, 2, 1] = 3 provider calls.
+    assert llm_provider.embed.await_count == 3
+    batched_inputs = [call.args[0] for call in llm_provider.embed.await_args_list]
+    assert batched_inputs == [
+        ["chunk-0", "chunk-1"],
+        ["chunk-2", "chunk-3"],
+        ["chunk-4"],
+    ]
+    total_vectors = sum(len(result.vectors) for result in results)
+    assert total_vectors == 5
+
+
+@pytest.mark.asyncio
 async def test_embed_empty_chunks_returns_empty_list(
     settings: AppSettings, fake_credential: MagicMock
 ) -> None:
