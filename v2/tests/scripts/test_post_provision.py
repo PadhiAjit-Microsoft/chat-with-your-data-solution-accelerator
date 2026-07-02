@@ -5,6 +5,7 @@ Purpose: Validate post_provision.py search-index bootstrap and CLI flags.
 """
 
 import importlib.util
+import subprocess
 import sys
 from pathlib import Path
 
@@ -598,3 +599,133 @@ def test_post_provision_does_not_reference_agent_partition() -> None:
     assert "_system" not in source
     assert "CosmosItemType" not in source
     assert "upsert_item" not in source
+
+
+# ---------------------------------------------------------------------------
+# Public network access re-assert (BUG-0093 / MACAE parity)
+# ---------------------------------------------------------------------------
+
+
+def _set_public_profile(monkeypatch):
+    monkeypatch.delenv("AZURE_ENV_ENABLE_PRIVATE_NETWORKING", raising=False)
+    monkeypatch.setenv("AZURE_RESOURCE_GROUP", "rg-test")
+    monkeypatch.setenv(
+        "AZURE_COSMOS_ENDPOINT", "https://cosno-abc.documents.azure.com:443/"
+    )
+    monkeypatch.setenv("AZURE_STORAGE_ACCOUNT_NAME", "stabc")
+
+
+def test_ensure_public_network_access_skips_under_private_networking(
+    monkeypatch, capsys
+):
+    _set_public_profile(monkeypatch)
+    monkeypatch.setenv("AZURE_ENV_ENABLE_PRIVATE_NETWORKING", "true")
+    calls: list = []
+
+    result = post_provision._ensure_public_network_access(
+        dry_run=False, runner=lambda cmd: calls.append(cmd)
+    )
+
+    assert result == "skipped"
+    assert calls == []
+    assert "private networking on" in capsys.readouterr().out
+
+
+def test_ensure_public_network_access_reasserts_cosmos_and_storage(monkeypatch):
+    _set_public_profile(monkeypatch)
+    calls: list[list[str]] = []
+
+    result = post_provision._ensure_public_network_access(
+        dry_run=False, runner=lambda cmd: calls.append(list(cmd))
+    )
+
+    assert result == "ensured"
+    assert len(calls) == 2
+    assert calls[0][:3] == ["az", "cosmosdb", "update"]
+    assert "cosno-abc" in calls[0]
+    assert "ENABLED" in calls[0]
+    assert calls[1][:4] == ["az", "storage", "account", "update"]
+    assert "stabc" in calls[1]
+    assert "Enabled" in calls[1]
+
+
+def test_ensure_public_network_access_storage_only_in_postgres_mode(monkeypatch):
+    # No AZURE_COSMOS_ENDPOINT (postgresql mode) -> storage account only.
+    monkeypatch.delenv("AZURE_ENV_ENABLE_PRIVATE_NETWORKING", raising=False)
+    monkeypatch.delenv("AZURE_COSMOS_ENDPOINT", raising=False)
+    monkeypatch.setenv("AZURE_RESOURCE_GROUP", "rg-test")
+    monkeypatch.setenv("AZURE_STORAGE_ACCOUNT_NAME", "stpg")
+    calls: list[list[str]] = []
+
+    result = post_provision._ensure_public_network_access(
+        dry_run=False, runner=lambda cmd: calls.append(list(cmd))
+    )
+
+    assert result == "ensured"
+    assert len(calls) == 1
+    assert calls[0][:4] == ["az", "storage", "account", "update"]
+
+
+def test_ensure_public_network_access_dry_run_makes_no_calls(monkeypatch, capsys):
+    _set_public_profile(monkeypatch)
+    calls: list = []
+
+    result = post_provision._ensure_public_network_access(
+        dry_run=True, runner=lambda cmd: calls.append(cmd)
+    )
+
+    assert result == "dry-run"
+    assert calls == []
+    assert "[dry-run] would run" in capsys.readouterr().out
+
+
+def test_ensure_public_network_access_skips_without_resource_group(
+    monkeypatch, capsys
+):
+    monkeypatch.delenv("AZURE_ENV_ENABLE_PRIVATE_NETWORKING", raising=False)
+    monkeypatch.delenv("AZURE_RESOURCE_GROUP", raising=False)
+    monkeypatch.setenv("AZURE_STORAGE_ACCOUNT_NAME", "stx")
+    calls: list = []
+
+    result = post_provision._ensure_public_network_access(
+        dry_run=False, runner=lambda cmd: calls.append(cmd)
+    )
+
+    assert result == "skipped"
+    assert calls == []
+
+
+def test_run_az_reraises_on_command_failure(monkeypatch, capsys):
+    def _boom(*args, **kwargs):
+        raise subprocess.CalledProcessError(
+            returncode=3, cmd=["az"], stderr="denied"
+        )
+
+    monkeypatch.setattr(post_provision.subprocess, "run", _boom)
+
+    with pytest.raises(subprocess.CalledProcessError):
+        post_provision._run_az(["az", "cosmosdb", "update"])
+
+    assert "failed (exit 3)" in capsys.readouterr().err
+
+
+def test_main_reasserts_public_access_before_db_work(monkeypatch):
+    monkeypatch.setenv("AZURE_DB_TYPE", "cosmosdb")
+    calls: list[str] = []
+    monkeypatch.setattr(
+        post_provision,
+        "_ensure_public_network_access",
+        lambda *, dry_run: (calls.append("public-access"), "skipped")[1],
+    )
+    monkeypatch.setattr(
+        post_provision,
+        "_ensure_search_index",
+        lambda *, dry_run: (calls.append("search"), "skipped")[1],
+    )
+
+    rc = post_provision.main(["--dry-run"])
+
+    assert rc == 0
+    # The public-access re-assert runs before the search / KB seed.
+    assert calls[0] == "public-access"
+    assert calls.index("public-access") < calls.index("search")

@@ -35,8 +35,10 @@ Notes
 
 import argparse
 import os
+import subprocess
 import sys
 from typing import Sequence
+from urllib.parse import urlparse
 
 import httpx
 import psycopg2  # type: ignore[import-not-found]
@@ -143,6 +145,146 @@ def _require(name: str) -> str:
         )
         sys.exit(2)
     return value
+
+
+def _is_private_networking() -> bool:
+    """True when the private-networking (WAF) profile is on.
+
+    Bound from ``AZURE_ENV_ENABLE_PRIVATE_NETWORKING`` (the
+    ``enablePrivateNetworking`` parameter in main.parameters.json); absent
+    means the default public profile.
+    """
+    return (
+        os.environ.get("AZURE_ENV_ENABLE_PRIVATE_NETWORKING", "false")
+        .strip()
+        .lower()
+        == "true"
+    )
+
+
+def _cosmos_account_name() -> str:
+    """Cosmos account name parsed from ``AZURE_COSMOS_ENDPOINT``.
+
+    ``https://<name>.documents.azure.com:443/`` -> ``<name>``. Empty string
+    in postgresql mode (no Cosmos endpoint).
+    """
+    endpoint = os.environ.get("AZURE_COSMOS_ENDPOINT", "").strip()
+    if not endpoint:
+        return ""
+    host = urlparse(endpoint).hostname or ""
+    return host.split(".", 1)[0] if host else ""
+
+
+def _run_az(command: Sequence[str]) -> None:
+    """Run an ``az`` command, surfacing stderr and re-raising on failure.
+
+    Never swallows: a missing CLI or a non-zero exit re-raises so the
+    post-provision hook fails loudly rather than shipping an unreachable
+    backend.
+    """
+    try:
+        # `az` is an `az.cmd` shim on Windows, which CreateProcess cannot
+        # launch directly; route through the shell there so PATHEXT resolves
+        # it. Args are our own azd resource names (no shell metacharacters).
+        subprocess.run(
+            list(command),
+            check=True,
+            capture_output=True,
+            text=True,
+            shell=os.name == "nt",
+        )
+    except FileNotFoundError:
+        sys.stderr.write(
+            "post-provision: `az` CLI not found on PATH; cannot re-assert "
+            "public network access.\n"
+        )
+        raise
+    except subprocess.CalledProcessError as exc:
+        sys.stderr.write(
+            f"post-provision: `{' '.join(command)}` failed (exit {exc.returncode}).\n"
+            f"  stderr: {exc.stderr}\n"
+        )
+        raise
+
+
+def _ensure_public_network_access(*, dry_run: bool, runner=None) -> str:
+    """Re-assert ``publicNetworkAccess=Enabled`` on Cosmos + Storage.
+
+    The ``avm/res/document-db/database-account`` and
+    ``avm/res/storage/storage-account`` modules deploy the accounts with
+    ``publicNetworkAccess=Disabled`` even though main.bicep passes
+    ``Enabled`` for the non-private-networking profile, so the public-egress
+    Container Apps cannot reach them and the backend crashes on startup.
+    This re-asserts ``Enabled`` via ``az`` after provisioning, mirroring the
+    MACAE ``selecting_team_config_and_data.sh`` toggle. Data-plane auth stays
+    RBAC-only (Cosmos ``disableLocalAuth``, Storage ``allowSharedKeyAccess``
+    off), so opening the network exposes no key surface. Tracked as BUG-0093.
+
+    No-op under private networking (the accounts are reached through private
+    endpoints and stay ``Disabled``). Returns ``"skipped"``, ``"dry-run"``,
+    or ``"ensured"``. ``runner`` is a test seam -- production passes ``None``
+    and shells out to ``az``.
+    """
+    if _is_private_networking():
+        print(
+            "post-provision: private networking on; leaving Cosmos/Storage "
+            "publicNetworkAccess Disabled (private endpoints cover access)"
+        )
+        return "skipped"
+
+    resource_group = os.environ.get("AZURE_RESOURCE_GROUP", "").strip()
+    if not resource_group:
+        print(
+            "post-provision: AZURE_RESOURCE_GROUP not set; skipping "
+            "public-access re-assert"
+        )
+        return "skipped"
+
+    commands: list[list[str]] = []
+    cosmos_account = _cosmos_account_name()
+    if cosmos_account:
+        commands.append(
+            [
+                "az", "cosmosdb", "update",
+                "--resource-group", resource_group,
+                "--name", cosmos_account,
+                "--public-network-access", "ENABLED",
+            ]
+        )
+    storage_account = os.environ.get("AZURE_STORAGE_ACCOUNT_NAME", "").strip()
+    if storage_account:
+        commands.append(
+            [
+                "az", "storage", "account", "update",
+                "--resource-group", resource_group,
+                "--name", storage_account,
+                "--public-network-access", "Enabled",
+                "--default-action", "Allow",
+            ]
+        )
+
+    if not commands:
+        print(
+            "post-provision: no Cosmos/Storage account resolved; skipping "
+            "public-access re-assert"
+        )
+        return "skipped"
+
+    if dry_run:
+        for command in commands:
+            print(f"post-provision: [dry-run] would run: {' '.join(command)}")
+        return "dry-run"
+
+    run = runner if runner is not None else _run_az
+    updated: list[str] = []
+    for command in commands:
+        run(command)
+        updated.append(command[command.index("--name") + 1])
+    print(
+        "post-provision: re-asserted publicNetworkAccess=Enabled on "
+        f"{', '.join(updated)}"
+    )
+    return "ensured"
 
 
 def _enable_pgvector() -> None:
@@ -642,6 +784,10 @@ def main(argv: Sequence[str] | None = None) -> int:
             "value set via `azd env set`).\n"
         )
         return 6
+
+    # Re-assert public network access on Cosmos + Storage before the backend
+    # deploys (the AVM modules deploy them Disabled in the public profile).
+    _ensure_public_network_access(dry_run=args.dry_run)
 
     if db_type == "postgresql":
         if args.dry_run:
