@@ -15,14 +15,15 @@
 ## Summary of Findings
 
 All three plan phases **Verified** by independent RPI Validators; implementation quality **Passed**.
-Zero Critical, zero Major. One cosmetic changes-log nit was found and **fixed during this review**;
-one optional DRY observation remains (already tracked as WI-02).
+Zero Critical, zero Major. One cosmetic changes-log nit was fixed during the review; the sole
+optional DRY observation (IV-002) was subsequently **extracted at the user's request** (see the
+IV-002 resolution below).
 
 | Severity | Count | Notes |
 |---|---|---|
 | Critical | 0 | — |
 | Major | 0 | — |
-| Minor | 1 open (1 resolved this turn) | Open: IV-002 collapse-regex duplication (optional, = WI-02). Resolved: RPI-P1 MINOR-1 changes-log `### Added` `_pending_` → `None`. |
+| Minor | 0 open (2 resolved) | Resolved: IV-002 collapse-regex duplication (extracted to `citationTokens.collapseConsecutiveSuperscripts`, both consumers refactored) + RPI-P1 MINOR-1 changes-log `### Added` `_pending_` → `None`. |
 | Info | 5 | DD-02 digit cap + bare-`[N]` accepted class + header phase-tail + `lastIndex`-safe confirmation + `document[5]` prefix boundary. |
 
 ## Applicable Conventions (applyTo match)
@@ -111,11 +112,12 @@ Addressed the actionable review findings:
   test-guarded); `lastIndex` reuse (verified safe — `.replace`-only, spec resets per call);
   `document[5]` prefix boundary (correct); `test_no_process_narrative_in_src.py` `.py`-only scope
   (factual clarification, not a defect).
-* **IV-002 (Minor) — DEFERRED BY DECISION.** The duplicated collapse regex
-  `/\^(\d+)\^(?:\s*\^\1\^)+/g` in `parseAnswer.tsx:26` and `reasoningText.tsx:42` is **not** extracted
-  now: a shared leaf module is a structural change (Hard Rule #10 — requires user confirmation) and
-  the review judged extracting a single literal premature. Kept as **WI-02** (extract only if a third
-  citation surface appears). Offered to the user as an optional next step.
+* **IV-002 (Minor) — RESOLVED (2026-07-02, user chose extraction).** The duplicated collapse regex
+  `/\^(\d+)\^(?:\s*\^\1\^)+/g` was factored into a new shared leaf module `citationTokens.tsx`
+  exporting the pure `collapseConsecutiveSuperscripts(text)` helper (test-first, 6 cases); both
+  `parseAnswer` and `superscriptReasoningCitations` now delegate to it and dropped their local
+  copies. The structural change was confirmed with the user first (Hard Rule #10). Behavior
+  unchanged — full suite **46 files / 613 tests** green. WI-02 closed.
 
 ## Follow-Up Work
 
@@ -124,9 +126,10 @@ Deferred from scope (pre-existing in the plan):
   `azd deploy frontend`. Requires a deploy the user controls.
 
 Discovered during review:
-* **WI-02** (low, optional) — if/when a third citation surface appears, extract the shared collapse
-  regex (and marker normalization) into one leaf module to remove the `parseAnswer` ↔ `reasoningText`
-  duplication (IV-002). No action until that trigger.
+* **WI-02** (low) — ✅ **DONE (2026-07-02).** The shared collapse regex was extracted to
+  `citationTokens.collapseConsecutiveSuperscripts` and both consumers refactored (IV-002 resolved).
+  The marker-matching regexes (`DOC_MARKER_PATTERN` vs `REASONING_CITATION_MARKER`) stay
+  intentionally separate by design, so no further unification is needed.
 
 ## Re-review Validation (2026-07-02)
 
@@ -147,12 +150,34 @@ Verified and is not re-run per the resumption guidance — the implementation su
 * **IV-002 — OPEN by decision.** The duplicated collapse regex remains deferred as WI-02; extraction
   is a structural change (Hard Rule #10) awaiting user opt-in. No new findings surfaced.
 
+## IV-002 Extraction Re-review (2026-07-02)
+
+Independent verification of the IV-002 resolution delta (the shared `collapseConsecutiveSuperscripts`
+extraction the user opted into):
+
+* **New `citationTokens.tsx` — VERIFIED.** Pure `(string) => string` helper owning the single
+  `/\^(\d+)\^(?:\s*\^\1\^)+/g` regex; carries the `Pillar:`/`Phase:` header (Hard Rule #3) and
+  descriptive present-tense docstrings with no process narrative (Hard Rule #16). Filename is
+  `camelCase.tsx` per the utility convention (ADR-0013).
+* **`parseAnswer.tsx` / `reasoningText.tsx` refactor — VERIFIED.** Both dropped their local collapse
+  constant and delegate to the shared helper; the marker regexes (`DOC_MARKER_PATTERN`,
+  `REASONING_CITATION_MARKER`) are retained, so behavior is identical. New imports sit at module top
+  (Hard Rule #17). Grep confirms **no dead references** to the removed `CONSECUTIVE_DUPLICATE_SUP*`
+  constants outside `citationTokens.tsx`.
+* **Test-first — VERIFIED.** `citationTokens.test.tsx` (6 cases) landed with the helper.
+* **Gates re-run — GREEN.** `tsc -b` exit 0; the four affected suites (parseAnswer 13, reasoningText
+  16, citationTokens 6, MessageList 34) = **69 tests** pass, confirming behavior preservation (the
+  full suite was 46 files / 613 green in the implementing turn on the identical code state).
+* **No new findings.**
+
 ## Overall Status
 
-✅ **Complete (re-verified).** All plan items verified across three RPI phases and
+✅ **Complete (fully verified).** All plan items verified across three RPI phases and
 implementation-quality review; the remediation delta re-validated green (tsc 0; 45 files / 607
 tests). Zero Critical / zero Major. Review findings remediated: two doc-accuracy nits fixed
 (`MessageList.tsx` docstring + planning-log DD-02 note), the cosmetic changes-log nit resolved, and
-IV-002 consciously deferred as WI-02 (structural extraction needs user sign-off). BUG-0094 is
-correctly closed in bugs.md + worklog. Nothing committed (git-ownership) — ready for the user to
-commit and deploy.
+IV-002 **resolved** — the duplicated collapse regex was extracted to the shared
+`citationTokens.collapseConsecutiveSuperscripts` helper at the user's request and both consumers
+refactored (behavior unchanged; full suite **46 files / 613 tests** green). All review findings are
+now closed. BUG-0094 is correctly closed in bugs.md + worklog. Nothing committed (git-ownership) —
+ready for the user to commit and deploy.

@@ -15,6 +15,7 @@
  * carries no such titles (the langgraph delta stream) is returned as
  * the verbatim join.
  */
+import { collapseConsecutiveSuperscripts } from "./citationTokens";
 
 // A model-emitted section title: a bold span on its own line — `**Title**`
 // immediately followed by a line break, with any whitespace on either
@@ -37,10 +38,6 @@ export function formatReasoning(parts: string[]): string {
 // prose, not citation markers.
 const REASONING_CITATION_MARKER = /(?:docs?\s*)?\[(?:doc)?(\d{1,3})\]/gi;
 
-// Runs of the same superscript token, separated only by whitespace, that
-// collapse to a single `<sup>`.
-const CONSECUTIVE_DUPLICATE_SUP = /\^(\d+)\^(?:\s*\^\1\^)+/g;
-
 /**
  * Pure marker→superscript normalizer for the reasoning feed. It rewrites
  * every reasoning citation marker (`[docN]`, `doc[N]`, `docs[N]`, bare
@@ -56,7 +53,7 @@ const CONSECUTIVE_DUPLICATE_SUP = /\^(\d+)\^(?:\s*\^\1\^)+/g;
  * helper composes after it.
  */
 export function superscriptReasoningCitations(text: string): string {
-  return text
-    .replace(REASONING_CITATION_MARKER, " ^$1^ ")
-    .replace(CONSECUTIVE_DUPLICATE_SUP, "^$1^");
+  return collapseConsecutiveSuperscripts(
+    text.replace(REASONING_CITATION_MARKER, " ^$1^ "),
+  );
 }

@@ -16,7 +16,8 @@ same compact superscript numbers used in the final answer body. A new pure
 
 ### Added
 
-* None (all changes are edits to existing files).
+* v2/src/frontend/src/pages/chat/components/citationTokens.tsx - New shared leaf module exporting the pure `collapseConsecutiveSuperscripts(text)` helper (owns the `/\^(\d+)\^(?:\s*\^\1\^)+/g` collapse regex) consumed by both `parseAnswer` and `superscriptReasoningCitations` (resolves IV-002).
+* v2/tests/frontend/pages/chat/components/citationTokens.test.tsx - 6 unit tests for the shared collapse helper (whitespace/adjacent/triple runs, distinct-adjacent no-collapse, marker-free passthrough).
 
 ### Modified
 
@@ -25,6 +26,8 @@ same compact superscript numbers used in the final answer body. A new pure
 * v2/src/frontend/src/pages/chat/components/MessageList.tsx - Imported `superscriptReasoningCitations`; the reasoning `<details>` body's model branch now renders `superscriptReasoningCitations(formatReasoning(m.reasoning))` and the `MarkdownContent` sets `enableSupersub`. Placeholder branch, `data-testid`/`data-role`, and `<details>`/`<summary>` structure untouched.
 * v2/src/frontend/src/pages/chat/components/MarkdownContent.tsx - Docstring only: the reasoning-panel note now states both the answer body and the reasoning panel enable supersub (answer renders `parseAnswer`'s `^K^`, reasoning renders `superscriptReasoningCitations`'s `^N^`), with the accepted cosmetic note that a stray `^..^` in reasoning renders as `<sup>`.
 * v2/tests/frontend/pages/chat/components/MessageList.test.tsx - Added one `it(...)` seeding a finished message with mixed markers (`"I checked doc[6] and docs[3] and [9]."`); asserts the reasoning panel emits `<sup>` nodes containing `6`/`3`/`9` and no longer shows the literal `doc[6]`/`docs[3]`/`[9]` text. 34 tests pass in-file.
+* v2/src/frontend/src/pages/chat/components/parseAnswer.tsx - IV-002 refactor: removed the local `CONSECUTIVE_DUPLICATE_SUP_PATTERN`; now imports + calls `collapseConsecutiveSuperscripts` from `citationTokens`.
+* v2/src/frontend/src/pages/chat/components/reasoningText.tsx - IV-002 refactor (further modified): removed the local `CONSECUTIVE_DUPLICATE_SUP`; `superscriptReasoningCitations` delegates the collapse to the shared `collapseConsecutiveSuperscripts`.
 * v2/docs/bugs.md - BUG-0094 row (line 153) flipped `open` → `fixed` with resolved date `2026-07-02`; the "Fix direction" note replaced with a "Fix" describing the actual `superscriptReasoningCitations` helper + `enableSupersub` wiring; tail ends `**Status: fixed.**`.
 * v2/docs/worklog/2026-07-02.md - BUG-0094 bug entry flipped to **fixed** with the helper + wiring summary and the green validation result.
 
@@ -39,7 +42,7 @@ same compact superscript numbers used in the final answer body. A new pure
 * DD-02 — bare `[N]` is matched with a `\d{1,3}` digit cap so a literal 4-digit bracket (e.g. `[2026]`) is not turned into a superscript. A false positive here is cosmetic (a stray `<sup>`), never a broken link. Guarded by explicit `[2026]`/`[note]` non-rewrite tests.
 * The `reasoningPlaceholder` branch of the reasoning body was deliberately left un-normalized (app-generated string, no citation markers).
 * Pre-existing `act(...)` warnings in `MessageInput.test.tsx` are unrelated to this change and were left as-is.
-* Review remediation (2026-07-02 follow-up): `MessageList.tsx` module docstring extended to mention the `superscriptReasoningCitations` normalization (RPI-P2 Info-1); planning-log DD-02 note reconciled. IV-002 (the collapse regex `/\^(\d+)\^(?:\s*\^\1\^)+/g` duplicated in `parseAnswer.tsx:26` and `reasoningText.tsx:42`) was **deferred to WI-02** — a shared leaf module is a structural change requiring user sign-off (Hard Rule #10), and the review judged extracting a single literal premature.
+* Review remediation (2026-07-02 follow-up): `MessageList.tsx` module docstring extended to mention the `superscriptReasoningCitations` normalization (RPI-P2 Info-1); planning-log DD-02 note reconciled. IV-002 (the collapse regex `/\^(\d+)\^(?:\s*\^\1\^)+/g` duplicated in `parseAnswer.tsx` and `reasoningText.tsx`) was **resolved** — the user chose extraction over deferral, so the collapse step was factored into the shared `citationTokens.collapseConsecutiveSuperscripts` helper and both consumers refactored (behavior unchanged; 46 files / 613 tests green). WI-02 closed.
 
 ## Release Summary
 

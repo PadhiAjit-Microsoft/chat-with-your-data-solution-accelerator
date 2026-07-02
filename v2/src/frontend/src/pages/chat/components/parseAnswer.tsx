@@ -22,8 +22,9 @@
  */
 import type { Citation } from "@/models/chat";
 
+import { collapseConsecutiveSuperscripts } from "./citationTokens";
+
 const DOC_MARKER_PATTERN = /\[doc(\d+)\]/g;
-const CONSECUTIVE_DUPLICATE_SUP_PATTERN = /\^(\d+)\^(?:\s*\^\1\^)+/g;
 
 export interface ParsedAnswer {
   markdownText: string;
@@ -63,10 +64,7 @@ export function parseAnswer(
     },
   );
 
-  const collapsed = rewritten.replace(
-    CONSECUTIVE_DUPLICATE_SUP_PATTERN,
-    "^$1^",
-  );
+  const collapsed = collapseConsecutiveSuperscripts(rewritten);
 
   return { markdownText: collapsed, citations: renumbered };
 }
