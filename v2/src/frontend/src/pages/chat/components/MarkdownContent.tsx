@@ -17,9 +17,12 @@
  *
  * When `enableSupersub` is set, `remark-supersub` is added to the remark
  * pipeline so `^text^` renders as a `<sup>` (and `~text~` as a `<sub>`).
- * The answer body uses this to display the `^K^` citation tokens emitted
- * by `parseAnswer` as visual superscripts; the reasoning panel leaves it
- * off so stray `^`/`~` in chain-of-thought stays literal.
+ * Both the answer body and the reasoning panel enable it: the answer
+ * body renders the `^K^` citation tokens emitted by `parseAnswer`, and
+ * the reasoning panel renders the `^N^` tokens emitted by
+ * `superscriptReasoningCitations`, so citation markers show as visual
+ * superscripts in both surfaces. A stray `^..^` pair in chain-of-thought
+ * therefore renders as a `<sup>` (accepted, cosmetic).
  */
 import ReactMarkdown from "react-markdown";
 import type { Components } from "react-markdown";

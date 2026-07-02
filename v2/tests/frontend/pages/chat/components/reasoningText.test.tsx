@@ -10,7 +10,10 @@
  */
 import { describe, it, expect } from "vitest";
 
-import { formatReasoning } from "@/pages/chat/components/reasoningText";
+import {
+  formatReasoning,
+  superscriptReasoningCitations,
+} from "@/pages/chat/components/reasoningText";
 
 describe("formatReasoning", () => {
   it("returns char-level deltas unchanged when there are no section titles", () => {
@@ -54,5 +57,61 @@ describe("formatReasoning", () => {
 
   it("returns an empty string for empty input", () => {
     expect(formatReasoning([])).toBe("");
+  });
+});
+
+describe("superscriptReasoningCitations", () => {
+  it("rewrites a `[docN]` marker into a superscript token", () => {
+    expect(superscriptReasoningCitations("see [doc6] here")).toContain(" ^6^ ");
+  });
+
+  it("rewrites a `doc[N]` marker, consuming the `doc` word", () => {
+    const result = superscriptReasoningCitations("see doc[6] here");
+    expect(result).toContain(" ^6^ ");
+    expect(result).not.toContain("doc");
+  });
+
+  it("rewrites a `docs[N]` marker into a superscript token", () => {
+    expect(superscriptReasoningCitations("per docs[3] above")).toContain(
+      " ^3^ ",
+    );
+  });
+
+  it("rewrites a bare `[N]` marker into a superscript token", () => {
+    expect(superscriptReasoningCitations("noted in [9] earlier")).toContain(
+      " ^9^ ",
+    );
+  });
+
+  it("rewrites multiple markers in order and retains surrounding prose", () => {
+    const result = superscriptReasoningCitations("docs[3] and [9]");
+    expect(result).toContain("^3^");
+    expect(result).toContain("^9^");
+    expect(result.indexOf("^3^")).toBeLessThan(result.indexOf("^9^"));
+    expect(result).toContain("and");
+  });
+
+  it("collapses consecutive duplicate markers into a single superscript", () => {
+    const result = superscriptReasoningCitations("[doc1][doc1]");
+    expect(result).toContain("^1^");
+    expect(result.match(/\^1\^/g)).toHaveLength(1);
+  });
+
+  it("returns text unchanged when there are no markers", () => {
+    expect(superscriptReasoningCitations("just plain reasoning.")).toBe(
+      "just plain reasoning.",
+    );
+  });
+
+  it("leaves a 4-digit bracket literal", () => {
+    const result = superscriptReasoningCitations("published in [2026] finally");
+    expect(result).toContain("[2026]");
+    expect(result).not.toContain("^");
+  });
+
+  it("leaves a non-numeric bracket literal", () => {
+    const result = superscriptReasoningCitations("see the [note] below");
+    expect(result).toContain("[note]");
+    expect(result).not.toContain("^");
   });
 });

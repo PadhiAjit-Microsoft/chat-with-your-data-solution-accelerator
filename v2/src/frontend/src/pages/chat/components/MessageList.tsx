@@ -33,7 +33,10 @@
  *     would read as one-character mush — we concatenate at render time
  *     (keeping the array shape on the wire), drop the model's bold
  *     section titles, and break the remaining reasoning bodies apart so
- *     both orchestrators render the same way.
+ *     both orchestrators render the same way. Inline citation markers in
+ *     the reasoning body are then normalized to `^N^` superscript tokens
+ *     by `superscriptReasoningCitations` and rendered via `enableSupersub`,
+ *     so the panel shows the same tiny superscript numbers as the answer.
  *   - referenced `Citation[]` (finished messages only) → a
  *     `<CitationPanel>` reference block under the answer, showing the
  *     renumbered subset that `parseAnswer` cited so the chip numbers
@@ -67,7 +70,7 @@ import { ChatActionType, useChat } from "@/pages/chat/ChatContext";
 import { TOASTER_ID } from "@/theme/FluentThemeBridge";
 import { MarkdownContent } from "./MarkdownContent";
 import { parseAnswer } from "./parseAnswer";
-import { formatReasoning } from "./reasoningText";
+import { formatReasoning, superscriptReasoningCitations } from "./reasoningText";
 import { CitationPanel } from "./CitationPanel/CitationPanel";
 import styles from "./MessageList.module.css";
 
@@ -190,9 +193,12 @@ export function MessageList() {
                         className={styles.reasoningBody}
                         content={
                           m.reasoning && m.reasoning.length > 0
-                            ? formatReasoning(m.reasoning)
+                            ? superscriptReasoningCitations(
+                                formatReasoning(m.reasoning),
+                              )
                             : (m.reasoningPlaceholder ?? "")
                         }
+                        enableSupersub
                       />
                     </details>
                   )}

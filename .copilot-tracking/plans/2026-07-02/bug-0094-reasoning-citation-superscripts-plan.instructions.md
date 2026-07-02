@@ -63,38 +63,38 @@ on the reasoning body.
 
 ## Implementation Checklist
 
-### [ ] Implementation Phase 1: Pure reasoning-citation superscript helper
+### [x] Implementation Phase 1: Pure reasoning-citation superscript helper
 
 <!-- parallelizable: false -->
 
-* [ ] Step 1.1: Add `superscriptReasoningCitations(text: string): string` to reasoningText.tsx
-  * Details: .copilot-tracking/details/2026-07-02/bug-0094-reasoning-citation-superscripts-details.md (Lines 12-44)
-* [ ] Step 1.2: Add helper unit tests covering every marker shape + no-marker passthrough
-  * Details: .copilot-tracking/details/2026-07-02/bug-0094-reasoning-citation-superscripts-details.md (Lines 46-70)
-* [ ] Step 1.3: Run the reasoningText test file and typecheck
-  * Details: .copilot-tracking/details/2026-07-02/bug-0094-reasoning-citation-superscripts-details.md (Lines 72-80)
+* [x] Step 1.1: Add `superscriptReasoningCitations(text: string): string` to reasoningText.tsx
+  * Details: .copilot-tracking/details/2026-07-02/bug-0094-reasoning-citation-superscripts-details.md (Lines 14-62)
+* [x] Step 1.2: Add helper unit tests covering every marker shape + no-marker passthrough
+  * Details: .copilot-tracking/details/2026-07-02/bug-0094-reasoning-citation-superscripts-details.md (Lines 63-94)
+* [x] Step 1.3: Run the reasoningText test file and typecheck
+  * Details: .copilot-tracking/details/2026-07-02/bug-0094-reasoning-citation-superscripts-details.md (Lines 95-106)
 
-### [ ] Implementation Phase 2: Wire the superscript treatment into the reasoning panel
-
-<!-- parallelizable: false -->
-
-* [ ] Step 2.1: Compose the helper + set `enableSupersub` on the reasoning `MarkdownContent`
-  * Details: .copilot-tracking/details/2026-07-02/bug-0094-reasoning-citation-superscripts-details.md (Lines 84-118)
-* [ ] Step 2.2: Update the MarkdownContent docstring note about the reasoning panel
-  * Details: .copilot-tracking/details/2026-07-02/bug-0094-reasoning-citation-superscripts-details.md (Lines 120-134)
-* [ ] Step 2.3: Extend MessageList tests to assert reasoning `<sup>` render + no literal marker
-  * Details: .copilot-tracking/details/2026-07-02/bug-0094-reasoning-citation-superscripts-details.md (Lines 136-160)
-
-### [ ] Implementation Phase 3: Validation and close-out
+### [x] Implementation Phase 2: Wire the superscript treatment into the reasoning panel
 
 <!-- parallelizable: false -->
 
-* [ ] Step 3.1: Run full frontend validation (typecheck + full vitest + shared gates)
-  * Details: .copilot-tracking/details/2026-07-02/bug-0094-reasoning-citation-superscripts-details.md (Lines 164-182)
-* [ ] Step 3.2: Mark BUG-0094 fixed in bugs.md and append the worklog entry
-  * Details: .copilot-tracking/details/2026-07-02/bug-0094-reasoning-citation-superscripts-details.md (Lines 184-200)
-* [ ] Step 3.3: Report blocking issues, if any, and defer the live re-verify follow-on
-  * Details: .copilot-tracking/details/2026-07-02/bug-0094-reasoning-citation-superscripts-details.md (Lines 202-214)
+* [x] Step 2.1: Compose the helper + set `enableSupersub` on the reasoning `MarkdownContent`
+  * Details: .copilot-tracking/details/2026-07-02/bug-0094-reasoning-citation-superscripts-details.md (Lines 111-150)
+* [x] Step 2.2: Update the MarkdownContent docstring note about the reasoning panel
+  * Details: .copilot-tracking/details/2026-07-02/bug-0094-reasoning-citation-superscripts-details.md (Lines 151-174)
+* [x] Step 2.3: Extend MessageList tests to assert reasoning `<sup>` render + no literal marker
+  * Details: .copilot-tracking/details/2026-07-02/bug-0094-reasoning-citation-superscripts-details.md (Lines 175-204)
+
+### [x] Implementation Phase 3: Validation and close-out
+
+<!-- parallelizable: false -->
+
+* [x] Step 3.1: Run full frontend validation (typecheck + full vitest + shared gates)
+  * Details: .copilot-tracking/details/2026-07-02/bug-0094-reasoning-citation-superscripts-details.md (Lines 209-225)
+* [x] Step 3.2: Mark BUG-0094 fixed in bugs.md and append the worklog entry
+  * Details: .copilot-tracking/details/2026-07-02/bug-0094-reasoning-citation-superscripts-details.md (Lines 226-249)
+* [x] Step 3.3: Report blocking issues, if any, and defer the live re-verify follow-on
+  * Details: .copilot-tracking/details/2026-07-02/bug-0094-reasoning-citation-superscripts-details.md (Lines 250-262)
 
 ## Planning Log
 

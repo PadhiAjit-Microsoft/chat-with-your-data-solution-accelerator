@@ -109,7 +109,7 @@ Matching **bare** `[N]` is required to satisfy the user's `docs[3] and [9]` exam
 numeric bracket in chain-of-thought (e.g. a literal `[2026]` year) could be turned into a
 superscript. Mitigation: cap digits to `\d{1,3}` (citations never realistically exceed a few
 dozen; 4-digit years like `[2026]` are excluded). This is a visual-only panel, so a false positive
-is cosmetic, never a broken link. Documented in the planning log as DD-01.
+is cosmetic, never a broken link. Documented in the planning log as DD-02.
 
 ## Recommended fix (two units)
 
