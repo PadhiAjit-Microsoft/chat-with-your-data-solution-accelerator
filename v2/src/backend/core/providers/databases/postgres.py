@@ -73,6 +73,13 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 
+# Bounded startup connect timeout (seconds) handed to `asyncpg.create_pool`.
+# Caps how long a first-connection attempt waits before raising, so an
+# unreachable server fails fast during lifespan startup instead of hanging
+# the pool build indefinitely.
+_POOL_CONNECT_TIMEOUT_SECONDS: float = 10.0
+
+
 _SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS conversations (
     id           UUID PRIMARY KEY,
@@ -325,6 +332,7 @@ class PostgresClient(BaseDatabaseClient):
                         password=self._password_provider,
                         min_size=1,
                         max_size=10,
+                        timeout=_POOL_CONNECT_TIMEOUT_SECONDS,
                     )
                 except (asyncpg.PostgresError, OSError):
                     # Lifespan policy: log loud + re-raise. Container restart

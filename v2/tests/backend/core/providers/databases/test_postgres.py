@@ -22,7 +22,11 @@ import asyncpg
 import pytest
 
 from backend.core.providers.databases import registry as databases_registry
-from backend.core.providers.databases.postgres import PostgresClient, _SCHEMA_SQL
+from backend.core.providers.databases.postgres import (
+    PostgresClient,
+    _POOL_CONNECT_TIMEOUT_SECONDS,
+    _SCHEMA_SQL,
+)
 from backend.core.settings import AppSettings, DatabaseSettings
 from backend.core.types import AdminAuditEntry, ChatMessage, RuntimeConfig
 
@@ -1031,6 +1035,41 @@ async def test_create_pool_widens_catch_to_oserror(
         with pytest.raises(OSError):
             await client.list_conversations("u1")
 
+    record = _find_error_record(caplog, "create_pool")
+    assert record.provider == "postgres"
+
+
+@pytest.mark.asyncio
+async def test_create_pool_uses_bounded_connect_timeout_and_fails_fast(
+    caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """`asyncpg.create_pool` is handed a bounded `timeout=` so an
+    unreachable server fails fast during lifespan startup instead of
+    hanging the pool build forever (BUG-0082). A timing-out connect
+    surfaces as `TimeoutError` (an `OSError` subclass in py3.11), so the
+    existing lifespan catch logs loud + re-raises promptly.
+    """
+    captured: dict[str, Any] = {}
+
+    async def _fake_create_pool(**kwargs: Any) -> Any:
+        captured.update(kwargs)
+        raise TimeoutError("connect timed out")
+
+    monkeypatch.setattr(
+        "backend.core.providers.databases.postgres.asyncpg.create_pool",
+        _fake_create_pool,
+    )
+    client = _make_client()  # no injected pool -> lazy slow path forced
+
+    with caplog.at_level("ERROR", logger=_LOGGER_NAME):
+        with pytest.raises(TimeoutError):
+            await client.ensure_pool()
+
+    # (a) A bounded connect timeout is passed to `create_pool`.
+    assert captured["timeout"] == _POOL_CONNECT_TIMEOUT_SECONDS
+    # (b) The timing-out connect is logged loud + re-raised (fail-fast),
+    #     not swallowed into an infinite hang.
     record = _find_error_record(caplog, "create_pool")
     assert record.provider == "postgres"
 

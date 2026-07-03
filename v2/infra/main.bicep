@@ -2230,32 +2230,41 @@ module eventGridSystemTopic 'br/public:avm/res/event-grid/system-topic:0.6.4' = 
     source: effectiveStorageResourceId
     topicType: 'Microsoft.Storage.StorageAccounts'
     managedIdentities: {
-      systemAssigned: true
+      // Deliver events as the shared UAMI (id-<suffix>) rather than the
+      // topic's system-assigned MI. The UAMI exists from t=0, so its
+      // Storage Queue Data Message Sender grant (eventGridQueueSenderRole)
+      // is authored with NO dependency on this topic and replicates during
+      // the whole provisioning tail -- closing the delivery-preflight
+      // replication race a system-assigned MI cannot (BUG-0061). Mirrors
+      // the existing-topic reuse path, which already delivers as the UAMI.
+      userAssignedResourceIds: [ userAssignedIdentity.outputs.resourceId ]
     }
     // The blob subscription is NOT nested here. It is created as a
     // standalone sibling (blobCreatedSubscription, below) that dependsOn
-    // eventGridQueueSenderRole, so the topic system MI holds Storage Queue
-    // Data Message Sender BEFORE Event Grid runs its delivery-authorization
-    // preflight (BUG-0061). A nested subscription preflights inside this
-    // module, before the role exists, and fails on a fresh provision.
+    // eventGridQueueSenderRole, so the UAMI holds Storage Queue Data Message
+    // Sender BEFORE Event Grid runs its delivery-authorization preflight
+    // (BUG-0061). A nested subscription preflights inside this module,
+    // before the role exists, and fails on a fresh provision.
   }
 }
 
-// Grant the Event Grid system topic's system-assigned MI permission to
-// enqueue messages on the storage account's queues. Skipped when
-// reusing v1's topic (the existingEventGridSubscription below uses our
-// UAMI, which already gets Queue Data Contributor via
-// existingStorageQueueContributor above).
+// Grant the shared UAMI (id-<suffix>) permission to enqueue messages on
+// the storage account's queues, so Event Grid can deliver blob events to
+// the blob-events queue as that identity. Authored with NO dependency on
+// the Event Grid topic -- the UAMI exists from the start of the
+// deployment, so ARM creates this grant early and it replicates during the
+// multi-minute provisioning tail, BEFORE Event Grid runs its synchronous
+// delivery-authorization preflight at subscription-create time (BUG-0061).
+// Account-scope is required: the EG MI validator walks the storage account
+// hierarchy and does not recognize queue-scope alone. Skipped when reusing
+// v1's topic (existingQueueMessageSenderRole below grants the same role to
+// the same UAMI under the same deterministic name).
 resource eventGridQueueSenderRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (!useExistingEventGridTopic) {
-  name: guid(storageAccountExisting.id, eventGridSystemTopicName, storageQueueDataMessageSenderRoleId)
+  name: guid(storageAccountExisting.id, userAssignedIdentity.name, storageQueueDataMessageSenderRoleId)
   scope: storageAccountExisting
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', storageQueueDataMessageSenderRoleId)
-    // managedIdentities.systemAssigned: true is set unconditionally on
-    // the topic above, so this output is always populated. The non-null
-    // assertion satisfies Bicep's nullable-output type without the
-    // empty-string fallback (which would fail the GUID min-length check).
-    principalId: eventGridSystemTopic!.outputs.systemAssignedMIPrincipalId!
+    principalId: userAssignedIdentity.outputs.principalId
     principalType: 'ServicePrincipal'
   }
 }
@@ -2263,8 +2272,8 @@ resource eventGridQueueSenderRole 'Microsoft.Authorization/roleAssignments@2022-
 // Standalone subscription on the new system topic. Lifted out of the AVM
 // module's eventSubscriptions array (BUG-0061) so it can dependsOn
 // eventGridQueueSenderRole and only run its delivery-authorization
-// preflight AFTER the topic system MI is granted Storage Queue Data
-// Message Sender. The `parent` is an `existing` reference to the
+// preflight AFTER the shared UAMI is granted Storage Queue Data Message
+// Sender. The `parent` is an `existing` reference to the
 // AVM-created topic — the same mechanism the reuse path uses
 // (existingEventGridTopic → existingEventGridSubscription), because an AVM
 // module is not a resource symbol usable as `parent`.
@@ -2281,11 +2290,13 @@ resource blobCreatedSubscription 'Microsoft.EventGrid/systemTopics/eventSubscrip
   name: 'blob-created-to-doc-processing'
   properties: {
     // deliveryWithResourceIdentity (NOT plain destination) is required
-    // because storage has allowSharedKeyAccess=false. The system topic's
-    // system-assigned MI authenticates to Storage Queue.
+    // because storage has allowSharedKeyAccess=false. The shared UAMI
+    // (id-<suffix>, assigned to the topic above) authenticates to Storage
+    // Queue -- mirrors the existing-topic reuse path.
     deliveryWithResourceIdentity: {
       identity: {
-        type: 'SystemAssigned'
+        type: 'UserAssigned'
+        userAssignedIdentity: userAssignedIdentity.outputs.resourceId
       }
       destination: {
         endpointType: 'StorageQueue'
@@ -2308,8 +2319,8 @@ resource blobCreatedSubscription 'Microsoft.EventGrid/systemTopics/eventSubscrip
   }
   // Role-before-subscription: the queue-sender grant must land before the
   // Event Grid delivery-authorization preflight runs (BUG-0061). Depend on
-  // the topic module too so the topic and its system MI exist (the `parent`
-  // existing-ref alone does not enforce module completion).
+  // the topic module too so the topic (with the UAMI assigned) exists -- the
+  // `parent` existing-ref alone does not enforce module completion.
   dependsOn: [
     eventGridSystemTopic
     eventGridQueueSenderRole
@@ -2320,10 +2331,10 @@ resource blobCreatedSubscription 'Microsoft.EventGrid/systemTopics/eventSubscrip
 // v1's topic that routes BlobCreated / BlobDeleted events from the
 // documents/ prefix to our blob-events queue (the blob_event trigger
 // translates a create to doc-processing and a delete to a de-index).
-// Delivery uses v2's UAMI (granted both
-// Queue Data Contributor on the storage account AND Queue Data Message
-// Sender on the specific queue \u2014 EG preflight validates the latter at
-// queue scope specifically).
+// Delivery uses v2's UAMI (granted both Queue Data Contributor AND
+// Queue Data Message Sender on the storage account -- EG's synchronous
+// preflight validates delivery authorization at account scope, not
+// queue scope; see existingQueueMessageSenderRole below).
 resource existingEventGridTopic 'Microsoft.EventGrid/systemTopics@2024-12-15-preview' existing = if (useExistingEventGridTopic) {
   name: existingEventGridTopicName
 }
