@@ -5,6 +5,6 @@ Phase: 2
 
 Each subdomain (`credentials/`, `llm/`, `embedders/`, `parsers/`,
 `search/`, `chat_history/`, `orchestrators/`) exposes a `Registry[T]`
-plus a `create(key, **kwargs)` helper. See §3.5 of
-`v2/docs/development_plan.md` for the binding recipe.
+instance in its sibling `registry.py`; callers resolve a concrete
+provider via `registry.get(key)(**kwargs)`.
 """

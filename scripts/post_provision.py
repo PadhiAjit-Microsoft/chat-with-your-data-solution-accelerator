@@ -67,7 +67,8 @@ POSTGRES_AAD_SCOPE = "https://ossrdbms-aad.database.windows.net/.default"
 POSTGRES_DB = "postgres"
 
 # Chat search index schema. Field names match those the
-# `azure_search` provider reads in src/providers/search/azure_search.py
+# `azure_search` provider reads in
+# src/backend/core/providers/search/azure_search.py
 # (id / content / title / url / content_vector). Re-naming here without
 # the corresponding provider change breaks Phase 3 RAG retrieval.
 DEFAULT_INDEX_NAME = "cwyd-index"

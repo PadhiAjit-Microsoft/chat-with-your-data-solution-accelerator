@@ -5,17 +5,16 @@
 # Build: docker build -f docker/Dockerfile.ci-validate -t cwyd-ci .
 # Run:   docker run --rm -v $PWD:/work -w /work cwyd-ci
 
-FROM mcr.microsoft.com/azure-cli:latest AS azcli
-
 FROM python:3.11-slim
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     UV_LINK_MODE=copy
 
-# System deps
+# System deps (libicu-dev satisfies the .NET globalization runtime that
+# `az bicep` needs on Debian slim).
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        curl ca-certificates git unzip gnupg lsb-release jq \
+        curl ca-certificates git unzip gnupg lsb-release jq libicu-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Node 20
@@ -23,10 +22,10 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# Azure CLI (copied from official image) + bicep
-COPY --from=azcli /usr/local /usr/local
-COPY --from=azcli /opt /opt
-RUN az bicep install || true
+# Azure CLI (native Debian install) + bicep — puts `az` on PATH so the
+# ci-entrypoint `az bicep build` / `az deployment what-if` steps resolve.
+RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash \
+    && az bicep install
 
 # azd
 RUN curl -fsSL https://aka.ms/install-azd.sh | bash
