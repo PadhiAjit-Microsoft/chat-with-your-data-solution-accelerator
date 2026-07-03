@@ -1,59 +1,57 @@
+---
+title: Chat history
+description: How Chat with Your Data stores and manages conversation history in Cosmos DB or PostgreSQL.
+ms.date: 2026-07-03
+ms.topic: concept
+---
 
-# Chat History
-#### **1. Introduction**
-- **What is Chat History in CWYD**:
-  - CWYD (Chat With Your Data) allows users to interact with their datasets conversationally. A key feature of this system is **Chat History**, which enables users to revisit past interactions for reference, auditing, or compliance purposes.
+[Back to *Chat with your data* README](../README.md)
 
-- **Purpose of this Tutorial**:
-  - This tutorial guides software engineers on how to **implement** and **manage** chat history in CWYD, including enabling/disabling it.
+![Supporting documentation](images/supportingDocuments.png)
 
+## Overview
 
+Chat with Your Data lets people hold a conversation with their own documents. Chat history keeps a record of those conversations so users can revisit past interactions for reference, auditing, or compliance. This guide explains where chat history is stored and how users work with it.
 
+## Where chat history is stored
 
-#### **2. Enabling/Disabling Chat History in CWYD**
+Chat history is written to the deployment's database. The database is chosen once, at deployment time, through the `databaseType` parameter, which also determines where the retrieval index lives.
 
-- **Overview**:
-  - By default, chat history is stored in **CosmosDB**, which is automatically deployed with CWYD infrastructure. This feature can be toggled based on the application's needs, such as privacy considerations or resource management.
+| Deployment mode | Chat history store |
+|-----------------|--------------------|
+| `cosmosdb` (default) | Azure Cosmos DB |
+| `postgresql` | PostgreSQL Flexible Server |
 
-- **Steps to Enable Chat History**:
-  1. **Access the Configuration**:
-     - Open the CWYD administration panel.
-     - Go to the "Configuration" section.
-  2. **Toggle Chat History**:
-     - Locate the option labeled **“Enable Chat History”**.
-     - Set checkbox to enable storing conversations.
-     - by default chat history is enabled.
-  3. **Save and Apply**:
-     - Click "Save" to apply the changes.
-     - Restart the chatbot service (if required) for the changes to take effect.
+Both modes store conversations and their messages through the same databases provider, so the chat experience is identical regardless of which one you deploy. The backend authenticates to the database with the workload's managed identity, so there are no connection-string secrets to manage. See [Architecture overview](architecture.md) for how the two modes fit together, and [PostgreSQL](postgreSQL.md) for the PostgreSQL schema.
 
-- **Steps to Disable Chat History**:
-  - Follow the same steps as enabling chat history, but remove checkbox. Disabling chat history will prevent storing future conversations, but it will not automatically delete past conversations.
+Chat history is enabled by default. Every conversation is saved as it happens, and reloading a conversation restores its messages and citations.
 
+## View chat history
 
+Users open their past conversations from the chat interface.
 
-#### **3. Accessing and Managing Chat History**
+1. Select the chat history control to open the conversation panel.
+2. The panel lists past conversations, newest first.
+3. Select a conversation to reload its messages and continue where it left off.
 
-- **Viewing Chat History**:
-  - If chat history is enabled, users can view their past conversations directly in the chatbot UI.
-  - To view chat history, click the **"Show Chat History"** button in the chat interface.
+*(Replace this with a screenshot of the conversation panel in your deployment.)*
 
-- **Example UI Interaction**:
-  - Clicking this button will open a side panel showing a list of past conversations. Users can click on each entry to review past messages and queries.
+## Rename a conversation
 
-  *(Insert screenshot examples from the uploaded images showing the "Show Chat History" option)*
+Give a conversation a meaningful title from the conversation panel so it is easier to find later.
 
+## Delete chat history
 
-#### **4. Deleting Chat History**
+Users manage their own conversations from the panel.
 
-- **How to Delete Individual Conversations**:
-  1. Open the **Chat History** panel in the CWYD interface.
-  2. Locate the conversation you want to delete.
-  3. Click on the trash icon next to the conversation.
-  4. Confirm the deletion by selecting “Delete” in the confirmation popup.
+1. Open the conversation panel.
+2. Find the conversation to remove.
+3. Select the delete control next to it and confirm.
 
-  *(Refer to the image with the delete confirmation screen for visual reference)*
+Deleting a conversation removes it and its messages from the database. Deleting history does not remove indexed documents; to manage documents, use the admin pages described in [Admin and configuration](admin.md).
 
-- **Deleting All Chat History**:
-  - Admin users can clear all chat history via the CWYD dashboard by selecting the **"Clear All Chat History"** option.
-  - It is important to notify users before mass deletion, especially in applications where data retention is critical.
+## Related documentation
+
+* [Architecture overview](architecture.md)
+* [PostgreSQL](postgreSQL.md)
+* [Managed identity and RBAC](managed_identity.md)

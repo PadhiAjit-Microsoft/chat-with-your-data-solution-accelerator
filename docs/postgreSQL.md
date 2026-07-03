@@ -1,88 +1,75 @@
-### PostgreSQL Integration in CWYD
-
-The CWYD has been enhanced with PostgreSQL as a core feature, enabling flexible, robust, and scalable database capabilities. This document outlines the features, configurations, and functionality introduced with PostgreSQL support.
-
+---
+title: PostgreSQL
+description: How Chat with Your Data uses PostgreSQL Flexible Server with pgvector for the retrieval index and chat history.
+ms.date: 2026-07-03
+ms.topic: concept
 ---
 
-## Features and Enhancements
+[Back to *Chat with your data* README](../README.md)
 
-### 1. **Default Database Configuration**
-PostgreSQL is now the default database for CWYD deployments. If no database preference is specified (`DATABASE_TYPE` is unset or empty), the platform defaults to PostgreSQL. This ensures a streamlined deployment process while utilizing PostgreSQL’s advanced capabilities.
+![Supporting documentation](images/supportingDocuments.png)
 
----
+## Overview
 
-### 2. **Unified Environment Configuration**
-To simplify environment setup, PostgreSQL configurations are now grouped under a unified JSON environment variable:
+Chat with Your Data can run on PostgreSQL. When you deploy with `databaseType=postgresql`, a single PostgreSQL Flexible Server holds both the retrieval index and the chat history, and no Azure AI Search resource is deployed. The other mode, `cosmosdb`, pairs Azure AI Search with Cosmos DB; see [Architecture overview](architecture.md) to compare them.
 
-Example:
-```json
-{
-  "type": "PostgreSQL",
-  "user": "DBUSER",
-  "database": "DBNAME",
-  "host": "DBHOST"
-}
+## Choosing PostgreSQL mode
+
+Set the database type before you deploy:
+
+```bash
+azd env set AZURE_ENV_DATABASE_TYPE postgresql
+azd up
 ```
-This structure ensures easier management of environment variables and dynamic database selection during runtime.
 
----
+The choice is locked after deployment. To switch, deploy a new environment.
 
-### 3. **PostgreSQL as the Relational and Vector Store Database**
-The PostgreSQL `vector_store` table is used for managing search-related indexing. It supports vector-based similarity searches.
+## Passwordless authentication
 
-**Table Schema**:
+The PostgreSQL server is configured for Microsoft Entra authentication only; password authentication is disabled. The application connects with the workload's user-assigned managed identity and a short-lived Entra token that is refreshed automatically, so there are no database passwords or connection-string secrets to store or rotate. The person who runs the deployment is set as the PostgreSQL Entra administrator by default; override this with the `AZURE_ENV_POSTGRES_ADMIN_PRINCIPAL_*` parameters. See [Managed identity and RBAC](managed_identity.md).
+
+## Vector index
+
+Retrieval uses the `pgvector` extension. The post-provision step enables the extension, and the application creates the `documents` table on first use. The table stores each chunk with its embedding:
+
 ```sql
-CREATE TABLE IF NOT EXISTS vector_store(
-    id TEXT,
-    title TEXT,
-    chunk INTEGER,
-    chunk_id TEXT,
-    offset INTEGER,
-    page_number INTEGER,
-    content TEXT,
-    source TEXT,
-    metadata TEXT,
-    content_vector VECTOR(1536)
+CREATE EXTENSION IF NOT EXISTS vector;
+
+CREATE TABLE IF NOT EXISTS documents (
+    id              TEXT PRIMARY KEY,
+    content         TEXT NOT NULL,
+    title           TEXT,
+    url             TEXT,
+    last_modified   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    content_vector  vector(<dims>) NOT NULL
 );
+
+CREATE INDEX IF NOT EXISTS documents_vec_hnsw
+    ON documents USING hnsw (content_vector vector_cosine_ops);
 ```
 
-**Similarity Query Example**:
-```sql
-SELECT content
-FROM vector_store
-ORDER BY content_vector <=> $1
-LIMIT $2;
-```
+The vector width (`<dims>`) comes from the embedding model. `text-embedding-3-large` produces 3072-dimensional vectors; see [Model configuration](model_configuration.md). Changing the embedding dimension on an existing deployment requires recreating the table, because the column width is fixed when the table is first created.
 
+Retrieval ranks chunks by cosine similarity over the embedding. When no query embedding is supplied, the provider falls back to PostgreSQL full-text search.
 
----
+## Chat history
 
-### 4. **Table Creation**
-The necessary PostgreSQL tables for chat history and vector storage, including table indexes, are created as part of the post-deployment steps. The `setup_postgres_tables.py` script is executed during post-deployment, and once complete, the database will be ready for use.
+The same server stores chat history in two tables, created on first use:
 
----
+* `conversations` — one row per conversation, keyed by a UUID and scoped to a user.
+* `messages` — one row per message, linked to its conversation with a foreign key and cascade delete, and carrying the citations for assistant turns.
 
-### 8. **Secure PostgreSQL Connections**
-All PostgreSQL connections use secure configurations:
-- SSL is enabled with parameters such as `sslmode=verify-full`.
-- Credentials are securely managed via environment variables and Key Vault integrations.
+For how users work with chat history, see [Chat history](chat_history.md).
 
----
+## Benefits
 
-### 9. **Backend Enhancements**
-- PostgreSQL database integration is included in the implementation of the Semantic Kernel orchestrator to ensure unified functionality.
-- Database operations, including indexing and similarity searches, align with the CWYD workflow.
+* **One data platform.** A single server holds both the vector index and the chat history, which keeps the deployment simple.
+* **Secretless access.** Entra-only authentication with a managed identity means there are no database credentials to manage.
+* **Scalable retrieval.** The `pgvector` HNSW index supports similarity search over large document sets.
 
----
+## Related documentation
 
-## Benefits of PostgreSQL Integration
-1. **Scalability**: PostgreSQL offers robust data storage and table indexing capabilities suitable for large-scale deployments
-2. **Flexibility**: Dynamic database switching allows users to choose between PostgreSQL and CosmosDB based on their requirements.
-3. **Ease of Use**: A single post-deployment script handles table creation and environment configuration, simplifying deployment and management.
-4. **Security**: SSL-enabled connections and secure credential handling ensure data protection.
-
-
----
-
-## Conclusion
-PostgreSQL integration transforms CWYD into a versatile, scalable platform capable of handling advanced database storage, table indexing, and query scenarios. By leveraging PostgreSQL’s cutting edge features, CWYD ensures a seamless user experience, robust performance, and future-ready architecture.
+* [Architecture overview](architecture.md)
+* [Chat history](chat_history.md)
+* [Managed identity and RBAC](managed_identity.md)
+* [Model configuration](model_configuration.md)
