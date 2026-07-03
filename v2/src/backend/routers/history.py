@@ -6,13 +6,13 @@ Phase: 4
 Thin REST surface over the registered ``BaseDatabaseClient``
 (``cosmosdb`` or ``postgresql`` -- selected at startup, see
 ``backend/app.py::_lifespan``). All routes are tenant-scoped: the
-``user_id`` is derived from the Easy Auth client-principal header
-(``x-ms-client-principal-id``) so each request is naturally isolated
-to its caller. When the header is missing we **only** fall back to a
-single ``"local-dev"`` partition if ``AZURE_ENVIRONMENT=local``
-(default for clean checkouts); production deployments raise ``401``
-instead, so a misconfigured Easy Auth never silently merges every
-caller into one tenant (see audit B1's sibling H1).
+``user_id`` is derived from the ``x-ms-client-principal-id`` header
+via ``UserIdDep`` so each request is naturally isolated to its
+caller. A missing, blank, or non-GUID header folds into the anonymous
+default id ``00000000-0000-0000-0000-000000000000`` (see
+``backend.dependencies.get_user_id``), which scopes a shared tenant
+partition rather than raising -- the id is a partition key, never a
+trust boundary.
 
 Routes
 ------

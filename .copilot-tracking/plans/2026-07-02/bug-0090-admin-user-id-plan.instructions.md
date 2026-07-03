@@ -58,60 +58,60 @@ Collapse the CWYD v2 backend to one minimal `get_user_id` (present + valid GUID 
 
 ## Implementation Checklist
 
-### [ ] Implementation Phase 1: Minimal `get_user_id`
+### [x] Implementation Phase 1: Minimal `get_user_id`
 
 <!-- parallelizable: false -->
 
-* [ ] Step 1.1: Rewrite `get_user_id` (Request-only; valid GUID → use, else default GUID, never raise); add `_is_valid_guid` + `_DEFAULT_USER_ID`; remove `_is_valid_principal_id` + `_PRINCIPAL_ID_PATTERN`
+* [x] Step 1.1: Rewrite `get_user_id` (Request-only; valid GUID → use, else default GUID, never raise); add `_is_valid_guid` + `_DEFAULT_USER_ID`; remove `_is_valid_principal_id` + `_PRINCIPAL_ID_PATTERN`
   * Details: .copilot-tracking/details/2026-07-02/bug-0090-admin-user-id-details.md (Lines 20-67)
-* [ ] Step 1.2: Rewrite EVERY `get_user_id` contract test (test_history.py, test_dependencies.py, test_conversation.py, test_app_exception_handlers.py); audit non-GUID principals
+* [x] Step 1.2: Rewrite EVERY `get_user_id` contract test (test_history.py, test_dependencies.py, test_conversation.py, test_app_exception_handlers.py); audit non-GUID principals
   * Details: .copilot-tracking/details/2026-07-02/bug-0090-admin-user-id-details.md (Lines 68-96)
 
-### [ ] Implementation Phase 2: Admin routes → `UserIdDep`
+### [x] Implementation Phase 2: Admin routes → `UserIdDep`
 
 <!-- parallelizable: false -->
 
-* [ ] Step 2.1: Swap `AdminUserIdDep` → `UserIdDep` on all `/api/admin/*` routes; update import + rewrite full docstring; keep line 138
+* [x] Step 2.1: Swap `AdminUserIdDep` → `UserIdDep` on all `/api/admin/*` routes; update import + rewrite full docstring; keep line 138
   * Details: .copilot-tracking/details/2026-07-02/bug-0090-admin-user-id-details.md (Lines 101-129)
-* [ ] Step 2.2: Update `test_admin.py` to override `get_user_id` instead of `REQUIRE_ADMIN_USER`; refresh its docstring
+* [x] Step 2.2: Update `test_admin.py` to override `get_user_id` instead of `REQUIRE_ADMIN_USER`; refresh its docstring
   * Details: .copilot-tracking/details/2026-07-02/bug-0090-admin-user-id-details.md (Lines 130-147)
 
-### [ ] Implementation Phase 3: Delete the dead role-gate cluster + `require_admin_auth`
+### [x] Implementation Phase 3: Delete the dead role-gate cluster + `require_admin_auth`
 
 <!-- parallelizable: false -->
 
-* [ ] Step 3.1: Grep-verify zero prod callers; delete the role-gate cluster from `dependencies.py` + `require_admin_auth` from `settings.py` + rewrite the `types.py` docstring + scrub stale narrative (settings/history/conversation); keep `environment`/`Environment`
+* [x] Step 3.1: Grep-verify zero prod callers; delete the role-gate cluster from `dependencies.py` + `require_admin_auth` from `settings.py` + rewrite the `types.py` docstring + scrub stale narrative (settings/history/conversation); keep `environment`/`Environment`
   * Details: .copilot-tracking/details/2026-07-02/bug-0090-admin-user-id-details.md (Lines 152-194)
-* [ ] Step 3.2: Delete the role-gate + `require_admin_auth` tests + remove the `_decode_easy_auth_principal` exemption in the shared gate
+* [x] Step 3.2: Delete the role-gate + `require_admin_auth` tests + remove the `_decode_easy_auth_principal` exemption in the shared gate
   * Details: .copilot-tracking/details/2026-07-02/bug-0090-admin-user-id-details.md (Lines 195-215)
 
-### [ ] Implementation Phase 4: Bicep — remove `AZURE_REQUIRE_ADMIN_AUTH`, refresh `AZURE_ENVIRONMENT` comment
+### [x] Implementation Phase 4: Bicep — remove `AZURE_REQUIRE_ADMIN_AUTH`, refresh `AZURE_ENVIRONMENT` comment
 
 <!-- parallelizable: true -->
 
-* [ ] Step 4.1: Delete the backend `AZURE_REQUIRE_ADMIN_AUTH` env entry + comment; rewrite the backend `AZURE_ENVIRONMENT` comment (keep the entry)
+* [x] Step 4.1: Delete the backend `AZURE_REQUIRE_ADMIN_AUTH` env entry + comment; rewrite the backend `AZURE_ENVIRONMENT` comment (keep the entry)
   * Details: .copilot-tracking/details/2026-07-02/bug-0090-admin-user-id-details.md (Lines 220-246)
-* [ ] Step 4.2: Update/add infra tests asserting `AZURE_REQUIRE_ADMIN_AUTH` absence + `AZURE_ENVIRONMENT` presence
+* [x] Step 4.2: Update/add infra tests asserting `AZURE_REQUIRE_ADMIN_AUTH` absence + `AZURE_ENVIRONMENT` presence
   * Details: .copilot-tracking/details/2026-07-02/bug-0090-admin-user-id-details.md (Lines 247-263)
 
-### [ ] Implementation Phase 5: Documentation
+### [x] Implementation Phase 5: Documentation
 
 <!-- parallelizable: false -->
 
-* [ ] Step 5.1: Correct the BUG-0090 registry row + append a worklog entry (flip status at Phase 6)
+* [x] Step 5.1: Correct the BUG-0090 registry row + append a worklog entry (flip status at Phase 6)
   * Details: .copilot-tracking/details/2026-07-02/bug-0090-admin-user-id-details.md (Lines 268-286)
-* [ ] Step 5.2: Author (or amend) an ADR for the auth-posture decision + revert path
+* [x] Step 5.2: Author (or amend) an ADR for the auth-posture decision + revert path
   * Details: .copilot-tracking/details/2026-07-02/bug-0090-admin-user-id-details.md (Lines 287-303)
-* [ ] Step 5.3: Verify the frontend is already compliant (no code change)
+* [x] Step 5.3: Verify the frontend is already compliant (no code change)
   * Details: .copilot-tracking/details/2026-07-02/bug-0090-admin-user-id-details.md (Lines 304-319)
 
 ### [ ] Implementation Phase 6: Validation
 
 <!-- parallelizable: false -->
 
-* [ ] Step 6.1: Run backend + infra tests, bicep build, env-ID gate + shared invariant gates
+* [x] Step 6.1: Run backend + infra tests, bicep build, env-ID gate + shared invariant gates
   * Details: .copilot-tracking/details/2026-07-02/bug-0090-admin-user-id-details.md (Lines 324-332)
-* [ ] Step 6.2: Fix minor validation issues (pyright/ruff/test) scoped to touched files
+* [x] Step 6.2: Fix minor validation issues (pyright/ruff/test) scoped to touched files
   * Details: .copilot-tracking/details/2026-07-02/bug-0090-admin-user-id-details.md (Lines 333-336)
 * [ ] Step 6.3: Live deploy + verify `/api/admin/status` returns 200 (gated on user go-ahead per Hard Rule #10); flip BUG-0090 → fixed
   * Details: .copilot-tracking/details/2026-07-02/bug-0090-admin-user-id-details.md (Lines 337-340)

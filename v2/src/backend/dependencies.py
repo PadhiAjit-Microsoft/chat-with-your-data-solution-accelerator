@@ -13,30 +13,21 @@ during app startup (`backend/app.py::_lifespan`) and stashed on
 fresh aiohttp transport on every request (DefaultAzureCredential is
 *not* free to construct) and lets shutdown deterministically close
 both objects.
-
-Auth gating (`requires_role` factory) lives here too because Easy
-Auth claim parsing is cross-cutting -- both the admin router (today)
-and any future role-scoped endpoints reach for the same primitive
-instead of each router rolling its own header-decoding helper.
 """
 
-import base64
-import binascii
-import json
 import logging
-import re
-from collections.abc import Callable
-from typing import Annotated, Any, cast
+import uuid
+from typing import Annotated
 
 from azure.core.credentials_async import AsyncTokenCredential
-from fastapi import Depends, HTTPException, Request, status
+from fastapi import Depends, Request
 
 from backend.core.providers.agents.base import BaseAgentsProvider
 from backend.core.providers.credentials.base import BaseCredentialProvider
 from backend.core.providers.databases.base import BaseDatabaseClient
 from backend.core.providers.llm.base import BaseLLMProvider
 from backend.core.providers.search.base import BaseSearch
-from backend.core.settings import AppSettings, Environment, get_settings
+from backend.core.settings import AppSettings, get_settings
 from backend.core.tools.content_safety import ContentSafetyGuard
 from backend.core.tools.post_prompt import PostPromptValidator
 from backend.core.types import RuntimeConfig
@@ -280,248 +271,43 @@ PostPromptValidatorDep = Annotated[
 ]
 
 
-# ---------------------------------------------------------------------------
-# #39 -- Easy Auth role-claim gate
-#
-# Replaces the Phase-5 placeholder "any authenticated caller is admin"
-# rule with a proper RBAC check anchored on App Service Easy Auth
-# headers. Two headers are involved:
-#
-# * ``x-ms-client-principal-id`` -- the caller's Entra object id (oid),
-#   identical to what the chat-history router already consumes.
-# * ``x-ms-client-principal``    -- a base64-encoded JSON blob carrying
-#   the full claims set (including roles).
-#
-# Easy Auth is allowed to emit role claims under either ``typ="roles"``
-# (short form) or the full schema URI; we accept both shapes so the
-# gate works against AAD app-role claims and Entra ID groups-as-roles.
-#
-# Production semantics: missing principal id, missing/empty claims
-# blob, or any decode failure -> 401 (Easy Auth must fail closed).
-# Authenticated caller without the requested role -> 403.
-#
-# Local-dev bypass: when ``settings.environment == 'local'`` AND no
-# Easy Auth *claims* header is present, the gate returns ``"local-dev"``
-# so the admin panel is exercisable end-to-end during development
-# without forging a base64 claims blob. The claims blob is the sole
-# authority for the role check, so the forgeable principal-id header
-# (which the SPA forwards by default on every call) does not defeat the
-# bypass. Devs that *want* to exercise the role gate locally can still
-# send the claims header explicitly.
-# ---------------------------------------------------------------------------
-
-
 _PRINCIPAL_ID_HEADER = "x-ms-client-principal-id"
-_PRINCIPAL_HEADER = "x-ms-client-principal"
-_LOCAL_DEV_USER = "local-dev"
-_ROLE_TYP_SHORT = "roles"
-_ROLE_TYP_FULL = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-
-# Defensive allowlist for principal ids: alphanumerics plus the few
-# punctuation characters that legitimately appear in Entra object ids,
-# the all-zeros default user id, and the `local-dev` fallback, bounded
-# to 128 characters. Anything else (control chars, whitespace,
-# injection punctuation, overlong strings) is rejected before the id
-# becomes a database partition key.
-_PRINCIPAL_ID_PATTERN = re.compile(r"[A-Za-z0-9._@-]{1,128}")
+_DEFAULT_USER_ID = "00000000-0000-0000-0000-000000000000"
 
 
-def _is_valid_principal_id(value: str) -> bool:
-    """Return whether `value` is a well-formed principal id.
+def _is_valid_guid(value: str) -> bool:
+    """Return whether `value` parses as a GUID."""
+    try:
+        uuid.UUID(value)
+        return True
+    except ValueError:
+        return False
 
-    Defensive well-formedness only. A browser-forwarded principal id
-    is forgeable and is therefore **not** a trust boundary -- this
-    check rejects obviously-garbage values before the id is used as a
-    database partition key; it does not assert that the caller is who
-    the id claims to be (authenticity stays anchored on the backend's
-    own Easy Auth claims, handled by `requires_role`).
 
-    The allowlist admits Entra object ids, the all-zeros default user
-    id, and the synthetic `local-dev` fallback while excluding
-    everything that has no business in an identity token.
+def get_user_id(request: Request) -> str:
+    """Return the caller's user id from the principal-id header.
+
+    Reads ``x-ms-client-principal-id`` and returns it verbatim when it
+    is a valid GUID. A missing, blank, or non-GUID header falls back to
+    the anonymous default id ``00000000-0000-0000-0000-000000000000``.
+    Never raises: the id scopes a tenant partition, it is not a trust
+    boundary.
     """
-    return _PRINCIPAL_ID_PATTERN.fullmatch(value) is not None
-
-
-def get_user_id(request: Request, settings: SettingsDep) -> str:
-    """Return the caller's user id from the Easy Auth principal-id header.
-
-    Reads ``x-ms-client-principal-id`` (the user's Entra object id).
-    When the header is absent the caller folds into the synthetic
-    ``"local-dev"`` partition whenever auth is OPEN -- either the
-    runtime is ``local`` (dev exercises the chat-history panel without
-    forging Easy Auth claims) OR ``require_admin_auth`` is ``False``
-    (the deployment opted out of the auth wall, the MACAE-faithful
-    default, so anonymous callers share one tenant partition). When
-    auth is REQUIRED (``production`` with ``require_admin_auth=True``)
-    a missing header fails closed with ``401`` -- a misconfigured Easy
-    Auth must never silently fold every anonymous caller into the
-    shared partition.
-
-    Sibling of ``requires_role`` below: same Easy Auth surface, same
-    open-posture toggle, no role gate. Routers that only need tenant
-    isolation (chat history) consume ``UserIdDep``; routers that need
-    role enforcement (admin) consume ``AdminUserIdDep``.
-    """
-    value = request.headers.get(_PRINCIPAL_ID_HEADER, "").strip()
-    if value:
-        if not _is_valid_principal_id(value):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Malformed client principal id.",
-            )
-        return value
-    allow_open_auth = (
-        settings.environment is Environment.LOCAL
-        or not settings.require_admin_auth
-    )
-    if allow_open_auth:
-        return _LOCAL_DEV_USER
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Missing client principal; Easy Auth header required.",
-    )
+    raw = request.headers.get(_PRINCIPAL_ID_HEADER, "").strip()
+    if raw and _is_valid_guid(raw):
+        return raw
+    return _DEFAULT_USER_ID
 
 
 UserIdDep = Annotated[str, Depends(get_user_id)]
 
 
-def _decode_easy_auth_principal(raw: str) -> dict[str, Any] | None:
-    """Decode the base64 JSON ``x-ms-client-principal`` header.
-
-    Returns the decoded claims dict on success or ``None`` on any
-    decode failure (bad base64, non-UTF-8 bytes, malformed JSON, or
-    a top-level non-object). The caller is responsible for turning
-    ``None`` into an HTTP 401 -- this helper deliberately does not
-    raise so the parsing logic stays unit-testable in isolation.
-    """
-    try:
-        decoded = base64.b64decode(raw, validate=True)
-        payload: object = json.loads(decoded.decode("utf-8"))
-    except (binascii.Error, ValueError, UnicodeDecodeError):
-        return None
-    if not isinstance(payload, dict):
-        return None
-    return cast("dict[str, Any]", payload)
-
-
-def _extract_roles(principal: dict[str, Any]) -> set[str]:
-    """Return the set of role values from an Easy Auth claims payload.
-
-    Tolerant to both ``typ="roles"`` (short form) and the full URI
-    role-claim ``typ`` so the gate works regardless of which Entra
-    issuer flavor is configured.
-    """
-    roles: set[str] = set()
-    claims_obj: object = principal.get("claims") or []
-    if not isinstance(claims_obj, list):
-        return roles
-    claims = cast("list[object]", claims_obj)
-    for claim in claims:
-        if not isinstance(claim, dict):
-            continue
-        claim_dict = cast("dict[str, object]", claim)
-        typ_obj = claim_dict.get("typ", "")
-        val_obj = claim_dict.get("val", "")
-        if not isinstance(typ_obj, str) or not isinstance(val_obj, str):
-            continue
-        if typ_obj in (_ROLE_TYP_SHORT, _ROLE_TYP_FULL) and val_obj:
-            roles.add(val_obj)
-    return roles
-
-
-def requires_role(role: str) -> Callable[[Request, AppSettings], str]:
-    """FastAPI dependency factory: gate a route on Easy Auth role claim.
-
-    Returns a dependency function that validates the caller carries
-    ``role`` in their Easy Auth claims and returns their user id
-    (Entra object id) on success.
-
-    Each call returns a NEW callable -- modules that need a stable
-    key for ``app.dependency_overrides`` MUST cache the returned dep
-    at module import time (see ``REQUIRE_ADMIN_USER`` below for the
-    admin-role singleton).
-    """
-
-    def _checker(request: Request, settings: SettingsDep) -> str:
-        principal_id = request.headers.get(_PRINCIPAL_ID_HEADER, "").strip()
-        claims_raw = request.headers.get(_PRINCIPAL_HEADER, "").strip()
-
-        # The admin gate relaxes to its open posture when EITHER the
-        # runtime is `local` (dev exercises the admin panel without
-        # forging Easy Auth claims) OR `require_admin_auth` is False (the
-        # deployment opted out of the admin wall -- the MACAE-faithful
-        # default). When neither holds, a missing or insufficient
-        # principal fails closed with 401. A present claims blob is
-        # always role-checked regardless of this toggle, so the flag
-        # relaxes the auth wall without ever bypassing role enforcement.
-        allow_open_admin = (
-            settings.environment is Environment.LOCAL
-            or not settings.require_admin_auth
-        )
-
-        # The open-admin bypass keys on the ABSENT CLAIMS blob -- the
-        # sole authority for the role check -- not on both headers being
-        # absent. The SPA forwards a default principal-id on every call
-        # (its shared `userIdHeaders()` seam), so the forgeable id header
-        # may ride along with no claims and must not defeat the bypass.
-        if not claims_raw:
-            if allow_open_admin:
-                return _LOCAL_DEV_USER
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail=(
-                    "Missing client principal claims; "
-                    "Easy Auth claims header required."
-                ),
-            )
-
-        principal = _decode_easy_auth_principal(claims_raw)
-        if principal is None:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Malformed client principal payload.",
-            )
-
-        roles = _extract_roles(principal)
-        if role not in roles:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Role '{role}' required to access this resource.",
-            )
-
-        # Prefer the dedicated principal-id header (parity with
-        # `history.get_user_id`); fall back to the open-admin user only
-        # when the header is absent and the gate is in its open posture.
-        if principal_id:
-            return principal_id
-        if allow_open_admin:
-            return _LOCAL_DEV_USER
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Missing client principal id header.",
-        )
-
-    return _checker
-
-
-# Cached admin auth gate. ``requires_role("admin")`` returns a fresh
-# callable on every call, so a stable key for
-# ``app.dependency_overrides`` requires caching the dep once at module
-# import. ``REQUIRE_ADMIN_USER`` is that singleton; ``AdminUserIdDep``
-# is the typed alias routers attach to admin-gated route signatures.
-REQUIRE_ADMIN_USER = requires_role("admin")
-AdminUserIdDep = Annotated[str, Depends(REQUIRE_ADMIN_USER)]
-
-
 __all__ = [
-    "AdminUserIdDep",
     "AgentsProviderDep",
     "CredentialDep",
     "CredentialProviderDep",
     "DatabaseClientDep",
     "LLMProviderDep",
-    "REQUIRE_ADMIN_USER",
     "RuntimeOverridesDep",
     "SearchProviderDep",
     "SettingsDep",
@@ -535,5 +321,4 @@ __all__ = [
     "get_runtime_overrides",
     "get_search_provider",
     "get_user_id",
-    "requires_role",
 ]

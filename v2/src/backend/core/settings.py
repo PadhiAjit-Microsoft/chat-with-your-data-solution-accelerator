@@ -42,10 +42,9 @@ class Environment(StrEnum):
     """Runtime mode discriminator for `AppSettings.environment`.
 
     Members:
-        LOCAL: developer machine; Easy Auth header-absent fallback to
-            ``local-dev`` user id is permitted (admin + history routes).
-        PRODUCTION: cloud deployment; Easy Auth headers are required
-            and missing-header cases must fail closed with 401.
+        LOCAL: developer machine; the default for a clean checkout.
+        PRODUCTION: cloud deployment, set via `AZURE_ENVIRONMENT` by
+            `v2/infra/main.bicep`.
     """
 
     LOCAL = "local"
@@ -521,26 +520,12 @@ class AppSettings(BaseSettings):
     # Runtime mode. `local` is the default so a clean checkout / dev run
     # boots without surprises. Production deployments set
     # `AZURE_ENVIRONMENT=production` via `v2/infra/main.bicep` on the
-    # backend Container App (and Function App) env-vars, which flips the
-    # final configuration to production -- enabling real environment
-    # reporting and disabling the local-dev identity bypass used by chat
-    # (`history.get_user_id`). The admin auth wall is governed separately
-    # by `require_admin_auth` below, not by this field.
-    #
-    # Stable Core code that branches on environment must use this
-    # field -- never sniff `os.getenv` ad-hoc -- so the value is
-    # type-checked at boot and centrally testable.
+    # backend Container App (and Function App) env-vars. The value is a
+    # status-report field surfaced by `GET /api/admin/status`; Stable
+    # Core code that reads the runtime mode must use this field -- never
+    # sniff `os.getenv` ad-hoc -- so the value is type-checked at boot
+    # and centrally testable.
     environment: Environment = Environment.LOCAL
-
-    # Admin auth wall toggle. `False` (default) leaves admin routes open
-    # -- callers reach them without Easy Auth claims -- matching the
-    # MACAE-faithful open posture. Set `AZURE_REQUIRE_ADMIN_AUTH=true` to
-    # require Easy Auth admin-role claims on admin routes; the
-    # `requires_role` gate then fails closed in any non-`local`
-    # environment. A present claims blob is always role-checked
-    # regardless of this toggle -- the flag relaxes the auth wall, never
-    # role enforcement.
-    require_admin_auth: bool = False
 
     identity: IdentitySettings = Field(default_factory=IdentitySettings)
     foundry: FoundrySettings = Field(default_factory=FoundrySettings)

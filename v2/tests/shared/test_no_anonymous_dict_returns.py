@@ -34,13 +34,11 @@ spec):
   contractually requires ``Mapping[str, object]``. Every caller spreads via
   ``**`` to add ad-hoc per-call fields, so wrapping in a model just to
   immediately ``model_dump`` would add noise without value.
-* ``backend.dependencies._decode_easy_auth_principal`` — Hard Rule #15(b):
-  decodes the externally-defined Easy Auth ``x-ms-client-principal`` claims
-  blob. The schema is owned by Entra; the claims list is dynamic.
 * ``backend.core.providers.databases.cosmosdb.CosmosDBClient._read_item`` —
   Hard Rule #15(a) + #11(a): returns a raw Azure Cosmos document. The Cosmos
   SDK contract is ``dict[str, Any]``; narrowing here would lie about the
-  shape the SDK actually delivers.* ``backend.core.providers.llm.foundry_iq.FoundryIQ._to_openai_messages`` --
+  shape the SDK actually delivers.
+* ``backend.core.providers.llm.foundry_iq.FoundryIQ._to_openai_messages`` --
   Hard Rule #15(a) + (b): converts already-typed ``ChatMessage`` Pydantic
   models into the ``openai.ChatCompletionMessageParam`` wire shape (a
   TypedDict union owned by the OpenAI SDK). This IS the model -> wire
@@ -70,7 +68,6 @@ _SRC_ROOT = _V2_ROOT / "src"
 _ALLOWED: frozenset[tuple[str, str]] = frozenset(
     {
         ("backend.exception_handlers", "_request_extras"),
-        ("backend.dependencies", "_decode_easy_auth_principal"),
         (
             "backend.core.providers.databases.cosmosdb",
             "CosmosDBClient._read_item",

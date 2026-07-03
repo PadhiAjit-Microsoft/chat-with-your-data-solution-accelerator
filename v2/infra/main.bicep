@@ -1792,25 +1792,9 @@ module backendContainerApp 'br/public:avm/res/app/container-app:0.22.1' = {
             { name: 'AZURE_CLIENT_ID', value: userAssignedIdentity.outputs.clientId }
             { name: 'AZURE_UAMI_CLIENT_ID', value: userAssignedIdentity.outputs.clientId }
             { name: 'AZURE_TENANT_ID', value: subscription().tenantId }
-            // Runtime mode (AppSettings.environment). Pinned to 'production'
-            // on every cloud deploy so the runtime reports the real
-            // environment (GET /api/admin/status) and DISABLES the local-dev
-            // identity bypass used by chat: backend.dependencies.get_user_id
-            // folds an anonymous caller into the synthetic 'local-dev'
-            // partition ONLY when environment == 'local', so a deployed
-            // runtime must never fall back to the 'local' default.
-            //
-            // This field no longer governs the admin auth WALL -- that is
-            // controlled separately by AZURE_REQUIRE_ADMIN_AUTH below.
+            // Runtime mode: sets AppSettings.environment, surfaced by
+            // GET /api/admin/status. It no longer governs any auth behavior.
             { name: 'AZURE_ENVIRONMENT', value: 'production' }
-            // Admin auth wall (AppSettings.require_admin_auth). 'false' (the
-            // MACAE-faithful default) leaves /api/admin/* reachable without
-            // Easy Auth claims. Set to 'true' to require Easy Auth admin-role
-            // claims on admin routes; backend.dependencies.requires_role then
-            // fails closed (401 without claims, 403 without the role). A
-            // present claims blob is always role-checked regardless of this
-            // value -- the flag relaxes the auth wall, never role enforcement.
-            { name: 'AZURE_REQUIRE_ADMIN_AUTH', value: 'false' }
             // Foundry endpoints (consumed by both orchestrators)
             { name: 'AZURE_AI_PROJECT_ENDPOINT', value: aiProject.outputs.projectEndpoint }
             { name: 'AZURE_OPENAI_ENDPOINT', value: effectiveOpenAiEndpoint }

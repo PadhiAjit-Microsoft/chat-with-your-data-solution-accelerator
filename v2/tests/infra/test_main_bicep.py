@@ -173,6 +173,33 @@ def test_backend_aca_env_block_binds_required_phase4_settings(
     )
 
 
+def test_backend_aca_env_drops_require_admin_auth_keeps_environment(
+    backend_aca_slice: str,
+) -> None:
+    """Backend ACA env drops `AZURE_REQUIRE_ADMIN_AUTH`, keeps `AZURE_ENVIRONMENT`.
+
+    BUG-0090 collapsed admin auth to a single `get_user_id` (header
+    present + valid GUID -> use, else default GUID; never raises) and
+    deleted the Easy-Auth role gate + the `require_admin_auth` setting.
+    The `AZURE_REQUIRE_ADMIN_AUTH` binding is now dead config; it must
+    stay absent so a copy-paste revert can't re-introduce a wall the
+    runtime no longer reads. `AZURE_ENVIRONMENT` remains bound -- it
+    still sets `AppSettings.environment`, surfaced by
+    `GET /api/admin/status`, and governs no auth behavior.
+    """
+    assert "AZURE_REQUIRE_ADMIN_AUTH" not in backend_aca_slice, (
+        "AZURE_REQUIRE_ADMIN_AUTH must remain absent from the backend "
+        "Container App env block (BUG-0090). The require_admin_auth setting "
+        "and the Easy-Auth role gate were deleted; the runtime no longer "
+        "reads this flag -- do not re-add it, not even in a comment."
+    )
+    assert "'AZURE_ENVIRONMENT'" in backend_aca_slice, (
+        "AZURE_ENVIRONMENT missing from the backend Container App env block. "
+        "It still feeds AppSettings.environment (surfaced by "
+        "GET /api/admin/status) and must stay bound."
+    )
+
+
 # Function app runs the indexing pipeline (Phase 6). It writes vectors to
 # AzureSearch (cosmosdb mode) OR pgvector (postgresql mode), so it needs
 # the same routing flags + the active-mode endpoint(s). `AZURE_COSMOS_ENDPOINT`

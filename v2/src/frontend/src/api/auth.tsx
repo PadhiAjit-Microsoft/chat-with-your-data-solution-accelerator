@@ -26,9 +26,11 @@ const OBJECT_ID_CLAIM =
 
 /**
  * Identity header every API client forwards for per-user partitioning.
- * A browser-set value is forgeable and is **not** a trust boundary — it
- * scopes chat history only; admin RBAC stays anchored on the backend's
- * own server-injected Easy Auth claims.
+ * A browser-set value is forgeable and is **not** a trust boundary — the
+ * backend validates only that it is a GUID and otherwise treats it as the
+ * shared default partition. Real authentication, when enabled, is enforced
+ * at the ingress/proxy (Easy Auth injecting/overwriting this header), never
+ * in backend application code.
  */
 const PRINCIPAL_ID_HEADER = "x-ms-client-principal-id";
 

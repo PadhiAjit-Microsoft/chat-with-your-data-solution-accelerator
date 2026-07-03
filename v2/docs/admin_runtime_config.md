@@ -17,19 +17,19 @@ The frontend integration of this surface lives in [`v2/src/frontend/src/api/admi
 4. **Live-reload, no restart.** A successful PATCH writes the new `RuntimeConfig` row through the database client and immediately reassigns `request.app.state.runtime_overrides`. The very next request sees the new value. No container recycle, no SIGHUP, no eventual-consistency window beyond a single round-trip to the database.
 5. **Audit-on-success, fire-and-forget.** Every successful PATCH writes one row to the `admin_audit` log (Cosmos `type="audit"` item, or Postgres `admin_audit` table) capturing actor, action, before-state, after-state, and timestamp. Audit-write failure logs an error but does **not** roll back the PATCH — the override is authoritative; the audit trail is best-effort.
 6. **Both database modes.** All persistence flows through the abstract database provider Protocol. `databaseType=cosmosdb` and `databaseType=postgresql` both implement the full `(get_runtime_config, upsert_runtime_config, write_admin_audit)` triplet. See [infrastructure.md](infrastructure.md) §2.2.1 for the one-shot nature of that choice.
-7. **Admin-role-gated.** Every route under `/api/admin/` declares `requires_role("admin")` ([v2/src/backend/dependencies.py](../src/backend/dependencies.py#L342)) — the dependency parses the Easy Auth `X-MS-CLIENT-PRINCIPAL` header, extracts role claims (both `typ="roles"` and full schema-URI forms accepted), returns the caller's Entra object ID on success, raises 403 on role-missing, 401 on header-missing/malformed in production, and falls back to `"local-dev"` in local mode.
+7. **Header user-id resolved.** Every route under `/api/admin/` declares `UserIdDep` ([v2/src/backend/dependencies.py](../src/backend/dependencies.py)) — the dependency reads the `x-ms-client-principal-id` header, validates it is a GUID, returns it as the caller's user id, and otherwise falls back to the anonymous default GUID. There is no application-layer role gate; identity enforcement, when enabled, is an ingress/proxy concern (see [ADR 0031](adr/0031-backend-admin-auth-header-only-ingress-enforced.md)).
 
 ---
 
 ## 2. Routes
 
-All routes are mounted under `/api/admin/`. All require the `admin` role claim. All return JSON.
+All routes are mounted under `/api/admin/`. All resolve the caller's user id from the `x-ms-client-principal-id` header. All return JSON.
 
 ### 2.1 `GET /api/admin/status` → `AdminStatus`
 
 Sanitized snapshot of running backend configuration. Used by the FE to display "what backend am I talking to and what is it configured for" without exposing anything secret. Already consumed by [`v2/src/frontend/src/api/admin.ts`](../src/frontend/src/api/admin.ts) (`getAdminStatus()`).
 
-Status codes: `200` on success · `401` missing/malformed Easy Auth (production only) · `403` authenticated but missing `admin` role.
+Status codes: `200` on success.
 
 **Response fields** ([v2/src/backend/models/admin.py](../src/backend/models/admin.py) — 12 fields, `extra="forbid"`):
 
@@ -53,7 +53,7 @@ Status codes: `200` on success · `401` missing/malformed Easy Auth (production 
 
 Read-only view of the **mutable runtime-toggle subset** of `AppSettings`. This is the field set that `PATCH /api/admin/config` is allowed to override. The two models are deliberately one-to-one so the UI can render the same form for read and write.
 
-Status codes: `200` · `401` · `403`.
+Status codes: `200`.
 
 **Response fields** ([v2/src/backend/models/admin.py](../src/backend/models/admin.py) — 7 fields, `extra="forbid"`):
 
@@ -73,7 +73,7 @@ Sensitive fields (UAMI / tenant / connection strings / API version) are excluded
 
 Apply a JSON Merge Patch (RFC 7396) over the same 7-field surface as `GET /api/admin/config`. The patch payload is sparse: only the keys you want to change need to appear.
 
-Status codes: `200` on success · `401` · `403` · `422` unknown field or wrong type · `500`/`503` storage failure.
+Status codes: `200` on success · `422` unknown field or wrong type · `500`/`503` storage failure.
 
 **Body semantics:**
 
@@ -88,7 +88,7 @@ The full set of writable keys is the `WRITABLE_FIELDS` allow-list in the route �
 **Server-assigned audit fields** on every successful PATCH:
 
 - `updated_at` — ISO-8601 UTC timestamp of the upsert
-- `updated_by` — Entra object ID of the calling admin (extracted from Easy Auth claims by `requires_role("admin")`)
+- `updated_by` — the caller's user id (from the `x-ms-client-principal-id` header via `get_user_id`)
 
 **Live-reload:** after the storage upsert succeeds, the route reassigns `request.app.state.runtime_overrides = merged`. This is a single Python attribute write — atomic from the perspective of the next request, no IPC, no message bus.
 
@@ -98,7 +98,7 @@ The full set of writable keys is the `WRITABLE_FIELDS` allow-list in the route �
 
 The merged view that powers the admin UI's "current effective config" panel. Combines env defaults with persisted overrides and tells the caller, per field, where each value came from.
 
-Status codes: `200` · `401` · `403`.
+Status codes: `200`.
 
 **Response shape** ([v2/src/backend/models/admin.py](../src/backend/models/admin.py)):
 
@@ -121,7 +121,7 @@ Status codes: `200` · `401` · `403`.
 
 Delete every indexed chunk whose `source` field (filename for uploaded files, URL for URL-ingested pages) matches the path segment.
 
-Status codes: `200` with `{"deleted": N}` when N≥1 chunks removed · `404` no matching chunks · `401` · `403` · `503` search backend not configured (backend-only dev profile).
+Status codes: `200` with `{"deleted": N}` when N≥1 chunks removed · `404` no matching chunks · `503` search backend not configured (backend-only dev profile).
 
 **Dispatch** through `SearchProviderDep` → `await search.delete_by_source(source)`:
 
@@ -233,7 +233,7 @@ Source: [v2/tests/backend/test_admin.py](../tests/backend/test_admin.py) — 49 
 
 | Area | Count | What it locks |
 |---|---|---|
-| `GET /api/admin/status` | 11 | Field set, value mapping, host extraction, search/AppInsights truthiness, CORS pass-through, leak guard, 401/403/200 auth |
+| `GET /api/admin/status` | 11 | Field set, value mapping, host extraction, search/AppInsights truthiness, CORS pass-through, leak guard, 200 status |
 | `GET /api/admin/config` | 11 | Field set, value mapping for each writable field, leak guard, production auth |
 | `PATCH /api/admin/config` | 17 | Single-field persist, unknown-field 422, wrong-type 422, null clears override, sparse merge preserves siblings, audit timestamp + caller capture, response = persisted state, app-state live-reload, audit-on-success + best-effort failure handling |
 | `GET /api/admin/config/effective` | 6 | Env-only cold start, partial overlay, full override, content-safety override, explicit-None treated as env |

@@ -106,7 +106,7 @@ A full audit walk lives in [qa_review_plan.md](qa_review_plan.md) Phase C.
 | `GET /api/admin/config/effective` (per-field provenance) | ✅ shipped (#35e) |
 | Live-reload of `app.state.runtime_overrides` after PATCH | ✅ shipped (#35e) |
 | Admin audit on PATCH (Cosmos + Postgres) | ✅ shipped (#35f) |
-| `requires_role("admin")` Easy Auth RBAC gate | ✅ shipped (#39) |
+| Admin routes gated by role | — removed (BUG-0090); admin routes now use the header-GUID `get_user_id`, no application-layer role gate (see [ADR 0031](adr/0031-backend-admin-auth-header-only-ingress-enforced.md)) |
 | `POST /api/admin/documents/url` (URL ingest) | ✅ shipped (`U-P7-53-BE` BE-1) |
 | `POST /api/admin/documents` (multipart upload, 50 MiB cap) | ✅ shipped (`U-P7-53-BE` BE-2) |
 | `POST /api/admin/documents/reprocess` (reprocess all in container) | ✅ shipped (`U-P7-53-BE` BE-3) |
@@ -128,7 +128,7 @@ A full audit walk lives in [qa_review_plan.md](qa_review_plan.md) Phase C.
 | `POST /api/history/conversations/{id}/messages` (append) | ✅ shipped |
 | `POST /api/history/messages/{message_id}/feedback` | ✅ shipped (#32b) |
 | Cosmos + Postgres provider impls | ✅ both registered under `databases` registry |
-| Fail-closed `get_user_id` (401 in prod, `local-dev` only when `Environment.LOCAL`) | ✅ shipped + `requires_role` parity |
+| Header-GUID `get_user_id` (validates `x-ms-client-principal-id` is a GUID, else the anonymous default GUID; never 401) | ✅ shipped (BUG-0090) |
 
 ### Phases
 

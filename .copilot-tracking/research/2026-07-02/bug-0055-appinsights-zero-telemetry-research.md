@@ -3,7 +3,7 @@
 
 Investigate why `appi-<SUFFIX>` (Application Insights) has received **zero** telemetry
 ever from both the backend Container App and the Functions Container App on the live
-`cwyd-cdb-v2` deployment, and determine the smallest correct fix.
+`<AZD_ENV_NAME>` deployment, and determine the smallest correct fix.
 
 ## Task Implementation Requests
 
