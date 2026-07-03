@@ -1,16 +1,12 @@
 """Pillar: Stable Core / Phase: 3.5 (debt #Q6a) + Phase 5 (#39, #35e) — DI provider tests."""
 
-import base64
-import json
 from types import SimpleNamespace
 from typing import Any
 from unittest.mock import MagicMock
 
 import pytest
-from fastapi import HTTPException
 from starlette.requests import Request
 
-from backend.core.settings import Environment
 from backend.core.types import RuntimeConfig
 from backend.dependencies import (
     get_agents_provider,
@@ -19,7 +15,6 @@ from backend.dependencies import (
     get_runtime_overrides,
     get_search_provider,
     get_user_id,
-    requires_role,
 )
 
 
@@ -122,62 +117,7 @@ def test_get_runtime_overrides_returns_none_when_attr_missing() -> None:
     assert get_runtime_overrides(request) is None  # type: ignore[arg-type]
 
 
-# ---------------------------------------------------------------------------
-# #39: requires_role(role) -- Easy Auth role-claim gate
-#
-# Replaces the old "any authenticated caller" admin gate. The factory
-# returns a FastAPI dependency that:
-#
-# * Reads the `X-MS-CLIENT-PRINCIPAL` header (base64 JSON with full
-#   Easy Auth claims), decodes it, and asserts the requested role is
-#   present.
-# * Returns the caller's user id (Entra object id) on success.
-# * Raises 401 when Easy Auth headers are missing/malformed in
-#   production -- a misconfigured Easy Auth must fail closed.
-# * Raises 403 when the caller is authenticated but lacks the role.
-# * In `local` environment, falls back to "local-dev" when no headers
-#   are present so the admin panel is exercisable end-to-end during
-#   development without forging the base64 claims blob.
-#
-# Easy Auth role-claim shape: roles can appear with `typ` either equal
-# to the literal string `"roles"` (the short form) OR the full URI
-# `http://schemas.microsoft.com/ws/2008/06/identity/claims/role`. The
-# helper accepts both.
-# ---------------------------------------------------------------------------
-
-
 _PRINCIPAL_ID = "x-ms-client-principal-id"
-_PRINCIPAL = "x-ms-client-principal"
-_ROLE_TYP_FULL = "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"
-
-
-def _claims(*role_pairs: tuple[str, str]) -> str:
-    """Build a base64-encoded Easy Auth claims payload.
-
-    Each ``role_pairs`` entry is ``(typ, val)`` -- pass either
-    ``("roles", "admin")`` (short form) or
-    ``(_ROLE_TYP_FULL, "admin")`` (full URI form).
-    """
-    payload = {
-        "auth_typ": "aad",
-        "claims": [{"typ": typ, "val": val} for typ, val in role_pairs],
-    }
-    raw = json.dumps(payload).encode("utf-8")
-    return base64.b64encode(raw).decode("ascii")
-
-
-def _settings(environment: Environment | str = Environment.PRODUCTION) -> Any:
-    # Accept either an `Environment` member (preferred) or a raw
-    # string (legacy callsites in this module) so the helper stays
-    # stable as new tests are added. Strings are coerced to the
-    # enum so `is Environment.LOCAL` dispatch in `requires_role`
-    # works regardless of how the caller spelled the value.
-    coerced = (
-        environment
-        if isinstance(environment, Environment)
-        else Environment(environment)
-    )
-    return SimpleNamespace(environment=coerced)
 
 
 def _request(headers: dict[str, str] | None = None) -> Request:
@@ -187,134 +127,6 @@ def _request(headers: dict[str, str] | None = None) -> Request:
     ]
     scope: dict[str, Any] = {"type": "http", "headers": raw_headers}
     return Request(scope)
-
-
-def test_requires_role_returns_user_id_when_role_present() -> None:
-    dep = requires_role("admin")
-    request = _request(
-        {
-            _PRINCIPAL_ID: "user-oid-123",
-            _PRINCIPAL: _claims(("roles", "admin")),
-        }
-    )
-    assert dep(request, _settings("production")) == "user-oid-123"
-
-
-def test_requires_role_accepts_full_uri_role_claim() -> None:
-    """Easy Auth may emit role claims with the schema-URI ``typ``."""
-    dep = requires_role("admin")
-    request = _request(
-        {
-            _PRINCIPAL_ID: "user-oid-456",
-            _PRINCIPAL: _claims((_ROLE_TYP_FULL, "admin")),
-        }
-    )
-    assert dep(request, _settings("production")) == "user-oid-456"
-
-
-def test_requires_role_raises_403_when_role_absent() -> None:
-    """Authenticated caller without the role -> 403 (not 401)."""
-    dep = requires_role("admin")
-    request = _request(
-        {
-            _PRINCIPAL_ID: "user-oid-789",
-            _PRINCIPAL: _claims(("roles", "reader")),
-        }
-    )
-    with pytest.raises(HTTPException) as exc:
-        dep(request, _settings("production"))
-    assert exc.value.status_code == 403
-
-
-def test_requires_role_raises_401_when_principal_id_missing_in_production() -> None:
-    """Production must fail closed when Easy Auth is broken/disabled."""
-    dep = requires_role("admin")
-    request = _request({})
-    with pytest.raises(HTTPException) as exc:
-        dep(request, _settings("production"))
-    assert exc.value.status_code == 401
-
-
-def test_requires_role_raises_401_when_claims_header_missing_in_production() -> None:
-    """Principal id alone is not enough to evaluate role membership."""
-    dep = requires_role("admin")
-    request = _request({_PRINCIPAL_ID: "user-oid-abc"})
-    with pytest.raises(HTTPException) as exc:
-        dep(request, _settings("production"))
-    assert exc.value.status_code == 401
-
-
-def test_requires_role_raises_401_on_malformed_base64() -> None:
-    dep = requires_role("admin")
-    request = _request(
-        {_PRINCIPAL_ID: "user-oid-def", _PRINCIPAL: "not!valid!base64==="}
-    )
-    with pytest.raises(HTTPException) as exc:
-        dep(request, _settings("production"))
-    assert exc.value.status_code == 401
-
-
-def test_requires_role_raises_401_on_malformed_json() -> None:
-    """Valid base64 wrapping non-JSON bytes must fail closed."""
-    dep = requires_role("admin")
-    bad = base64.b64encode(b"not-json-at-all").decode("ascii")
-    request = _request({_PRINCIPAL_ID: "user-oid-ghi", _PRINCIPAL: bad})
-    with pytest.raises(HTTPException) as exc:
-        dep(request, _settings("production"))
-    assert exc.value.status_code == 401
-
-
-def test_requires_role_falls_back_to_local_dev_when_no_headers_in_local() -> None:
-    """Local-dev bypass: no headers + ``environment == 'local'`` ->
-    return ``'local-dev'`` so the admin panel is exercisable end-to-end
-    during development without forging Easy Auth claims."""
-    dep = requires_role("admin")
-    request = _request({})
-    assert dep(request, _settings("local")) == "local-dev"
-
-
-def test_requires_role_falls_back_to_local_dev_when_id_present_no_claims_in_local() -> (
-    None
-):
-    """Local-dev bypass keys on absent CLAIMS, not absent headers.
-
-    The SPA forwards a default ``x-ms-client-principal-id`` on every
-    call (its shared ``userIdHeaders()`` seam), so the admin gate sees
-    the id header with NO ``x-ms-client-principal`` claims blob in local
-    dev. The claims blob is the sole authority for the role check, so the
-    bypass must trigger on its absence and return ``'local-dev'`` -- not
-    fall through to a ``401`` just because the forgeable id header rode
-    along."""
-    dep = requires_role("admin")
-    request = _request({_PRINCIPAL_ID: "00000000-0000-0000-0000-000000000000"})
-    assert dep(request, _settings("local")) == "local-dev"
-
-
-def test_requires_role_in_local_still_validates_when_headers_present() -> None:
-    """Local environment does NOT skip role checking when the caller
-    explicitly sends Easy Auth headers -- devs can exercise the
-    real role gate locally by forging the claims blob."""
-    dep = requires_role("admin")
-    request = _request(
-        {
-            _PRINCIPAL_ID: "user-oid-jkl",
-            _PRINCIPAL: _claims(("roles", "reader")),
-        }
-    )
-    with pytest.raises(HTTPException) as exc:
-        dep(request, _settings("local"))
-    assert exc.value.status_code == 403
-
-
-def test_requires_role_factory_returns_distinct_callable_per_call() -> None:
-    """Each ``requires_role(role)`` invocation must return a NEW
-    callable so FastAPI's `app.dependency_overrides` keying stays
-    deterministic. Modules that need a stable key MUST cache the
-    returned dep at module import time (see admin.py for the pattern).
-    """
-    dep_a = requires_role("admin")
-    dep_b = requires_role("admin")
-    assert dep_a is not dep_b
 
 
 # ---------------------------------------------------------------------------
@@ -509,29 +321,25 @@ def test_get_content_safety_guard_returns_none_when_override_false_and_no_client
 
 
 # ---------------------------------------------------------------------------
-# get_user_id -- Easy Auth principal extraction (no role gate)
+# get_user_id -- principal-id header extraction
 #
-# Sibling of `requires_role`: reads `x-ms-client-principal-id` and
-# returns the caller's Entra object id. Falls back to "local-dev"
-# only when `settings.environment is Environment.LOCAL` so chat
-# history is exercisable in dev without forging Easy Auth headers;
-# production raises 401 on a missing header (fail-closed).
+# Reads `x-ms-client-principal-id` and returns it verbatim when it is a
+# valid GUID. A missing, blank, or non-GUID header folds into the
+# anonymous default id `00000000-0000-0000-0000-000000000000`. Never
+# raises: the id scopes a tenant partition, not a trust boundary.
 # ---------------------------------------------------------------------------
 
 
 def test_get_user_id_returns_principal_id_when_header_present() -> None:
+    request = _request({_PRINCIPAL_ID: "6b2e1f54-1c2d-4a8b-9f0e-1234567890ab"})
+    assert get_user_id(request) == "6b2e1f54-1c2d-4a8b-9f0e-1234567890ab"
+
+
+def test_get_user_id_falls_back_to_default_guid_when_header_missing() -> None:
+    request = _request({})
+    assert get_user_id(request) == "00000000-0000-0000-0000-000000000000"
+
+
+def test_get_user_id_falls_back_to_default_guid_when_not_a_guid() -> None:
     request = _request({_PRINCIPAL_ID: "user-oid-42"})
-    assert get_user_id(request, _settings("production")) == "user-oid-42"
-
-
-def test_get_user_id_falls_back_to_local_dev_when_local_and_header_missing() -> None:
-    request = _request({})
-    assert get_user_id(request, _settings(Environment.LOCAL)) == "local-dev"
-
-
-def test_get_user_id_raises_401_when_production_and_header_missing() -> None:
-    request = _request({})
-    with pytest.raises(HTTPException) as exc_info:
-        get_user_id(request, _settings(Environment.PRODUCTION))
-    assert exc_info.value.status_code == 401
-    assert "Missing client principal" in exc_info.value.detail
+    assert get_user_id(request) == "00000000-0000-0000-0000-000000000000"

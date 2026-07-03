@@ -77,11 +77,12 @@ def test_openai_api_error_returns_502_with_sanitized_body(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     app = _build_app_with_failing_route(_api_error("upstream model crashed"))
+    principal_id = "22222222-2222-2222-2222-222222222222"
     with caplog.at_level("ERROR", logger=_APP_LOGGER_NAME):
         with TestClient(app) as client:
             response = client.get(
                 "/_test/raise",
-                headers={"x-ms-client-principal-id": "user-42"},
+                headers={"x-ms-client-principal-id": principal_id},
             )
 
     assert response.status_code == 502
@@ -92,7 +93,7 @@ def test_openai_api_error_returns_502_with_sanitized_body(
     record = _find_error_record(caplog, "exception_class", "APIError")
     assert record.method == "GET"
     assert record.path == "/_test/raise"
-    assert record.user_id == "user-42"
+    assert record.user_id == principal_id
 
 
 def test_cosmos_http_error_returns_503_with_sanitized_body(

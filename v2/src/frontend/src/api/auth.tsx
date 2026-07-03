@@ -8,8 +8,7 @@
  * the backend uses as the per-user partition key. The lookup degrades to
  * `null` whenever no identity provider is configured, the caller is not
  * signed in, or the payload carries no usable object id, so the bootstrap
- * can fall back to the default user (when auth is not enforced) or show
- * the blocked screen (when it is).
+ * falls back to the default user.
  *
  * The header builder, default-user constant, and resolved-id store live
  * alongside this getter; together they are the single seam every API
@@ -27,16 +26,18 @@ const OBJECT_ID_CLAIM =
 
 /**
  * Identity header every API client forwards for per-user partitioning.
- * A browser-set value is forgeable and is **not** a trust boundary — it
- * scopes chat history only; admin RBAC stays anchored on the backend's
- * own server-injected Easy Auth claims.
+ * A browser-set value is forgeable and is **not** a trust boundary — the
+ * backend validates only that it is a GUID and otherwise treats it as the
+ * shared default partition. Real authentication, when enabled, is enforced
+ * at the ingress/proxy (Easy Auth injecting/overwriting this header), never
+ * in backend application code.
  */
 const PRINCIPAL_ID_HEADER = "x-ms-client-principal-id";
 
 /**
- * The all-zeros id forwarded when auth is not enforced and no signed-in
- * user has been resolved. The backend treats it as a single shared
- * partition for local / unauthenticated use.
+ * The all-zeros id forwarded when no signed-in user has been resolved.
+ * The backend treats it as a single shared partition for local /
+ * unauthenticated use.
  */
 export const DEFAULT_USER_ID = "00000000-0000-0000-0000-000000000000";
 
@@ -53,10 +54,9 @@ let currentUserId: string | null = null;
  * origin — never the backend), narrowing to the object-identifier claim.
  * Returns `null` when `/.auth/me` is unavailable (no identity provider,
  * not signed in), the principal list is empty, or no usable object id is
- * present, so callers fall back to the default user or block per the
- * enforcement policy. A failed fetch or malformed payload degrades to
- * `null` rather than throwing — an absent identity provider is the normal
- * local-dev state, not an error.
+ * present, so callers fall back to the default user. A failed fetch or
+ * malformed payload degrades to `null` rather than throwing — an absent
+ * identity provider is the normal local-dev state, not an error.
  */
 export async function getUserInfo(): Promise<UserInfo | null> {
   try {
@@ -94,7 +94,7 @@ export function getUserId(): string {
  * Record the resolved per-user id so subsequent {@link userIdHeaders}
  * calls forward it; passing `null` clears the override back to the
  * default. Called once by the auth bootstrap after `/.auth/me` resolves
- * (or settles on the default when auth is not enforced).
+ * (or settles on the default when no principal is present).
  */
 export function setUserId(userId: string | null): void {
   currentUserId = userId;

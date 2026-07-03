@@ -5,15 +5,12 @@ from unittest.mock import AsyncMock, MagicMock
 
 import httpx
 import pytest
-from fastapi import HTTPException
 from starlette.requests import Request
 
 from backend.app import create_app
-from backend.core.settings import Environment
 from backend.core.tools.content_safety import ContentSafetyVerdict
 from backend.core.types import ChatMessage, Conversation, MessageRecord
 from backend.dependencies import (
-    _is_valid_principal_id,
     get_app_settings,
     get_content_safety_guard,
     get_database_client,
@@ -26,6 +23,9 @@ from backend.dependencies import (
 # ---------------------------------------------------------------------------
 
 
+_TEST_USER_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
+
+
 class _FakeSettings:
     class _D:
         db_type = "cosmosdb"
@@ -34,7 +34,7 @@ class _FakeSettings:
 
 
 def _conv(
-    *, id: str = "c-1", title: str = "t", user_id: str = "u-1"
+    *, id: str = "c-1", title: str = "t", user_id: str = _TEST_USER_ID
 ) -> Conversation:
     return Conversation(
         id=id,
@@ -91,7 +91,7 @@ def app_with_fake_db():
     app.dependency_overrides[get_database_client] = lambda: db
     app.dependency_overrides[get_app_settings] = lambda: _FakeSettings()
     # Pin user_id so tests don't need to pretend Easy Auth is wired.
-    app.dependency_overrides[get_user_id] = lambda: "u-1"
+    app.dependency_overrides[get_user_id] = lambda: _TEST_USER_ID
     app.state._test_db = db  # type: ignore[attr-defined]
     return app
 
@@ -110,89 +110,51 @@ def _client(app) -> httpx.AsyncClient:
 def test_get_user_id_reads_easy_auth_header() -> None:
     scope: dict[str, Any] = {
         "type": "http",
-        "headers": [(b"x-ms-client-principal-id", b"00000000-0000-0000-0000-000000000abc")],
+        "headers": [
+            (
+                b"x-ms-client-principal-id",
+                b"3f2504e0-4f89-41d3-9a0c-0305e82c3301",
+            )
+        ],
     }
-    # Header present -> environment is irrelevant; use a stub so the
-    # test does not require a fully-populated AZURE_* env.
-    settings = MagicMock(environment=Environment.PRODUCTION)
     assert (
-        get_user_id(Request(scope), settings)
-        == "00000000-0000-0000-0000-000000000abc"
+        get_user_id(Request(scope))
+        == "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
     )
 
 
-def test_get_user_id_falls_back_to_local_dev_when_header_missing() -> None:
+def test_get_user_id_falls_back_to_default_guid_when_header_missing() -> None:
     scope: dict[str, Any] = {"type": "http", "headers": []}
-    settings = MagicMock(environment=Environment.LOCAL)
-    assert get_user_id(Request(scope), settings) == "local-dev"
+    assert (
+        get_user_id(Request(scope))
+        == "00000000-0000-0000-0000-000000000000"
+    )
 
 
-def test_get_user_id_raises_401_in_production_when_header_missing() -> None:
-    """H1 hardening: production must fail closed.
-
-    A misconfigured Easy Auth in production must NOT silently fold
-    every anonymous caller into the ``local-dev`` partition. With
-    ``AZURE_ENVIRONMENT=production`` and no header, we raise 401.
-    """
-    scope: dict[str, Any] = {"type": "http", "headers": []}
-    settings = MagicMock(environment=Environment.PRODUCTION)
-    with pytest.raises(HTTPException) as exc:
-        get_user_id(Request(scope), settings)
-    assert exc.value.status_code == 401
-
-
-@pytest.mark.parametrize(
-    "value",
-    [
-        "00000000-0000-0000-0000-000000000000",  # all-zeros default user
-        "6b2e1f54-1c2d-4a8b-9f0e-1234567890ab",  # Entra object id
-        "local-dev",  # synthetic fallback
-        "integration-user",  # synthetic test principal
-    ],
-)
-def test_is_valid_principal_id_accepts_well_formed(value: str) -> None:
-    assert _is_valid_principal_id(value) is True
-
-
-@pytest.mark.parametrize(
-    "value",
-    [
-        "robert'); DROP TABLE users;--",  # injection punctuation + spaces
-        "user with spaces",  # internal whitespace
-        "bad\nid",  # control character
-        "x" * 129,  # overlong (>128)
-    ],
-)
-def test_is_valid_principal_id_rejects_malformed(value: str) -> None:
-    assert _is_valid_principal_id(value) is False
-
-
-def test_get_user_id_rejects_malformed_principal_id() -> None:
-    """B2: a present-but-malformed principal id fails closed.
-
-    A header carrying injection punctuation is never a legitimate
-    identity token; reject it with 401 regardless of environment so
-    the value never reaches a database partition key.
-    """
+def test_get_user_id_falls_back_to_default_guid_when_not_a_guid() -> None:
     scope: dict[str, Any] = {
         "type": "http",
-        "headers": [(b"x-ms-client-principal-id", b"robert'); DROP TABLE users;--")],
+        "headers": [(b"x-ms-client-principal-id", b"not-a-guid")],
     }
-    settings = MagicMock(environment=Environment.LOCAL)
-    with pytest.raises(HTTPException) as exc:
-        get_user_id(Request(scope), settings)
-    assert exc.value.status_code == 401
+    assert (
+        get_user_id(Request(scope))
+        == "00000000-0000-0000-0000-000000000000"
+    )
 
 
 def test_get_user_id_accepts_all_zeros_default_user() -> None:
-    """B2: the frontend's all-zeros default user id is well-formed."""
+    """The frontend's all-zeros default id is a valid GUID."""
     scope: dict[str, Any] = {
         "type": "http",
-        "headers": [(b"x-ms-client-principal-id", b"00000000-0000-0000-0000-000000000000")],
+        "headers": [
+            (
+                b"x-ms-client-principal-id",
+                b"00000000-0000-0000-0000-000000000000",
+            )
+        ],
     }
-    settings = MagicMock(environment=Environment.PRODUCTION)
     assert (
-        get_user_id(Request(scope), settings)
+        get_user_id(Request(scope))
         == "00000000-0000-0000-0000-000000000000"
     )
 
@@ -224,7 +186,7 @@ async def test_list_conversations_returns_user_scoped_results(
     body = resp.json()
     assert len(body) == 1
     assert body[0]["id"] == "c-1"
-    db.list_conversations.assert_awaited_once_with("u-1")
+    db.list_conversations.assert_awaited_once_with(_TEST_USER_ID)
 
 
 async def test_create_conversation_returns_201_and_persists_via_client(
@@ -237,7 +199,9 @@ async def test_create_conversation_returns_201_and_persists_via_client(
         )
     assert resp.status_code == 201
     assert resp.json()["title"] == "new"
-    db.create_conversation.assert_awaited_once_with(user_id="u-1", title="new")
+    db.create_conversation.assert_awaited_once_with(
+        user_id=_TEST_USER_ID, title="new"
+    )
 
 
 async def test_get_conversation_returns_conversation_plus_messages(
@@ -313,7 +277,9 @@ async def test_rename_conversation_strips_surrounding_whitespace(
             "/api/history/conversations/c-1", json={"title": "  New name  "}
         )
     assert resp.status_code == 200
-    db.rename_conversation.assert_awaited_once_with("c-1", "u-1", "New name")
+    db.rename_conversation.assert_awaited_once_with(
+        "c-1", _TEST_USER_ID, "New name"
+    )
 
 
 async def test_rename_conversation_400_when_title_flagged_by_content_safety(
@@ -348,7 +314,7 @@ async def test_rename_conversation_screens_clean_title_then_persists(
     assert resp.status_code == 200
     assert guard.screened == ["Clean title"]
     db.rename_conversation.assert_awaited_once_with(
-        "c-1", "u-1", "Clean title"
+        "c-1", _TEST_USER_ID, "Clean title"
     )
 
 
@@ -364,7 +330,9 @@ async def test_rename_conversation_skips_screening_when_guard_disabled(
             "/api/history/conversations/c-1", json={"title": "No guard"}
         )
     assert resp.status_code == 200
-    db.rename_conversation.assert_awaited_once_with("c-1", "u-1", "No guard")
+    db.rename_conversation.assert_awaited_once_with(
+        "c-1", _TEST_USER_ID, "No guard"
+    )
 
 
 async def test_delete_conversation_returns_204_idempotently(
@@ -374,7 +342,7 @@ async def test_delete_conversation_returns_204_idempotently(
     async with _client(app_with_fake_db) as client:
         resp = await client.delete("/api/history/conversations/c-1")
     assert resp.status_code == 204
-    db.delete_conversation.assert_awaited_once_with("c-1", "u-1")
+    db.delete_conversation.assert_awaited_once_with("c-1", _TEST_USER_ID)
 
 
 # ---------------------------------------------------------------------------
@@ -395,7 +363,7 @@ async def test_add_message_returns_201_and_forwards_chatmessage(
     assert resp.json()["content"] == "added"
     call = db.add_message.await_args
     assert call.kwargs["conversation_id"] == "c-1"
-    assert call.kwargs["user_id"] == "u-1"
+    assert call.kwargs["user_id"] == _TEST_USER_ID
     msg = call.kwargs["message"]
     assert isinstance(msg, ChatMessage)
     assert msg.content == "hi"
@@ -420,7 +388,9 @@ async def test_set_feedback_returns_204(app_with_fake_db) -> None:
             json={"feedback": "positive"},
         )
     assert resp.status_code == 204
-    db.set_feedback.assert_awaited_once_with("m-1", "u-1", "positive")
+    db.set_feedback.assert_awaited_once_with(
+        "m-1", _TEST_USER_ID, "positive"
+    )
 
 
 async def test_set_feedback_404_when_message_missing(app_with_fake_db) -> None:

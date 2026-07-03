@@ -21,7 +21,7 @@
  * Every `data-testid` + `aria-label` is preserved verbatim from
  * Phase 4.
  *
- * Phase 4 MACAE re-skin: rows render as MACAE-style `.tab` chips
+ * Phase 4 reference-architecture re-skin: rows render as reference-architecture-style `.tab` chips
  * (border-radius var(--borderRadiusMedium), hover
  * var(--colorSubtleBackgroundHover), selected with a 2px
  * var(--colorCompoundBrandStroke) left tick). The outer landmark
@@ -33,10 +33,8 @@ import { useCallback, useEffect, useState, type JSX } from "react";
 import { Delete16Regular, Edit16Regular } from "@fluentui/react-icons";
 import type { HistoryConversation } from "@/models/chat";
 import { userIdHeaders } from "@/api/auth";
+import { getBackendUrl } from "@/api/runtimeConfig";
 import styles from "./HistoryPanel.module.css";
-
-const BACKEND_URL =
-  (import.meta.env.VITE_BACKEND_URL as string | undefined) ?? "";
 
 interface LoadState {
   status: "loading" | "ready" | "error";
@@ -53,7 +51,7 @@ export interface HistoryPanelProps {
 }
 
 function buildUrl(path: string): string {
-  return `${BACKEND_URL.replace(/\/$/, "")}${path}`;
+  return `${getBackendUrl().replace(/\/$/, "")}${path}`;
 }
 
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {

@@ -227,6 +227,42 @@ describe("MessageList", () => {
     expect(details.querySelectorAll("li")).toHaveLength(0);
   });
 
+  it("renders reasoning citation markers as superscripts in the panel", () => {
+    const mWithMarkers: ChatMessage = {
+      id: "9",
+      role: "assistant",
+      content: "answer body",
+      reasoning: ["I checked doc[6] and docs[3] and [9]."],
+    };
+    render(
+      <ChatProvider>
+        <Seed messages={[]} />
+        <MessageList />
+      </ChatProvider>,
+    );
+    const dispatch = (Seed as unknown as { _dispatch: (a: { type: "add"; message: ChatMessage }) => void })._dispatch;
+
+    act(() => {
+      dispatch({ type: "add", message: mWithMarkers });
+    });
+
+    const details = screen.getByTestId("message-9-reasoning");
+    // Each marker family (`doc[N]`, `docs[N]`, bare `[N]`) becomes a
+    // `<sup>` carrying the verbatim index.
+    const sups = details.querySelectorAll("sup");
+    expect(sups.length).toBeGreaterThanOrEqual(1);
+    const supText = Array.from(sups)
+      .map((sup) => sup.textContent)
+      .join("");
+    expect(supText).toContain("6");
+    expect(supText).toContain("3");
+    expect(supText).toContain("9");
+    // ...and the literal bracketed markers no longer appear as text.
+    expect(details.textContent).not.toContain("doc[6]");
+    expect(details.textContent).not.toContain("docs[3]");
+    expect(details.textContent).not.toContain("[9]");
+  });
+
   it("drops model section titles and breaks reasoning blocks apart in the panel", () => {
     const mHeadered: ChatMessage = {
       id: "8",

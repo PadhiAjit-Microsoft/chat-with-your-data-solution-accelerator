@@ -19,6 +19,7 @@ import {
   uploadDocument,
 } from "@/api/admin";
 import { DEFAULT_USER_ID, setUserId } from "@/api/auth";
+import { loadRuntimeConfig, resetRuntimeConfig } from "@/api/runtimeConfig";
 import type {
   AdminConfig,
   AdminStatus,
@@ -45,7 +46,6 @@ const STATUS_FIXTURE: AdminStatus = {
   foundry_project_endpoint_host: "fdy-abc123.services.ai.azure.com",
   gpt_deployment: "gpt-5",
   embedding_deployment: "text-embedding-3-large",
-  reasoning_deployment: "gpt-5",
   search_enabled: true,
   app_insights_enabled: false,
   cors_origins: ["http://localhost:5273"],
@@ -979,4 +979,42 @@ describe("principal id header forwarding", () => {
       expect(headers["x-ms-client-principal-id"]).toBe(RESOLVED_ID);
     },
   );
+});
+
+describe("admin backendUrl runtime /config seam", () => {
+  let fetchMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+    resetRuntimeConfig();
+  });
+
+  it("prefers the runtime /config backendUrl over the env fallback", async () => {
+    // The runtime origin from /config must win over the build-time
+    // VITE_BACKEND_URL so the deployed split-host SPA crosses to the
+    // backend Container App resolved at boot, not a baked-in guess.
+    vi.stubEnv("VITE_BACKEND_URL", "https://build-time.example.com");
+    fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+      const url = typeof input === "string" ? input : input.toString();
+      if (url === "/config") {
+        return jsonResponse({ backendUrl: "https://runtime.example.com" });
+      }
+      return jsonResponse(STATUS_FIXTURE);
+    });
+
+    await loadRuntimeConfig();
+    await getAdminStatus();
+
+    const statusCall = fetchMock.mock.calls.find(
+      ([callUrl]) => callUrl === "https://runtime.example.com/api/admin/status",
+    );
+    expect(statusCall).toBeDefined();
+  });
 });

@@ -35,8 +35,10 @@ Notes
 
 import argparse
 import os
+import subprocess
 import sys
 from typing import Sequence
+from urllib.parse import urlparse
 
 import httpx
 import psycopg2  # type: ignore[import-not-found]
@@ -76,7 +78,7 @@ SEMANTIC_CONFIG_NAME = "default"
 
 # Foundry IQ Knowledge Base seed. A `searchIndex` knowledge source wraps
 # the existing chat index, and the knowledge base references that source
-# plus the Azure OpenAI reasoning model used for query planning. Created
+# plus the Azure OpenAI chat model used for query planning. Created
 # once via the Search REST `knowledgesources` / `knowledgebases` endpoints
 # (api-version from SearchSettings) — never per-document. The two `kind`
 # discriminators below are the only values this script emits, so they are
@@ -99,6 +101,16 @@ DEFAULT_KNOWLEDGE_BASE_API_VERSION = "2025-11-01-preview"
 # knowledgebases REST PUT). Distinct from the postgres AAD scope above.
 SEARCH_DATA_PLANE_SCOPE = "https://search.azure.com/.default"
 
+# OAuth scope for the Azure Resource Manager control plane. The KB-MCP
+# RemoteTool connection is created via an ARM PUT on the Foundry project,
+# so it uses the management scope -- distinct from the search data-plane
+# scope above (the connection lives on the project, not in the index).
+ARM_SCOPE = "https://management.azure.com/.default"
+# Control-plane api-version for the project `connections` PUT. Distinct from
+# the KB target-URL api-version (DEFAULT_KNOWLEDGE_BASE_API_VERSION) the
+# connection `target` embeds.
+KB_MCP_CONNECTION_API_VERSION = "2025-04-01-preview"
+
 # Outputs surfaced in the summary block. Kept in display order; missing
 # entries are skipped silently (e.g. cosmos vars in postgresql mode).
 SUMMARY_KEYS = (
@@ -110,7 +122,6 @@ SUMMARY_KEYS = (
     "AZURE_AI_SERVICES_ENDPOINT",
     "AZURE_AI_PROJECT_ENDPOINT",
     "AZURE_OPENAI_GPT_DEPLOYMENT",
-    "AZURE_OPENAI_REASONING_DEPLOYMENT",
     "AZURE_OPENAI_EMBEDDING_DEPLOYMENT",
     "AZURE_AI_SEARCH_ENDPOINT",
     "AZURE_COSMOS_ENDPOINT",
@@ -134,6 +145,146 @@ def _require(name: str) -> str:
         )
         sys.exit(2)
     return value
+
+
+def _is_private_networking() -> bool:
+    """True when the private-networking (WAF) profile is on.
+
+    Bound from ``AZURE_ENV_ENABLE_PRIVATE_NETWORKING`` (the
+    ``enablePrivateNetworking`` parameter in main.parameters.json); absent
+    means the default public profile.
+    """
+    return (
+        os.environ.get("AZURE_ENV_ENABLE_PRIVATE_NETWORKING", "false")
+        .strip()
+        .lower()
+        == "true"
+    )
+
+
+def _cosmos_account_name() -> str:
+    """Cosmos account name parsed from ``AZURE_COSMOS_ENDPOINT``.
+
+    ``https://<name>.documents.azure.com:443/`` -> ``<name>``. Empty string
+    in postgresql mode (no Cosmos endpoint).
+    """
+    endpoint = os.environ.get("AZURE_COSMOS_ENDPOINT", "").strip()
+    if not endpoint:
+        return ""
+    host = urlparse(endpoint).hostname or ""
+    return host.split(".", 1)[0] if host else ""
+
+
+def _run_az(command: Sequence[str]) -> None:
+    """Run an ``az`` command, surfacing stderr and re-raising on failure.
+
+    Never swallows: a missing CLI or a non-zero exit re-raises so the
+    post-provision hook fails loudly rather than shipping an unreachable
+    backend.
+    """
+    try:
+        # `az` is an `az.cmd` shim on Windows, which CreateProcess cannot
+        # launch directly; route through the shell there so PATHEXT resolves
+        # it. Args are our own azd resource names (no shell metacharacters).
+        subprocess.run(
+            list(command),
+            check=True,
+            capture_output=True,
+            text=True,
+            shell=os.name == "nt",
+        )
+    except FileNotFoundError:
+        sys.stderr.write(
+            "post-provision: `az` CLI not found on PATH; cannot re-assert "
+            "public network access.\n"
+        )
+        raise
+    except subprocess.CalledProcessError as exc:
+        sys.stderr.write(
+            f"post-provision: `{' '.join(command)}` failed (exit {exc.returncode}).\n"
+            f"  stderr: {exc.stderr}\n"
+        )
+        raise
+
+
+def _ensure_public_network_access(*, dry_run: bool, runner=None) -> str:
+    """Re-assert ``publicNetworkAccess=Enabled`` on Cosmos + Storage.
+
+    The ``avm/res/document-db/database-account`` and
+    ``avm/res/storage/storage-account`` modules deploy the accounts with
+    ``publicNetworkAccess=Disabled`` even though main.bicep passes
+    ``Enabled`` for the non-private-networking profile, so the public-egress
+    Container Apps cannot reach them and the backend crashes on startup.
+    This re-asserts ``Enabled`` via ``az`` after provisioning, mirroring the
+    MACAE ``selecting_team_config_and_data.sh`` toggle. Data-plane auth stays
+    RBAC-only (Cosmos ``disableLocalAuth``, Storage ``allowSharedKeyAccess``
+    off), so opening the network exposes no key surface. Tracked as BUG-0093.
+
+    No-op under private networking (the accounts are reached through private
+    endpoints and stay ``Disabled``). Returns ``"skipped"``, ``"dry-run"``,
+    or ``"ensured"``. ``runner`` is a test seam -- production passes ``None``
+    and shells out to ``az``.
+    """
+    if _is_private_networking():
+        print(
+            "post-provision: private networking on; leaving Cosmos/Storage "
+            "publicNetworkAccess Disabled (private endpoints cover access)"
+        )
+        return "skipped"
+
+    resource_group = os.environ.get("AZURE_RESOURCE_GROUP", "").strip()
+    if not resource_group:
+        print(
+            "post-provision: AZURE_RESOURCE_GROUP not set; skipping "
+            "public-access re-assert"
+        )
+        return "skipped"
+
+    commands: list[list[str]] = []
+    cosmos_account = _cosmos_account_name()
+    if cosmos_account:
+        commands.append(
+            [
+                "az", "cosmosdb", "update",
+                "--resource-group", resource_group,
+                "--name", cosmos_account,
+                "--public-network-access", "ENABLED",
+            ]
+        )
+    storage_account = os.environ.get("AZURE_STORAGE_ACCOUNT_NAME", "").strip()
+    if storage_account:
+        commands.append(
+            [
+                "az", "storage", "account", "update",
+                "--resource-group", resource_group,
+                "--name", storage_account,
+                "--public-network-access", "Enabled",
+                "--default-action", "Allow",
+            ]
+        )
+
+    if not commands:
+        print(
+            "post-provision: no Cosmos/Storage account resolved; skipping "
+            "public-access re-assert"
+        )
+        return "skipped"
+
+    if dry_run:
+        for command in commands:
+            print(f"post-provision: [dry-run] would run: {' '.join(command)}")
+        return "dry-run"
+
+    run = runner if runner is not None else _run_az
+    updated: list[str] = []
+    for command in commands:
+        run(command)
+        updated.append(command[command.index("--name") + 1])
+    print(
+        "post-provision: re-asserted publicNetworkAccess=Enabled on "
+        f"{', '.join(updated)}"
+    )
+    return "ensured"
 
 
 def _enable_pgvector() -> None:
@@ -341,8 +492,8 @@ def _build_knowledge_base_seed(
     2. A knowledge base that references the knowledge source by name and
        lists the Azure OpenAI chat model used for query planning. The
        Foundry IQ knowledge base API only accepts chat models here (for
-       example gpt-4o-mini, gpt-4.1, gpt-5.1); o-series reasoning models
-       are rejected, so this is the chat deployment, not the reasoning one.
+       example gpt-5.1, gpt-5-mini); o-series reasoning models are
+       rejected, so this is the chat deployment, not the reasoning one.
 
     The shapes match the Azure AI Search ``knowledgesources`` /
     ``knowledgebases`` REST contract; the caller pins the api-version from
@@ -422,8 +573,8 @@ def _ensure_knowledge_base(*, dry_run: bool, client_factory=None) -> str:
     )
 
     # The KB query-planning model lives on the Azure OpenAI account. Foundry
-    # IQ knowledge bases only accept a chat model here (gpt-4o-mini, gpt-4.1,
-    # gpt-5.1, ...); o-series reasoning models are rejected with a 400, so the
+    # IQ knowledge bases only accept a chat model here (gpt-5.1, gpt-5-mini,
+    # ...); o-series reasoning models are rejected with a 400, so the
     # KB uses the chat deployment (AZURE_OPENAI_GPT_DEPLOYMENT), not the
     # reasoning one. In this repo the deployment is named after its model
     # (Bicep wires the deployment and the model from the same `gptModelName`
@@ -504,6 +655,111 @@ def _ensure_knowledge_base(*, dry_run: bool, client_factory=None) -> str:
             close()
 
 
+def _ensure_kb_mcp_connection(*, dry_run: bool, client_factory=None) -> str:
+    """Create-or-update the Foundry project ``{kb}-mcp`` RemoteTool connection.
+
+    Points the project's MCP grounding at the knowledge base's ``/mcp``
+    endpoint using the project's managed identity, so
+    ``AZURE_AI_SEARCH_CONNECTION_NAME`` can reference the ``{kb}-mcp``
+    connection rather than the base search connection (which is the wrong
+    connection category for the knowledge-base MCP route).
+
+    Idempotent: the ARM ``connections`` PUT is create-or-update, so
+    re-running overwrites the connection in place. Returns one of:
+    ``"skipped"`` (no search endpoint or no project resource id --
+    postgresql mode), ``"dry-run"``, ``"ensured"``.
+
+    The connection name is ``f"{kb_name}-mcp"`` where ``kb_name`` comes from
+    ``AZURE_AI_SEARCH_KNOWLEDGE_BASE_NAME`` (the same variable
+    ``_ensure_knowledge_base`` reads), so it cannot drift from the Bicep env
+    wiring. The connection PUT is an ARM control-plane call (``ARM_SCOPE``),
+    distinct from the search data-plane scope the knowledge-base seed uses.
+    ``client_factory`` is a test seam -- production passes ``None`` and the
+    function builds an ``httpx.Client`` bearer-authed for the ARM control
+    plane.
+    """
+    search_endpoint = os.environ.get("AZURE_AI_SEARCH_ENDPOINT", "").strip()
+    project_resource_id = os.environ.get(
+        "AZURE_AI_PROJECT_RESOURCE_ID", ""
+    ).strip()
+    if not search_endpoint or not project_resource_id:
+        print(
+            "post-provision: AZURE_AI_SEARCH_ENDPOINT or "
+            "AZURE_AI_PROJECT_RESOURCE_ID not set; skipping KB-MCP connection"
+        )
+        return "skipped"
+
+    kb_name = (
+        os.environ.get("AZURE_AI_SEARCH_KNOWLEDGE_BASE_NAME", "").strip()
+        or DEFAULT_KNOWLEDGE_BASE_NAME
+    )
+    kb_api_version = (
+        os.environ.get("AZURE_AI_SEARCH_KNOWLEDGE_BASE_API_VERSION", "").strip()
+        or DEFAULT_KNOWLEDGE_BASE_API_VERSION
+    )
+    connection_name = f"{kb_name}-mcp"
+    base = search_endpoint.rstrip("/")
+    target = f"{base}/knowledgebases/{kb_name}/mcp?api-version={kb_api_version}"
+    url = (
+        f"https://management.azure.com{project_resource_id}/connections/"
+        f"{connection_name}?api-version={KB_MCP_CONNECTION_API_VERSION}"
+    )
+
+    if dry_run:
+        print(
+            f"post-provision: [dry-run] would ensure KB-MCP connection "
+            f"{connection_name!r} via PUT {url}"
+        )
+        return "dry-run"
+
+    # Externally-owned ARM REST body, so a plain dict rather than a typed
+    # model (the Hard Rule #15 boundary carve-out, matching
+    # `_build_knowledge_base_seed`'s plain-dict precedent).
+    properties: dict[str, object] = {
+        "category": "RemoteTool",
+        "target": target,
+        "authType": "ProjectManagedIdentity",
+        "useWorkspaceManagedIdentity": True,
+        "isSharedToAll": True,
+        "audience": "https://search.azure.com",
+        "metadata": {"ApiType": "Azure"},
+    }
+    body: dict[str, object] = {"properties": properties}
+
+    if client_factory is None:
+        def client_factory():  # type: ignore[no-redef]
+            token = DefaultAzureCredential().get_token(ARM_SCOPE).token
+            return httpx.Client(
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Content-Type": "application/json",
+                },
+                timeout=30.0,
+            )
+
+    client = client_factory()
+    try:
+        response = client.put(url, json=body)
+        try:
+            response.raise_for_status()
+        except Exception:  # noqa: BLE001 - surfaced + re-raised below
+            sys.stderr.write(
+                "post-provision: failed to ensure KB-MCP connection "
+                f"{connection_name!r} (status {response.status_code}).\n"
+                f"  body: {getattr(response, 'text', '')}\n"
+            )
+            raise
+        print(
+            f"post-provision: KB-MCP connection {connection_name!r} ready "
+            f"(target {target})"
+        )
+        return "ensured"
+    finally:
+        close = getattr(client, "close", None)
+        if callable(close):
+            close()
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="post-provision",
@@ -529,6 +785,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         )
         return 6
 
+    # Re-assert public network access on Cosmos + Storage before the backend
+    # deploys (the AVM modules deploy them Disabled in the public profile).
+    _ensure_public_network_access(dry_run=args.dry_run)
+
     if db_type == "postgresql":
         if args.dry_run:
             print("post-provision: [dry-run] would enable pgvector extension")
@@ -539,6 +799,10 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     _ensure_search_index(dry_run=args.dry_run)
     _ensure_knowledge_base(dry_run=args.dry_run)
+    # The KB-MCP connection PUT is an ARM control-plane write requiring
+    # Microsoft.CognitiveServices/accounts/projects/connections/write on the
+    # Foundry account; the azd deploy principal already holds that right.
+    _ensure_kb_mcp_connection(dry_run=args.dry_run)
 
     _print_summary()
     return 0

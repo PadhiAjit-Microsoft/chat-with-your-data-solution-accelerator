@@ -1,15 +1,15 @@
-"""Pillar: Stable Core / Phase: 5 (tasks #35a, #35b, #35c, #39) -- admin router tests.
+"""Pillar: Stable Core / Phase: 5 (admin surface) -- admin router tests.
 
 Covers the read-only ``GET /api/admin/status`` endpoint, the
-``GET /api/admin/config`` runtime-toggle subset (#35b), the
-``PATCH /api/admin/config`` merge-patch endpoint (#35c), and the
-#39 RBAC-narrowed ``REQUIRE_ADMIN_USER`` auth gate (replaces the
-former ``admin_user_id`` placeholder; the role-claim contract itself
-is unit-tested in ``test_dependencies.py::test_requires_role_*``).
+``GET /api/admin/config`` runtime-toggle subset, the
+``PATCH /api/admin/config`` merge-patch endpoint, and the document
+write routes. Every admin route resolves the caller through
+``get_user_id`` / ``UserIdDep``, which returns the caller's GUID from
+the ``x-ms-client-principal-id`` header or the anonymous default GUID;
+there is no role gate, so the fixture pins ``get_user_id`` to a fixed
+caller GUID for the audit-trail assertions.
 """
 
-import base64
-import json
 import logging
 from datetime import datetime
 from enum import StrEnum
@@ -39,12 +39,12 @@ from backend.core.agents.presets import (
 from backend.core.providers.search.base import SourceListing
 from backend.core.types import AdminAuditEntry, RuntimeConfig
 from backend.dependencies import (
-    REQUIRE_ADMIN_USER,
     get_agents_provider,
     get_app_settings,
     get_credential,
     get_database_client,
     get_search_provider,
+    get_user_id,
 )
 from backend.models.admin import (
     AdminConfig,
@@ -57,6 +57,13 @@ from backend.models.admin import (
     WRITABLE_FIELDS,
 )
 from backend.routers.admin import router as admin_router
+
+
+# Fixed caller GUID pinned by the admin_app_factory fixture's
+# get_user_id override so the audit-trail tests can assert on
+# updated_by / actor without forging the x-ms-client-principal-id
+# header.
+_FIXED_USER_ID = "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
 
 
 # ---------------------------------------------------------------------------
@@ -74,9 +81,8 @@ def _settings(
     index_store: str = "AzureSearch",
     project_endpoint: str = "https://my-foundry.cognitiveservices.azure.com/projects/proj1",
     services_endpoint: str = "https://my-foundry.cognitiveservices.azure.com",
-    gpt_deployment: str = "gpt-4o",
+    gpt_deployment: str = "gpt-5.1",
     embedding_deployment: str = "text-embedding-3-large",
-    reasoning_deployment: str = "",
     search_endpoint: str = "https://srch.search.windows.net",
     app_insights_conn: str = "",
     cors_origins: list[str] | None = None,
@@ -110,7 +116,6 @@ def _settings(
         openai=NS(
             gpt_deployment=gpt_deployment,
             embedding_deployment=embedding_deployment,
-            reasoning_deployment=reasoning_deployment,
             api_version=api_version,
             temperature=openai_temperature,
             max_tokens=openai_max_tokens,
@@ -183,9 +188,9 @@ def admin_app_factory():
         app = FastAPI()
         app.include_router(admin_router)
         app.dependency_overrides[get_app_settings] = lambda: settings
-        # Pin the #39 admin-role gate so route tests that don't probe
-        # auth gating can run without forging the Easy Auth headers.
-        app.dependency_overrides[REQUIRE_ADMIN_USER] = lambda: "u-1"
+        # Pin get_user_id so route tests receive a fixed caller GUID
+        # without forging the x-ms-client-principal-id header.
+        app.dependency_overrides[get_user_id] = lambda: _FIXED_USER_ID
         # Pin a sentinel credential so routes consuming ``CredentialDep``
         # don't trip on the lifespan-less ASGI test transport.
         cred = credential if credential is not None else AsyncMock()
@@ -214,17 +219,6 @@ def _client(app: FastAPI) -> httpx.AsyncClient:
 
 
 # ---------------------------------------------------------------------------
-# admin auth gate (#39 -- RBAC-narrowed to the "admin" role claim).
-#
-# The role-claim parsing contract is exhaustively unit-tested in
-# tests/backend/test_dependencies.py::test_requires_role_*. The smoke
-# tests below are the ROUTE-level wiring checks: do the admin routes
-# actually consume the gate, and does a missing principal in production
-# surface as 401 end-to-end through the router?
-# ---------------------------------------------------------------------------
-
-
-# ---------------------------------------------------------------------------
 # GET /api/admin/status -- payload shape and value mapping
 # ---------------------------------------------------------------------------
 
@@ -237,7 +231,6 @@ _EXPECTED_STATUS_KEYS = {
     "foundry_project_endpoint_host",
     "gpt_deployment",
     "embedding_deployment",
-    "reasoning_deployment",
     "search_enabled",
     "app_insights_enabled",
     "cors_origins",
@@ -329,10 +322,8 @@ async def test_status_maps_orchestrator_db_index_environment(
             cosmos_endpoint="",
         )
     )
-    # production mode -> route requires header; forge it via the
-    # already-pinned REQUIRE_ADMIN_USER override (the fixture pinned
-    # "u-1"), so the request still succeeds.
-    # "u-1"), so the request still succeeds.
+    # The fixture pins get_user_id to a fixed caller GUID, so the
+    # request succeeds regardless of environment.
     async with _client(app) as ac:
         resp = await ac.get("/api/admin/status")
     body = resp.json()
@@ -381,18 +372,16 @@ async def test_status_uses_env_orchestrator_when_no_override(
 async def test_status_returns_cors_and_deployments(admin_app_factory) -> None:
     app = admin_app_factory(
         _settings(
-            gpt_deployment="gpt-4o",
+            gpt_deployment="gpt-5.1",
             embedding_deployment="text-embedding-3-large",
-            reasoning_deployment="o3-mini",
             cors_origins=["http://localhost:3000", "https://prod.example.com"],
         )
     )
     async with _client(app) as ac:
         resp = await ac.get("/api/admin/status")
     body = resp.json()
-    assert body["gpt_deployment"] == "gpt-4o"
+    assert body["gpt_deployment"] == "gpt-5.1"
     assert body["embedding_deployment"] == "text-embedding-3-large"
-    assert body["reasoning_deployment"] == "o3-mini"
     assert body["cors_origins"] == [
         "http://localhost:3000",
         "https://prod.example.com",
@@ -426,91 +415,6 @@ async def test_status_does_not_leak_sensitive_settings(
     async with _client(app) as ac:
         resp = await ac.get("/api/admin/status")
     assert marker not in resp.text
-
-
-# ---------------------------------------------------------------------------
-# Auth gate via the full route (production mode, missing header -> 401)
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.asyncio
-async def test_status_endpoint_requires_easy_auth_in_production() -> None:
-    """End-to-end #39 RBAC check: the route must reject anonymous
-    callers in production. Builds the app WITHOUT the
-    ``REQUIRE_ADMIN_USER`` override so the real role-claim gate runs.
-    """
-    app = FastAPI()
-    app.include_router(admin_router)
-    app.dependency_overrides[get_app_settings] = lambda: _settings(
-        environment="production"
-    )
-    async with _client(app) as ac:
-        resp = await ac.get("/api/admin/status")
-    assert resp.status_code == 401
-
-
-@pytest.mark.asyncio
-async def test_status_endpoint_returns_403_when_caller_lacks_admin_role() -> None:
-    """End-to-end #39 RBAC check: an authenticated caller WITHOUT the
-    ``admin`` role claim must be rejected with 403, not 200. Builds the
-    app WITHOUT the ``REQUIRE_ADMIN_USER`` override so the real gate
-    parses the forged claims blob.
-    """
-    payload = {
-        "auth_typ": "aad",
-        "claims": [{"typ": "roles", "val": "reader"}],
-    }
-    claims_blob = base64.b64encode(
-        json.dumps(payload).encode("utf-8")
-    ).decode("ascii")
-
-    app = FastAPI()
-    app.include_router(admin_router)
-    app.dependency_overrides[get_app_settings] = lambda: _settings(
-        environment="production"
-    )
-    async with _client(app) as ac:
-        resp = await ac.get(
-            "/api/admin/status",
-            headers={
-                "x-ms-client-principal-id": "user-oid-789",
-                "x-ms-client-principal": claims_blob,
-            },
-        )
-    assert resp.status_code == 403
-
-
-@pytest.mark.asyncio
-async def test_status_endpoint_returns_200_when_caller_has_admin_role(
-    admin_app_factory,
-) -> None:
-    """End-to-end #39 RBAC check: an authenticated caller WITH the
-    ``admin`` role claim reaches the route handler. Builds the app
-    WITHOUT the ``REQUIRE_ADMIN_USER`` override so the real gate
-    parses the forged claims blob and resolves the user id.
-    """
-    payload = {
-        "auth_typ": "aad",
-        "claims": [{"typ": "roles", "val": "admin"}],
-    }
-    claims_blob = base64.b64encode(
-        json.dumps(payload).encode("utf-8")
-    ).decode("ascii")
-
-    app = FastAPI()
-    app.include_router(admin_router)
-    app.dependency_overrides[get_app_settings] = lambda: _settings(
-        environment="production"
-    )
-    async with _client(app) as ac:
-        resp = await ac.get(
-            "/api/admin/status",
-            headers={
-                "x-ms-client-principal-id": "user-oid-admin",
-                "x-ms-client-principal": claims_blob,
-            },
-        )
-    assert resp.status_code == 200
 
 
 # ---------------------------------------------------------------------------
@@ -718,23 +622,6 @@ async def test_config_does_not_leak_sensitive_settings(
     assert marker not in resp.text
 
 
-@pytest.mark.asyncio
-async def test_config_endpoint_requires_easy_auth_in_production() -> None:
-    """#39 RBAC: anonymous callers must be rejected in production.
-
-    Builds the app WITHOUT the ``REQUIRE_ADMIN_USER`` override so the
-    real dependency runs and the missing Easy Auth header trips the 401.
-    """
-    app = FastAPI()
-    app.include_router(admin_router)
-    app.dependency_overrides[get_app_settings] = lambda: _settings(
-        environment="production"
-    )
-    async with _client(app) as ac:
-        resp = await ac.get("/api/admin/config")
-    assert resp.status_code == 401
-
-
 # ---------------------------------------------------------------------------
 # PATCH /api/admin/config -- runtime overrides (#35c-4)
 #
@@ -889,7 +776,7 @@ async def test_patch_config_records_caller_id_and_timestamp(
     admin_app_factory,
 ) -> None:
     """Audit trail: every persisted RuntimeConfig must carry the
-    admin caller's user id (from `REQUIRE_ADMIN_USER`, pinned to "u-1"
+    admin caller's user id (from `get_user_id`, pinned to a fixed GUID
     in this fixture) and an ISO-8601 `updated_at` so a future query
     can answer 'who flipped temperature to 0.9 and when?'. Without
     these, the override row is anonymous and undateable."""
@@ -901,7 +788,7 @@ async def test_patch_config_records_caller_id_and_timestamp(
         )
     assert resp.status_code == 200
     persisted = db.upsert_runtime_config.await_args.args[0]
-    assert persisted.updated_by == "u-1"
+    assert persisted.updated_by == _FIXED_USER_ID
     # ISO-8601 with timezone -- not just "now()" formatted weirdly.
     assert persisted.updated_at
     parsed = datetime.fromisoformat(persisted.updated_at)
@@ -1228,26 +1115,6 @@ async def test_patch_config_rejects_non_bool_post_answering_enabled(
     db.upsert_runtime_config.assert_not_awaited()
 
 
-@pytest.mark.asyncio
-async def test_patch_config_requires_easy_auth_in_production() -> None:
-    """H1 hardening parity with GET: anonymous callers must be
-    rejected in production. Without this, an unauthenticated PATCH
-    could mutate the persisted runtime config indefinitely."""
-    app = FastAPI()
-    app.include_router(admin_router)
-    app.dependency_overrides[get_app_settings] = lambda: _settings(
-        environment="production"
-    )
-    db = _fake_db()
-    app.dependency_overrides[get_database_client] = lambda: db
-    async with _client(app) as ac:
-        resp = await ac.patch(
-            "/api/admin/config", json={"openai_temperature": 0.7}
-        )
-    assert resp.status_code == 401
-    db.upsert_runtime_config.assert_not_awaited()
-
-
 # ---------------------------------------------------------------------------
 # #35e(a): live-reload runtime overrides -- PATCH writes through to
 # `app.state.runtime_overrides` so the next request's
@@ -1334,8 +1201,8 @@ async def test_patch_config_writes_admin_audit_on_success(
 ) -> None:
     """Happy path: a successful PATCH must call
     `db.write_admin_audit` exactly once with an `AdminAuditEntry`
-    whose `actor` is the admin caller id (pinned to `"u-1"` in this
-    fixture), `action == "patch_config"`, `before` is the prior
+    whose `actor` is the admin caller id (pinned to a fixed GUID in
+    this fixture), `action == "patch_config"`, `before` is the prior
     persisted override (here a `RuntimeConfig` with temperature=0.5)
     and `after` is the just-persisted merged shape. Locks the four
     forensic axes a future audit query needs (who / what /
@@ -1351,7 +1218,7 @@ async def test_patch_config_writes_admin_audit_on_success(
     db.write_admin_audit.assert_awaited_once()
     entry = db.write_admin_audit.await_args.args[0]
     assert isinstance(entry, AdminAuditEntry)
-    assert entry.actor == "u-1"
+    assert entry.actor == _FIXED_USER_ID
     assert entry.action == "patch_config"
     assert entry.before is not None
     assert entry.before.openai_temperature == 0.5
@@ -1966,23 +1833,6 @@ async def test_list_documents_returns_503_when_search_disabled(
     assert "not configured" in resp.json()["detail"].lower()
 
 
-@pytest.mark.asyncio
-async def test_list_documents_requires_easy_auth_in_production() -> None:
-    """End-to-end #39 RBAC check: an anonymous GET in production must
-    be rejected with 401 by the shared ``REQUIRE_ADMIN_USER`` gate.
-    Mirrors ``test_delete_document_requires_easy_auth_in_production``
-    so every admin route shares the same gating contract.
-    """
-    app = FastAPI()
-    app.include_router(admin_router)
-    app.dependency_overrides[get_app_settings] = lambda: _settings(
-        environment="production"
-    )
-    async with _client(app) as ac:
-        resp = await ac.get("/api/admin/documents")
-    assert resp.status_code == 401
-
-
 # ---------------------------------------------------------------------------
 # DELETE /api/admin/documents/{source} -- admin-side delete (#35d)
 # ---------------------------------------------------------------------------
@@ -2120,29 +1970,6 @@ async def test_delete_document_returns_503_when_search_disabled(
     assert "not configured" in resp.json()["detail"].lower()
 
 
-@pytest.mark.asyncio
-async def test_delete_document_requires_easy_auth_in_production() -> None:
-    """End-to-end #39 RBAC check: an anonymous DELETE in production
-    must be rejected with 401 by the shared ``REQUIRE_ADMIN_USER``
-    gate. Mirrors the existing
-    ``test_status_endpoint_requires_easy_auth_in_production`` pattern
-    so every admin route shares the same gating contract.
-    """
-    app = FastAPI()
-    app.include_router(admin_router)
-    app.dependency_overrides[get_app_settings] = lambda: _settings(
-        environment="production"
-    )
-    # The route now resolves ``CredentialDep`` (for the blob delete);
-    # stub it so dependency resolution reaches the admin-role gate,
-    # which is what this test exercises. In a real deployment the
-    # lifespan-built credential is present, so the 401 fires the same.
-    app.dependency_overrides[get_credential] = lambda: AsyncMock()
-    async with _client(app) as ac:
-        resp = await ac.delete("/api/admin/documents/report.pdf")
-    assert resp.status_code == 401
-
-
 # ---------------------------------------------------------------------------
 # POST /api/admin/documents/url -- URL ingestion
 # ---------------------------------------------------------------------------
@@ -2239,27 +2066,6 @@ async def test_ingest_url_returns_503_when_storage_unconfigured(
     assert resp.status_code == 503
     assert "not configured" in resp.json()["detail"].lower()
     sentinel.assert_not_called()
-
-
-@pytest.mark.asyncio
-async def test_ingest_url_requires_easy_auth_in_production() -> None:
-    """End-to-end #39 RBAC check: anonymous POST in production -> 401.
-    Same gating contract as every other admin route.
-    """
-    app = FastAPI()
-    app.include_router(admin_router)
-    app.dependency_overrides[get_app_settings] = lambda: _settings(
-        environment="production"
-    )
-    # Pin a credential so the gate fails first instead of the
-    # lifespan-less credential dependency tripping.
-    app.dependency_overrides[get_credential] = lambda: AsyncMock()
-    async with _client(app) as ac:
-        resp = await ac.post(
-            "/api/admin/documents/url",
-            json={"url": "https://example.com/article.pdf"},
-        )
-    assert resp.status_code == 401
 
 
 # ---------------------------------------------------------------------------
@@ -2479,23 +2285,6 @@ async def test_upload_document_allows_non_di_extension_without_parse_service(
     assert resp.json()["queued"] is True
 
 
-@pytest.mark.asyncio
-async def test_upload_document_requires_easy_auth_in_production() -> None:
-    """End-to-end #39 RBAC check: anonymous POST in production -> 401."""
-    app = FastAPI()
-    app.include_router(admin_router)
-    app.dependency_overrides[get_app_settings] = lambda: _settings_with_storage(
-        environment="production"
-    )
-    app.dependency_overrides[get_credential] = lambda: AsyncMock()
-    async with _client(app) as ac:
-        resp = await ac.post(
-            "/api/admin/documents",
-            files={"file": ("report.pdf", b"x", "application/pdf")},
-        )
-    assert resp.status_code == 401
-
-
 # ---------------------------------------------------------------------------
 # POST /api/admin/documents/reprocess -- fan every blob in the documents
 # container onto the push queue.
@@ -2547,20 +2336,6 @@ async def test_reprocess_all_returns_503_when_storage_unconfigured(
     assert resp.status_code == 503
     assert "not configured" in resp.json()["detail"].lower()
     sentinel.assert_not_called()
-
-
-@pytest.mark.asyncio
-async def test_reprocess_all_requires_easy_auth_in_production() -> None:
-    """End-to-end #39 RBAC check: anonymous POST in production -> 401."""
-    app = FastAPI()
-    app.include_router(admin_router)
-    app.dependency_overrides[get_app_settings] = lambda: _settings_with_storage(
-        environment="production"
-    )
-    app.dependency_overrides[get_credential] = lambda: AsyncMock()
-    async with _client(app) as ac:
-        resp = await ac.post("/api/admin/documents/reprocess")
-    assert resp.status_code == 401
 
 
 # ---------------------------------------------------------------------------

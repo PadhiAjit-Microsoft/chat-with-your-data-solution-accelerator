@@ -99,6 +99,55 @@ drift-guard is now parametrized per workload to assert the correct name for each
 This durable fix takes effect on the next `azd provision`; the **function half** of
 BUG-0055 (app-level OTel export from the function worker) remains open.
 
+## Amendment 2 (2026-07-02) — enable App Insights local auth to match MACAE (BUG-0055)
+
+Amendment 1 fixed the backend env-var name but both runtimes still emitted **zero**
+telemetry. The remaining cause is the AppI ingestion auth posture itself. The App
+Insights component (`avm/res/insights/component`) is provisioned with
+`disableLocalAuth: true`, so the data plane **refuses** instrumentation-key /
+connection-string ingestion and requires a Microsoft Entra bearer token. But CWYD's
+application code calls `configure_azure_monitor(connection_string=...)` with **no
+`credential=`** at both sites (the backend lifespan and the functions worker), so the
+exporter never presents a token and every ingestion request silently returns 401 —
+telemetry looks "wired" while no events ever reach the workspace.
+
+**What changed.** The App Insights component `disableLocalAuth` flips from `true` to
+`false` in [`v2/infra/main.bicep`](../../infra/main.bicep). The
+`Monitoring Metrics Publisher` role assignment on the App Insights component
+(introduced by Decision #2 above) is **retained** even though it is now unused, kept
+in place to preserve a clean revert path (see below). No application code changes.
+
+**Why.** This matches MACAE (the Multi-Agent Custom Automation Engine Solution
+Accelerator), whose App Insights `avm/res/insights/component` **omits** `disableLocalAuth`
+— defaulting to `false` — and ingests telemetry with connection-string /
+instrumentation-key auth, granting no `Monitoring Metrics Publisher` role at all.
+CWYD's application code is **already** connection-string-only
+(`configure_azure_monitor(connection_string=...)`), so enabling local auth restores
+ingestion with **zero application-code change**. This is the smallest possible fix for
+BUG-0055: App Insights was receiving zero telemetry precisely because
+`disableLocalAuth: true` rejected the ikey ingestion path and the exporter presented
+no Entra credential.
+
+**Tradeoff.** Instrumentation-key / connection-string ingestion is a **weaker auth
+bar** than Entra-token ingestion. Accepted because MACAE — a shipped Microsoft
+reference accelerator — uses exactly this posture. This amendment therefore
+**reverses** the original ADR's Decision #2 (Entra-only ingestion via
+`disableLocalAuth: true`) and its *Positive* consequence "**UAMI + Entra-only ingestion
+stays**". The original ADR never enumerated an explicit "leave local auth enabled"
+alternative — it treated `disableLocalAuth: true` as settled — so this amendment
+introduces that posture deliberately. (The role assignment from Decision #2 is
+retained, not reversed; only rejected Alternative #3's "drop the role" stance is
+untouched here.)
+
+**Revert path.** To return to Entra-only ingestion, flip `disableLocalAuth` back to
+`true` and pass a **synchronous** `azure.identity.ManagedIdentityCredential(client_id=...)`
+to `configure_azure_monitor(connection_string=..., credential=...)` at **both** sites:
+the backend lifespan in [`v2/src/backend/app.py`](../../src/backend/app.py) and the
+functions worker in [`v2/src/functions/core/telemetry.py`](../../src/functions/core/telemetry.py).
+Because the `Monitoring Metrics Publisher` role assignment is retained, no RBAC change
+is required for the revert. (This credential-based approach is the research doc's
+rejected alternative, preserved here for reference.)
+
 ## References
 
 - [`v2/infra/main.bicep`](../../infra/main.bicep) — `enableMonitoring` param (line 195), `logAnalyticsWorkspace` + `applicationInsights` modules (lines 287–321), `disableLocalAuth: true` (line 320), backend env wiring (lines 1702–1703 + 1816–1817), function env wiring (lines 1980–1986). New `appiMonitoringRole` lands near the `flexDeploymentRole` block (~line 2005).

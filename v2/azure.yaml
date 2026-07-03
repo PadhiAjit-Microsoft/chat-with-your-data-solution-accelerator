@@ -91,9 +91,9 @@ parameters:
 # ----------------------------------------------------------------------
 # Services — bound to Bicep resources by the `azd-service-name` tag in
 # v2/infra/main.bicep:
-#   - backend  → Container App  (tag 'backend',  L1120)
-#   - frontend → App Service    (tag 'frontend', L1240)
-#   - function → Function App   (tag 'function', L1366)
+#   - backend  → Container App  (tag 'backend')
+#   - frontend → Container App  (tag 'frontend')
+#   - function → Container App  (tag 'function', kind=functionapp)
 # Each service uses its own Dockerfile under v2/docker/. `azd deploy`
 # builds the image, pushes to the Bicep-deployed ACR, and updates the
 # target resource. Debt #Q4 (Phase 3.5 QA remediation) — closes the
@@ -107,59 +107,45 @@ services:
     docker:
       path: ../../docker/Dockerfile.backend
       context: ../..
+      # Build the backend image in ACR (remote) instead of the local
+      # Docker daemon, so `azd deploy` works without a local Docker
+      # install and pushes straight to the registry the UAMI pulls from.
+      remoteBuild: true
   frontend:
     project: ./src/frontend
     language: js
-    host: appservice
+    host: containerapp
     docker:
       path: ../../docker/Dockerfile.frontend
       context: ../..
+      # Pin the multi-stage build to the `prod` stage (uvicorn serving
+      # the Vite dist/ on port 80).
       target: prod
-      # Vite bakes the backend URL into the static bundle at build time.
-      # AZURE_BACKEND_URL is a Bicep output of the backend Container App
-      # (see v2/infra/main.bicep -> output azureBackendUrl). azd resolves
-      # ${AZURE_BACKEND_URL} from the active azd env before invoking
-      # `docker build`, so the bundle ships pointing at the right
-      # backend without a separate runtime config fetch.
-      buildArgs:
-        - VITE_BACKEND_URL=${AZURE_BACKEND_URL}
+      # Build the frontend image in ACR (remote) instead of the local
+      # Docker daemon, so `azd deploy` works without a local Docker
+      # install and pushes straight to the registry the UAMI pulls from.
+      remoteBuild: true
+      # No VITE_BACKEND_URL build-arg: the SPA reads the backend origin at
+      # runtime from /config (the BACKEND_API_URL env on the container
+      # app), so nothing is baked at build time.
   function:
-    project: ./build-functions
+    project: ./src/functions
     language: py
-    host: function
-    # prepackage is SERVICE-scoped (not project-scoped) so it fires on a
-    # targeted `azd deploy function` as well as `azd package` / `azd up`.
-    # A project-level `hooks.prepackage` only runs on the `package`
-    # command, so per-service deploys shipped a stale build-functions/
-    # artifact (BUG-0058). It regenerates v2/build-functions/ from
-    # src/functions/ + src/backend/ (function_app.py + host.json at root,
-    # a functions/ subpackage carrying the blueprint tree so
-    # `from functions.<sub>...` resolves at deploy root, a backend/
-    # subpackage, plus generated requirements.txt + .funcignore -- see
-    # v2/scripts/prepackage_function.py for the layout contract). The run
-    # path is relative to the service path (build-functions/), so it
-    # climbs to ../scripts/; the Python script resolves every path from
-    # its own location, so the hook cwd is irrelevant.
-    hooks:
-      prepackage:
-        posix:
-          shell: sh
-          run: ../scripts/prepackage-function.sh
-          continueOnError: false
-          interactive: false
-        windows:
-          shell: pwsh
-          run: ../scripts/prepackage-function.ps1
-          continueOnError: false
-          interactive: false
+    host: containerapp
+    docker:
+      path: ../../docker/Dockerfile.functions
+      context: ../..
+      # Build the function image in ACR (remote) instead of the local
+      # Docker daemon, so `azd deploy` works without a local Docker
+      # install and pushes straight to the registry the UAMI pulls from.
+      # The Dockerfile reproduces the Functions deploy layout
+      # (function_app.py + host.json at the deploy root, blueprints nested
+      # under functions/, backend/ copied) so no prepackage staging hook
+      # is needed.
+      remoteBuild: true
 
 # ----------------------------------------------------------------------
 # Project-level hooks.
-#
-#   prepackage is intentionally NOT here -- it is SERVICE-scoped under
-#   `services.function.hooks.prepackage` (above) so it fires on a
-#   targeted `azd deploy function`, which a project-level package hook
-#   does not (BUG-0058).
 #
 #   postprovision -- runs after every successful `azd provision` /
 #                    `azd up`. Idempotent. In postgresql mode it
@@ -168,6 +154,20 @@ services:
 #                    Entra token. Always prints a compact summary of
 #                    the AZURE_* outputs an operator most commonly
 #                    needs.
+#
+#   postdeploy    -- runs after every successful `azd deploy` / `azd up`.
+#                    Prompts the operator (interactive menu) to choose an
+#                    assistant scenario to seed -- default / employee
+#                    (benefits + HR docs), contract (contract docs), or
+#                    All -- then uploads those documents into the
+#                    documents container and enqueues ingestion so chat
+#                    grounds out-of-the-box. The scope can also be set
+#                    unattended via AZURE_ENV_SAMPLE_DATA (or --set);
+#                    a non-interactive shell with no override skips the
+#                    seed. Idempotent (skip-if-present), and
+#                    continueOnError is true so a seed hiccup (e.g. RBAC
+#                    propagation delay) never fails an otherwise-successful
+#                    deployment.
 #
 # Both posix/windows wrappers shell out to a single Python script so
 # behaviour is identical across platforms.
@@ -183,4 +183,15 @@ hooks:
       shell: pwsh
       run: ./scripts/post-provision.ps1
       continueOnError: false
+      interactive: true
+  postdeploy:
+    posix:
+      shell: sh
+      run: ./scripts/upload-sample-data.sh
+      continueOnError: true
+      interactive: true
+    windows:
+      shell: pwsh
+      run: ./scripts/upload-sample-data.ps1
+      continueOnError: true
       interactive: true

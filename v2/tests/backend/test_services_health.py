@@ -24,7 +24,7 @@ COSMOS_ENV: dict[str, str] = {
     "AZURE_COSMOS_ENDPOINT": "https://cosmos-cwyd001.documents.azure.com:443/",
     "AZURE_AI_PROJECT_ENDPOINT": "https://foundry-cwyd001.services.ai.azure.com/api/projects/p1",
     "AZURE_AI_SEARCH_ENDPOINT": "https://srch-cwyd001.search.windows.net",
-    "AZURE_OPENAI_GPT_DEPLOYMENT": "gpt-4o",
+    "AZURE_OPENAI_GPT_DEPLOYMENT": "gpt-5.1",
     "AZURE_OPENAI_EMBEDDING_DEPLOYMENT": "text-embedding-3-small",
 }
 
@@ -217,22 +217,3 @@ def test_run_health_checks_overall_passes_when_search_skipped(monkeypatch: pytes
     assert result.status is OverallStatus.PASS
     search = next(c for c in result.checks if c.name == "search")
     assert search.status is CheckStatus.SKIP
-
-
-# ---------------------------------------------------------------------------
-# run_health_checks -- auth_enforced reflects the runtime environment
-# ---------------------------------------------------------------------------
-
-
-def test_run_health_checks_auth_enforced_false_when_local(monkeypatch: pytest.MonkeyPatch) -> None:
-    """`AZURE_ENVIRONMENT` unset defaults to `local`, so auth is not enforced."""
-    monkeypatch.delenv("AZURE_ENVIRONMENT", raising=False)
-    settings = _settings(monkeypatch, COSMOS_ENV)
-    result = run_health_checks(settings)
-    assert result.auth_enforced is False
-
-
-def test_run_health_checks_auth_enforced_true_when_production(monkeypatch: pytest.MonkeyPatch) -> None:
-    settings = _settings(monkeypatch, {**COSMOS_ENV, "AZURE_ENVIRONMENT": "production"})
-    result = run_health_checks(settings)
-    assert result.auth_enforced is True

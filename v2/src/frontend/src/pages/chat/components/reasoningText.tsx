@@ -15,6 +15,7 @@
  * carries no such titles (the langgraph delta stream) is returned as
  * the verbatim join.
  */
+import { collapseConsecutiveSuperscripts } from "./citationTokens";
 
 // A model-emitted section title: a bold span on its own line — `**Title**`
 // immediately followed by a line break, with any whitespace on either
@@ -28,4 +29,31 @@ export function formatReasoning(parts: string[]): string {
     .replace(SECTION_TITLE, "\n")
     .replace(/\n{2,}/g, "\n")
     .trim();
+}
+
+// The reasoning citation marker family the model interleaves into its
+// chain-of-thought: `[docN]`, `doc[N]`, `docs[N]`, and bare `[N]`. The
+// captured group is the number verbatim. The `\d{1,3}` cap admits 1–3
+// digit indices and excludes 4-digit brackets (e.g. `[2026]`), which are
+// prose, not citation markers.
+const REASONING_CITATION_MARKER = /(?:docs?\s*)?\[(?:doc)?(\d{1,3})\]/gi;
+
+/**
+ * Pure marker→superscript normalizer for the reasoning feed. It rewrites
+ * every reasoning citation marker (`[docN]`, `doc[N]`, `docs[N]`, bare
+ * `[N]`) into the ` ^N^ ` token that `remark-supersub` renders as a
+ * `<sup>` node — the same token the answer body's `parseAnswer`
+ * produces, so both feeds drive `remark-supersub` identically. The
+ * number is emitted verbatim: the reasoning panel is chain-of-thought,
+ * not a clickable citation surface, so there is no renumbering against a
+ * `citations` array. Leading/trailing spaces around each token preserve
+ * a word boundary in adjacent prose, and consecutive duplicate
+ * superscripts collapse to one. Text carrying no markers is returned
+ * unchanged; whitespace trimming is `formatReasoning`'s concern, so this
+ * helper composes after it.
+ */
+export function superscriptReasoningCitations(text: string): string {
+  return collapseConsecutiveSuperscripts(
+    text.replace(REASONING_CITATION_MARKER, " ^$1^ "),
+  );
 }

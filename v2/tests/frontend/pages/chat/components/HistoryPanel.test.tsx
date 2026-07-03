@@ -10,6 +10,7 @@ import {
 } from "@testing-library/react";
 import { HistoryPanel } from "@/pages/chat/components/HistoryPanel";
 import { DEFAULT_USER_ID, setUserId } from "@/api/auth";
+import { loadRuntimeConfig, resetRuntimeConfig } from "@/api/runtimeConfig";
 
 interface FakeConv {
   id: string;
@@ -90,6 +91,7 @@ afterEach(() => {
   vi.restoreAllMocks();
   // Reset the module-level resolved id so each test starts from default.
   setUserId(null);
+  resetRuntimeConfig();
 });
 
 const sampleList: FakeConv[] = [
@@ -115,6 +117,40 @@ describe("HistoryPanel", () => {
     const urls = calls.map((c) => c.url);
     expect(urls.some((u) => u.endsWith("/api/history/conversations"))).toBe(true);
     expect(urls.some((u) => u.endsWith("/api/history/status"))).toBe(false);
+  });
+
+  it("prefixes history requests with the runtime /config backendUrl", async () => {
+    // Resolve the backend origin from /config first (deployed split-host),
+    // then the panel's requests must target that origin, not the empty
+    // build-time VITE_BACKEND_URL.
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({ backendUrl: "https://backend.example.com" }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      ),
+    );
+    await loadRuntimeConfig();
+    vi.unstubAllGlobals();
+
+    const calls = installFetch({
+      list: () =>
+        new Response(JSON.stringify(sampleList), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+    });
+    render(<HistoryPanel />);
+    await screen.findByTestId("history-list");
+
+    expect(calls.length).toBeGreaterThan(0);
+    expect(
+      calls.every((c) =>
+        c.url.startsWith("https://backend.example.com/api/history"),
+      ),
+    ).toBe(true);
   });
 
   it("does not display the backend database name", async () => {

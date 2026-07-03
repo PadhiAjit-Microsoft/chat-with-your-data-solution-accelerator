@@ -11,18 +11,21 @@ function, plus a focused ``_execute`` translate-and-enqueue test.
 
 import json
 import logging
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Sequence
 from typing import Self, cast
 
 import azure.functions as func
 import pytest
 from azure.core.exceptions import AzureError
 
+from backend.core.providers.search.base import BaseSearch
 from backend.core.settings import AppSettings, get_settings
+from backend.core.types import SearchResult
 from functions.blob_event import blueprint as bp_module
 from functions.blob_event.blueprint import blob_event
 from functions.blob_event.event_parser import BlobEventType
 from functions.blob_event.handler import BlobEventOutcome
+from functions.core import search_resolution
 from functions.core.contracts import BatchPushQueueMessage
 from functions.function_app import app
 
@@ -46,8 +49,7 @@ _BASE_ENV: dict[str, str] = {
     "AZURE_AI_PROJECT_ENDPOINT": "https://ai-cwyd001.services.ai.azure.com/api/projects/proj",
     "AZURE_AI_AGENT_API_VERSION": "2025-05-01",
     "AZURE_OPENAI_API_VERSION": "2024-12-01-preview",
-    "AZURE_OPENAI_GPT_DEPLOYMENT": "gpt-4.1",
-    "AZURE_OPENAI_REASONING_DEPLOYMENT": "o4-mini",
+    "AZURE_OPENAI_GPT_DEPLOYMENT": "gpt-5.1",
     "AZURE_OPENAI_EMBEDDING_DEPLOYMENT": "text-embedding-3-small",
     "AZURE_DB_TYPE": "cosmosdb",
     "AZURE_INDEX_STORE": "AzureSearch",
@@ -296,9 +298,14 @@ async def test_execute_deindexes_on_blob_deleted(
         async def get_credential(self) -> _StubCredCM:
             return _StubCredCM()
 
-    class _StubSearch:
+    class _StubSearch(BaseSearch):
         def __init__(self, **_kw: object) -> None:
             pass
+
+        async def search(
+            self, query: str, **_kwargs: object
+        ) -> Sequence[SearchResult]:
+            return []
 
         async def ensure_schema(self) -> None:
             return None
@@ -317,7 +324,7 @@ async def test_execute_deindexes_on_blob_deleted(
         bp_module.credentials_registry.registry, "get", lambda _key: _StubCredProvider
     )
     monkeypatch.setattr(
-        bp_module.search_registry.registry, "get", lambda _key: _StubSearch
+        search_resolution.search_registry.registry, "get", lambda _key: _StubSearch
     )
 
     result = await bp_module._execute(

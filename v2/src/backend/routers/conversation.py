@@ -150,9 +150,10 @@ async def conversation(
     # The turn's question is the latest user message -- the frontend
     # sends the running thread ending with the new user turn. Both
     # response modes persist the completed turn keyed by `user_id` (the
-    # Easy Auth principal id, or `local-dev` when running locally) so
-    # the history panel can replay it; a new thread is titled with this
-    # question, a follow-up appends to `body.conversation_id`.
+    # caller's principal id, or the anonymous default id when the header
+    # is absent) so the history panel can replay it; a new thread is
+    # titled with this question, a follow-up appends to
+    # `body.conversation_id`.
     question = next(
         (m.content for m in reversed(body.messages) if m.role == ChatRole.USER),
         "",

@@ -42,10 +42,9 @@ class Environment(StrEnum):
     """Runtime mode discriminator for `AppSettings.environment`.
 
     Members:
-        LOCAL: developer machine; Easy Auth header-absent fallback to
-            ``local-dev`` user id is permitted (admin + history routes).
-        PRODUCTION: cloud deployment; Easy Auth headers are required
-            and missing-header cases must fail closed with 401.
+        LOCAL: developer machine; the default for a clean checkout.
+        PRODUCTION: cloud deployment, set via `AZURE_ENVIRONMENT` by
+            `v2/infra/main.bicep`.
     """
 
     LOCAL = "local"
@@ -171,7 +170,6 @@ class OpenAISettings(BaseSettings):
 
     api_version: str = ""
     gpt_deployment: str = ""
-    reasoning_deployment: str = ""
     embedding_deployment: str = ""
     embedding_dimensions: int = 1536
     temperature: float = 0.0
@@ -522,15 +520,11 @@ class AppSettings(BaseSettings):
     # Runtime mode. `local` is the default so a clean checkout / dev run
     # boots without surprises. Production deployments set
     # `AZURE_ENVIRONMENT=production` via `v2/infra/main.bicep` on the
-    # backend Container App (and Function App) env-vars, which flips the
-    # final configuration to production -- the deployed admin auth gate
-    # then enforces Easy Auth (the local-dev bypass in
-    # backend.dependencies.requires_role fires only when
-    # `environment == 'local'`).
-    #
-    # Stable Core code that branches on environment must use this
-    # field -- never sniff `os.getenv` ad-hoc -- so the value is
-    # type-checked at boot and centrally testable.
+    # backend Container App (and Function App) env-vars. The value is a
+    # status-report field surfaced by `GET /api/admin/status`; Stable
+    # Core code that reads the runtime mode must use this field -- never
+    # sniff `os.getenv` ad-hoc -- so the value is type-checked at boot
+    # and centrally testable.
     environment: Environment = Environment.LOCAL
 
     identity: IdentitySettings = Field(default_factory=IdentitySettings)

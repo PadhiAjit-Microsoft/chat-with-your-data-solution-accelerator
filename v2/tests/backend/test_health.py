@@ -169,7 +169,7 @@ COSMOS_ENV: dict[str, str] = {
     "AZURE_COSMOS_ENDPOINT": "https://cosmos-cwyd001.documents.azure.com:443/",
     "AZURE_AI_PROJECT_ENDPOINT": "https://foundry-cwyd001.services.ai.azure.com/api/projects/p1",
     "AZURE_AI_SEARCH_ENDPOINT": "https://srch-cwyd001.search.windows.net",
-    "AZURE_OPENAI_GPT_DEPLOYMENT": "gpt-4o",
+    "AZURE_OPENAI_GPT_DEPLOYMENT": "gpt-5.1",
     "AZURE_OPENAI_EMBEDDING_DEPLOYMENT": "text-embedding-3-small",
 }
 
@@ -226,7 +226,6 @@ async def test_health_returns_200_when_all_checks_pass(
     body = r.json()
     assert body["status"] == "pass"
     assert body["version"] == "v2"
-    assert body["auth_enforced"] is False
     names = {c["name"]: c["status"] for c in body["checks"]}
     assert names == {"foundry_iq": "pass", "database": "pass", "search": "pass"}
 
@@ -304,7 +303,7 @@ async def test_health_response_model_shape(
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         r = await ac.get("/api/health")
     body = r.json()
-    assert set(body.keys()) == {"status", "version", "auth_enforced", "checks"}
+    assert set(body.keys()) == {"status", "version", "checks"}
     for check in body["checks"]:
         assert set(check.keys()) >= {"name", "status"}
 

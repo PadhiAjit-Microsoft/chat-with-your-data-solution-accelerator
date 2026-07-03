@@ -4,11 +4,14 @@
  *
  * Vitest coverage for `deriveDocumentHref` — the citation -> document
  * link resolver. Exercises the blob-name, blob-URL, external-URL, and
- * empty cases plus the `VITE_BACKEND_URL` absolute-prefix wiring.
+ * empty cases plus the runtime `getBackendUrl()` absolute-prefix wiring
+ * (the deployed `/config` origin, with the build-time `VITE_BACKEND_URL`
+ * as the local-dev fallback).
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { deriveDocumentHref } from "@/pages/chat/components/CitationDetailPanel/documentHref";
 import type { Citation } from "@/models/chat";
+import { loadRuntimeConfig, resetRuntimeConfig } from "@/api/runtimeConfig";
 
 function citation(overrides: Partial<Citation>): Citation {
   return {
@@ -25,6 +28,8 @@ function citation(overrides: Partial<Citation>): Citation {
 describe("deriveDocumentHref", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    resetRuntimeConfig();
   });
 
   it("builds a backend file route from a blob filename in the title", () => {
@@ -69,10 +74,26 @@ describe("deriveDocumentHref", () => {
     expect(deriveDocumentHref(citation({ title: "", url: "" }))).toBeNull();
   });
 
-  it("prefixes the backend file route with VITE_BACKEND_URL when set", () => {
-    vi.stubEnv("VITE_BACKEND_URL", "https://backend.example.com");
+  it("prefixes the backend file route with the runtime /config backendUrl", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({ backendUrl: "https://backend.example.com" }),
+          { status: 200, headers: { "Content-Type": "application/json" } },
+        ),
+      ),
+    );
+    await loadRuntimeConfig();
     expect(deriveDocumentHref(citation({ title: "Benefit_Options.pdf" }))).toBe(
       "https://backend.example.com/api/files/Benefit_Options.pdf",
+    );
+  });
+
+  it("falls back to build-time VITE_BACKEND_URL for local dev when /config is unset", () => {
+    vi.stubEnv("VITE_BACKEND_URL", "https://local.example.com");
+    expect(deriveDocumentHref(citation({ title: "Benefit_Options.pdf" }))).toBe(
+      "https://local.example.com/api/files/Benefit_Options.pdf",
     );
   });
 });

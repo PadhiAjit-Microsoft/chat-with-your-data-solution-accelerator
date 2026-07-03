@@ -25,7 +25,7 @@ Status legend: ✅ done · ⏳ in progress · ⏭ next · ☐ not started.
 
 ## Executive snapshot
 
-- **Backend MVP surface is complete and green.** Chat, RAG, citations, chat history (Cosmos + Postgres), and the full admin REST surface are implemented, registry-wired, and RBAC-gated. See [project_status.md](project_status.md) for the live test/gate metrics.
+- **Backend MVP surface is complete and green.** Chat, RAG, citations, chat history (Cosmos + Postgres), and the full admin REST surface are implemented, registry-wired, and resolve the caller's user id from the `x-ms-client-principal-id` header. See [project_status.md](project_status.md) for the live test/gate metrics.
 - **Frontend MVP surface is mostly complete.** Chat, streaming reasoning/answer, citation panel, history panel, theme switch, and the four admin pages are shipped. Admin pages now live at real URLs (`/admin/ingest|delete|config|prompt`) inside a dedicated admin layout shell.
 - **The header was simplified.** The blue "Chat" nav button was removed; a new chat starts from the broom / new-chat button. A gated **Admin** entry (gear) sits next to the history and theme controls and only appears when the caller has the admin role. Admin has its own layout with a **Home** button back to the chat.
 - **The main remaining gaps are platform auth and frontend polish:** enabling Easy Auth on the hosting platform so identity headers are injected in production, a signed-in-user display, history rehydrate-on-select, and SSE abort/reconnect.
@@ -39,7 +39,7 @@ Per-user conversation persistence over a registry-selected database (`cosmosdb` 
 ### How it works
 
 - **Router:** [history.py](../src/backend/routers/history.py) mounts under `/api/history` and is a thin REST surface over the registered `BaseDatabaseClient`. The concrete client is selected in the app lifespan and dispatched through the `databases` registry (Hard Rule #4) — the router never branches on backend type.
-- **Tenant isolation:** every route derives `user_id` from the Easy Auth principal header via `get_user_id` ([dependencies.py](../src/backend/dependencies.py)), so each caller only ever sees their own conversations. When the header is absent the code falls back to a single `"local-dev"` partition **only** if `AZURE_ENVIRONMENT=local`; production raises `401` so a misconfigured Easy Auth never merges callers.
+- **Tenant isolation:** every route derives `user_id` from the `x-ms-client-principal-id` header via `get_user_id` ([dependencies.py](../src/backend/dependencies.py)), so each caller only ever sees their own conversations. When the header is absent or not a GUID, `get_user_id` falls back to the anonymous default GUID partition; it never raises.
 - **Frontend:** [HistoryPanel.tsx](../src/frontend/src/pages/chat/components/HistoryPanel.tsx) lists conversations newest-first and toggles from the header clock button.
 
 ### Routes
@@ -118,11 +118,11 @@ sequenceDiagram
 
 ## 3. Admin flow
 
-A read/write operator surface for configuration and document management, gated by the `admin` role.
+A read/write operator surface for configuration and document management, reachable through the same header-based user id as the rest of the API.
 
 ### How it works
 
-- **Router:** [admin.py](../src/backend/routers/admin.py) mounts under `/api/admin`. **Every route depends on `AdminUserIdDep`** (`requires_role("admin")`), so the whole surface is RBAC-gated at the dependency layer.
+- **Router:** [admin.py](../src/backend/routers/admin.py) mounts under `/api/admin`. **Every route depends on `UserIdDep`**, which reads the `x-ms-client-principal-id` header, validates it is a GUID, and otherwise falls back to the anonymous default GUID. There is no application-layer role gate — identity enforcement, when enabled, is an ingress/proxy concern (see [ADR 0031](adr/0031-backend-admin-auth-header-only-ingress-enforced.md)).
 - **Sanitized status:** `GET /api/admin/status` returns only non-secret values — tenant ids, UAMI ids, and full database / Cosmos endpoints are deliberately excluded.
 - **Frontend:** the four admin pages live under a dedicated shell, [AdminLayout.tsx](../src/frontend/src/pages/admin/AdminLayout.tsx), which renders a sub-nav plus a **Home** button back to the chat. The pages are [IngestData.tsx](../src/frontend/src/pages/admin/IngestData/IngestData.tsx), [DeleteData.tsx](../src/frontend/src/pages/admin/DeleteData/DeleteData.tsx), [Configuration.tsx](../src/frontend/src/pages/admin/Configuration/Configuration.tsx), and [PromptEditor.tsx](../src/frontend/src/pages/admin/PromptEditor/PromptEditor.tsx). A gated **Admin** button in the header ([Header.tsx](../src/frontend/src/components/Header/Header.tsx)) navigates to `/admin/ingest` and only renders when the caller has the admin role.
 
@@ -145,19 +145,17 @@ sequenceDiagram
     participant U as Admin user
     participant FE as AdminLayout + pages
     participant API as /api/admin
-    participant RBAC as requires_role("admin")
     U->>FE: open Admin (gear)
-    FE->>API: GET /status (Easy Auth claims)
-    API->>RBAC: decode roles → require "admin"
-    RBAC-->>API: 200 (role present) / 403 (missing) / 401 (no Easy Auth)
-    API-->>FE: status / config / documents
+    FE->>API: GET /status (x-ms-client-principal-id header)
+    API->>API: validate header is a GUID (else default GUID)
+    API-->>FE: 200 status / config / documents
     U->>FE: upload | delete | reprocess | edit config
-    FE->>API: POST/DELETE/PATCH (admin-gated)
+    FE->>API: POST/DELETE/PATCH (x-ms-client-principal-id header)
 ```
 
 ### Status and gaps
 
-- ✅ Backend: all 9 routes, RBAC-gated, config audit log written on every successful PATCH.
+- ✅ Backend: all 9 routes, header user-id resolved, config audit log written on every successful PATCH.
 - ✅ Frontend: four pages, real URLs, dedicated layout, Home-to-chat, gated header entry. The Streamlit→React admin merge (`#35d`) is cleared.
 - ⏳ **Delete Data UX (`#54`):** backend delete surface is shipped and the FE has multi-select delete + retry; final operator-workflow parity and table-state polish remain.
 - ☐ **Audit-log viewer:** the backend persists admin config-change audit rows, but there is no FE page to view them yet.
@@ -167,36 +165,30 @@ sequenceDiagram
 
 ## 4. User login / auth flow
 
-The backend trusts App Service / Container Apps **Easy Auth** (built-in authentication). It reads identity from injected headers; it does not implement its own login.
+The backend trusts the `x-ms-client-principal-id` request header for the caller's identity; it does not implement its own login. When platform authentication (App Service / Container Apps **Easy Auth**) is enabled, the platform injects and overwrites that header at the ingress, so a signed-in caller's real Entra object id reaches the backend; when it is not enabled, the frontend forwards the anonymous default GUID.
 
 ### How it works
 
-- **Two headers** (set by the platform when Easy Auth is enabled):
-  - `x-ms-client-principal-id` — the caller's Entra object id (used for tenant isolation in chat history).
-  - `x-ms-client-principal` — a base64-encoded JSON claims blob (used to extract roles for RBAC).
-- **Identity:** `get_user_id` reads the principal-id header for tenant scoping.
-- **RBAC:** `requires_role("admin")` decodes the claims blob, accepts both the short `roles` claim type and the full schema-URI role claim, and returns the caller's object id when the `admin` role is present.
-- **Fail-closed in production:** missing principal id, missing/empty claims, or any decode failure → `401`; authenticated-but-no-role → `403`.
-- **Local-dev bypass:** when `AZURE_ENVIRONMENT=local` **and** no Easy Auth headers are present, both `get_user_id` and the role gate return a synthetic `"local-dev"` user so the app is exercisable end-to-end without forging claims.
+- **One header:** `x-ms-client-principal-id` — the caller's user id (an Entra object id when Easy Auth is on, or the anonymous default GUID `00000000-0000-0000-0000-000000000000` when it is off).
+- **Identity:** `get_user_id` ([dependencies.py](../src/backend/dependencies.py)) reads the header, validates it is a GUID, returns it as the tenant / partition key, and otherwise falls back to the default GUID. It never raises — there is no application-layer authentication gate.
+- **No RBAC in application code:** the former `requires_role("admin")` role gate and the base64 `x-ms-client-principal` claims blob are gone (see [ADR 0031](adr/0031-backend-admin-auth-header-only-ingress-enforced.md)). Admin routes use the same `get_user_id` dependency as every other route.
+- **Enforcement is at the ingress:** because `x-ms-client-principal-id` is a client-set, forgeable header, real authentication (when required) is enforced at the platform / proxy layer (Easy Auth), not in the backend — matching the MACAE posture.
 
 ```mermaid
 flowchart TD
-    A[Request] --> B{Easy Auth headers present?}
-    B -- No, AZURE_ENVIRONMENT=local --> C[user = local-dev]
-    B -- No, production --> D[401 Unauthorized]
-    B -- Yes --> E[get_user_id: principal-id → tenant scope]
-    E --> F{admin route?}
-    F -- No --> G[Proceed tenant-scoped]
-    F -- Yes --> H{admin role in claims?}
-    H -- Yes --> I[Proceed as admin]
-    H -- No --> J[403 Forbidden]
+    A[Request] --> B[get_user_id: read x-ms-client-principal-id]
+    B --> C{valid GUID?}
+    C -- Yes --> D[user = that GUID]
+    C -- No / absent --> E[user = default GUID]
+    D --> F[Proceed tenant-scoped]
+    E --> F
 ```
 
 ### Status and gaps
 
-- ✅ Backend: identity + RBAC fully implemented and fail-closed; verified by unit tests.
-- ☐ **Easy Auth is not provisioned in infrastructure.** `v2/infra/main.bicep` wires Postgres AAD auth and function deployment-storage identity, but it does **not** configure App Service / Container Apps built-in authentication. Without that, the `x-ms-client-principal-*` headers are never injected in production and the backend will (correctly) fail closed. This must be enabled — either added to `v2/infra/**` or applied as a documented operator step — to complete the production auth flow.
-- ☐ **Admin role assignment:** an Entra app role (or group) named `admin` must be defined and assigned to admin users so `requires_role("admin")` passes.
+- ✅ Backend: header user-id resolution is implemented and never fail-closes; verified by unit tests.
+- ☐ **Easy Auth is not provisioned in infrastructure.** `v2/infra/main.bicep` wires Postgres AAD auth and function deployment-storage identity, but it does **not** configure App Service / Container Apps built-in authentication. Without it, real signed-in identity is never injected and every caller uses the default GUID. Enable it (in `v2/infra/**` or as a documented operator step) to complete real per-user identity.
+- ☐ **Ingress protection for admin routes.** With the application-layer role gate removed, `/api/admin/*` (including writes) is reachable by anyone who can reach the backend FQDN. Before exposing the backend publicly, protect it at the ingress (private ingress, or Easy Auth on the backend Container App). See [ADR 0031](adr/0031-backend-admin-auth-header-only-ingress-enforced.md).
 - ☐ **Frontend identity display:** there is no signed-in-user indicator or sign-out control in the UI yet.
 
 ---
@@ -210,7 +202,7 @@ Tasks and subtasks left to call the MVP done. None of these block the backend, w
 | # | Task | Subtasks | Status |
 |---|---|---|---|
 | A1 | Enable Easy Auth on the hosting platform | Configure built-in authentication on the Container App / App Service ingress; map the Entra identity provider; confirm `x-ms-client-principal-*` headers reach the backend | ☐ |
-| A2 | Define and assign the `admin` app role | Create the `admin` app role (or group-as-role); assign to admin users; verify `requires_role("admin")` returns 200 for admins, 403 for others | ☐ |
+| A2 | Protect `/api/admin/*` at the ingress | The app no longer gates admin routes (see [ADR 0031](adr/0031-backend-admin-auth-header-only-ingress-enforced.md)); restrict the backend admin surface at the ingress (private ingress, or Easy Auth on the backend Container App) so admin writes are not open on the public FQDN | ☐ |
 | A3 | Frontend identity surface | Show the signed-in user; add a sign-out link to the Easy Auth endpoint; hide the admin entry unless the role is present (already gated by `adminAvailable`) | ☐ |
 
 ### B. Chat history frontend polish

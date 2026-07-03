@@ -7,13 +7,10 @@ Validates:
 
 * `AgentDefinition` is frozen and rejects unknown fields.
 * `CWYD_AGENT` and `RAI_AGENT` declare the required scenario data.
-* `RAI_AGENT.instructions` follows the MACAE TRUE/FALSE classifier
+* `RAI_AGENT.instructions` follows the reference-architecture TRUE/FALSE classifier
   shape (the resolver in CU-011a parses single-token responses).
 * `BUILTIN_AGENTS` is keyed by `definition.name` (the lazy resolver
   in CU-010c looks up by name).
-* `deployment_attr` always names a real `OpenAISettings` field
-  (catches typos like "gpt_deplyment" at definition-load time, not
-  at first-request time).
 """
 
 import pytest
@@ -30,7 +27,6 @@ from backend.core.agents.definitions import (
     compose_cwyd_instructions,
     resolve_cwyd_instructions,
 )
-from backend.core.settings import OpenAISettings
 
 
 # ---------------------------------------------------------------------------
@@ -74,20 +70,6 @@ def test_agent_definition_requires_non_empty_strings() -> None:
     ):
         with pytest.raises(ValidationError):
             AgentDefinition(**kwargs)  # type: ignore[arg-type]
-
-
-def test_agent_definition_rejects_unknown_deployment_attr() -> None:
-    """`deployment_attr` is a Literal -- typos must fail at construction,
-    not at first request when `getattr(settings.openai, attr)` returns
-    `None` and the SDK call collapses with an opaque message.
-    """
-    with pytest.raises(ValidationError):
-        AgentDefinition(
-            name="x",
-            description="y",
-            instructions="z",
-            deployment_attr="gpt_deplyment",  # type: ignore[arg-type]
-        )
 
 
 def test_agent_definition_tools_is_tuple_for_immutability() -> None:
@@ -257,8 +239,8 @@ def test_cwyd_default_body_drops_strict_in_domain_drag() -> None:
     assert "enough information" not in body
 
 
-def test_rai_agent_uses_macae_classifier_pattern() -> None:
-    """The MACAE-style RAI classifier returns exactly one token
+def test_rai_agent_uses_classifier_pattern() -> None:
+    """The reference-architecture-style RAI classifier returns exactly one token
     (`TRUE` or `FALSE`). The instructions must mention both tokens
     and instruct the model to emit one of them, otherwise the parser
     in CU-011a will mis-classify ambiguous outputs.
@@ -302,16 +284,3 @@ def test_builtin_agents_keyed_by_definition_name() -> None:
     for key, definition in BUILTIN_AGENTS.items():
         assert key == definition.name
     assert set(BUILTIN_AGENTS) == {"cwyd", "rai", "prompt_review"}
-
-
-def test_builtin_deployment_attrs_are_real_openai_settings_fields() -> None:
-    """`deployment_attr` must name an actual `OpenAISettings` field.
-    Catches typos at module-import time rather than at first request
-    when `getattr(settings.openai, "gpt_deplyment")` raises.
-    """
-    openai_fields = set(OpenAISettings.model_fields)
-    for definition in BUILTIN_AGENTS.values():
-        assert definition.deployment_attr in openai_fields, (
-            f"{definition.name}.deployment_attr={definition.deployment_attr!r} "
-            f"is not a field on OpenAISettings ({sorted(openai_fields)})."
-        )

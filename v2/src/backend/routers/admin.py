@@ -1,44 +1,34 @@
 """Admin router.
 
 Pillar: Stable Core
-Phase: 5 (tasks #35a, #35b, #35c, #35e, #39)
+Phase: 5 (admin surface)
 
-Read-only operator surface for the v2 backend. Today exposes:
+Operator surface for the v2 backend. Exposes:
 
 * ``GET /api/admin/status`` -- sanitized snapshot of the running
-  configuration (orchestrator key, db type, vector index store,
-  environment, deployment names, feature-enabled flags, CORS list,
-  app version). Surfaces only **non-secret** values: tenant ids,
+  configuration (effective orchestrator key, db type, vector index
+  store, environment, deployment names, feature-enabled flags, CORS
+  list, app version). Surfaces only **non-secret** values: tenant ids,
   UAMI ids, and full database / Cosmos endpoints stay out of the
   payload (covered by ``test_status_does_not_leak_sensitive_settings``).
 
 * ``GET /api/admin/config`` and ``PATCH /api/admin/config`` --
-  read / write the runtime-toggle subset of ``AppSettings`` (#35b/c).
+  read / write the runtime-toggle subset of ``AppSettings``.
 
 * ``GET /api/admin/config/effective`` -- merged view of env defaults
   overlaid with persisted ``RuntimeConfig`` overrides + per-field
-  provenance hints (#35e(b)). Reads the override side via the
-  live-reload channel (#35e(a)) so PATCHes are visible immediately.
+  provenance hints. Reads the override side via the live-reload
+  channel so PATCHes are visible immediately.
 
-Auth gating (#39, RBAC-narrowed): every admin route is gated on the
-shared :func:`backend.dependencies.requires_role` factory bound to
-the ``"admin"`` role claim. The factory:
+* the document write routes (upload, URL ingest, reprocess, delete)
+  that fan work onto the ingestion pipeline.
 
-* Reads Easy Auth ``x-ms-client-principal`` (base64 JSON claims) +
-  ``x-ms-client-principal-id`` headers.
-* Returns the caller's Entra object id when the ``"admin"`` role
-  claim is present.
-* Raises ``401`` when Easy Auth is missing or malformed in production
-  (must fail closed) and ``403`` when the caller is authenticated but
-  lacks the role.
-* Falls back to ``"local-dev"`` when no Easy Auth headers are present
-  in ``settings.environment == "local"`` so the admin panel is
-  exercisable end-to-end during development without forging claims.
-
-The dependency callable is cached at module import in
-``backend.dependencies`` (``REQUIRE_ADMIN_USER``) so
-``app.dependency_overrides`` keying stays deterministic across
-test fixtures.
+Every route resolves the caller through
+:data:`backend.dependencies.UserIdDep`, which reads the
+``x-ms-client-principal-id`` header and returns the caller's GUID when
+it is present and well-formed, or the anonymous default GUID otherwise.
+There is no role gate and no Easy Auth requirement -- the router never
+rejects a request on identity grounds.
 """
 
 import logging
@@ -56,13 +46,13 @@ from fastapi import (
 from pydantic import ValidationError
 
 from backend.dependencies import (
-    AdminUserIdDep,
     AgentsProviderDep,
     CredentialDep,
     DatabaseClientDep,
     RuntimeOverridesDep,
     SearchProviderDep,
     SettingsDep,
+    UserIdDep,
 )
 from backend.core.agents.definitions import CWYD_DEFAULT_BODY
 from backend.core.agents.presets import (
@@ -115,7 +105,7 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 async def status_endpoint(
     settings: SettingsDep,
     overrides: RuntimeOverridesDep,
-    _user: AdminUserIdDep,
+    _user: UserIdDep,
 ) -> AdminStatus:
     """Return the sanitized runtime status snapshot.
 
@@ -141,7 +131,6 @@ async def status_endpoint(
         ),
         gpt_deployment=settings.openai.gpt_deployment,
         embedding_deployment=settings.openai.embedding_deployment,
-        reasoning_deployment=settings.openai.reasoning_deployment,
         search_enabled=bool(settings.search.endpoint),
         app_insights_enabled=bool(obs_conn),
         cors_origins=list(settings.network.cors_origins),
@@ -152,7 +141,7 @@ async def status_endpoint(
 @router.get("/config", response_model=AdminConfig)
 async def config_endpoint(
     settings: SettingsDep,
-    _user: AdminUserIdDep,
+    _user: UserIdDep,
 ) -> AdminConfig:
     """Return the runtime-toggle subset of ``AppSettings`` (#35b).
 
@@ -186,7 +175,7 @@ async def config_endpoint(
 async def config_effective_endpoint(
     settings: SettingsDep,
     overrides: RuntimeOverridesDep,
-    _user: AdminUserIdDep,
+    _user: UserIdDep,
 ) -> EffectiveAdminConfig:
     """Return env defaults overlaid with persisted overrides + per-field
     provenance hints (#35e(b)).
@@ -270,7 +259,7 @@ async def config_effective_endpoint(
 async def patch_config_endpoint(
     request: Request,
     db: DatabaseClientDep,
-    user_id: AdminUserIdDep,
+    user_id: UserIdDep,
     agents: AgentsProviderDep,
     payload: Annotated[dict[str, Any], Body(...)],
 ) -> RuntimeConfig:
@@ -415,7 +404,7 @@ async def patch_config_endpoint(
 )
 async def list_documents_endpoint(
     search: SearchProviderDep,
-    _user: AdminUserIdDep,
+    _user: UserIdDep,
 ) -> ListDocumentsResponse:
     """List every distinct source currently indexed.
 
@@ -464,7 +453,7 @@ async def delete_document_endpoint(
     settings: SettingsDep,
     credential: CredentialDep,
     search: SearchProviderDep,
-    _user: AdminUserIdDep,
+    _user: UserIdDep,
 ) -> DeleteDocumentResponse:
     """Delete a document's indexed chunks **and** its source blob.
 
@@ -545,7 +534,7 @@ async def ingest_url_endpoint(
     body: IngestUrlRequest,
     settings: SettingsDep,
     credential: CredentialDep,
-    _user: AdminUserIdDep,
+    _user: UserIdDep,
 ) -> IngestUrlResponse:
     """Download ``body.url`` and ingest its content like an uploaded file.
 
@@ -601,7 +590,7 @@ async def ingest_url_endpoint(
 async def upload_document_endpoint(
     settings: SettingsDep,
     credential: CredentialDep,
-    _user: AdminUserIdDep,
+    _user: UserIdDep,
     file: Annotated[UploadFile, File(...)],
 ) -> UploadResponse:
     """Upload a single document and enqueue it for indexing.
@@ -662,7 +651,7 @@ async def upload_document_endpoint(
 async def reprocess_all_endpoint(
     settings: SettingsDep,
     credential: CredentialDep,
-    _user: AdminUserIdDep,
+    _user: UserIdDep,
 ) -> ReprocessResponse:
     """Fan every blob in the documents container out to the push queue.
 

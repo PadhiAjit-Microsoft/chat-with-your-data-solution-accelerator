@@ -96,9 +96,9 @@ def _fake_settings(orchestrator_name: str = "fake") -> SimpleNamespace:
     cross-setting guard satisfied for every orchestrator); tests vary
     only ``orchestrator_name``.
 
-    ``environment`` is ``LOCAL`` so the route's ``user_id`` dependency
-    (``get_user_id``) falls back to ``"local-dev"`` when a test sends no
-    ``x-ms-client-principal-id`` header, instead of raising 401.
+    When a test sends no ``x-ms-client-principal-id`` header the route's
+    ``user_id`` dependency (``get_user_id``) folds into the anonymous
+    default id ``00000000-0000-0000-0000-000000000000``.
     """
     return SimpleNamespace(
         environment=Environment.LOCAL,
@@ -1021,8 +1021,10 @@ async def test_json_mode_persists_turn_and_echoes_conversation_id(
     assert resp.status_code == 200
     assert resp.json()["conversation_id"] == "conv-new"
     # New thread titled with the question (no existing id supplied), keyed
-    # by the local-dev fallback (no Easy Auth header on this request).
-    assert recorder.created == [("local-dev", "What is CWYD?")]
+    # by the anonymous default id (no principal header on this request).
+    assert recorder.created == [
+        ("00000000-0000-0000-0000-000000000000", "What is CWYD?")
+    ]
     # User message persisted before the assistant answer.
     assert [(m.role, m.content) for (_cid, _uid, m) in recorder.added] == [
         ("user", "What is CWYD?"),
@@ -1093,7 +1095,9 @@ async def test_sse_mode_emits_terminal_conversation_frame_and_persists(
     assert frames[-1].startswith("event: conversation\n")
     data_line = [ln for ln in frames[-1].splitlines() if ln.startswith("data: ")][0]
     assert json.loads(data_line[len("data: ") :]) == {"conversation_id": "conv-new"}
-    assert recorder.created == [("local-dev", "hello")]
+    assert recorder.created == [
+        ("00000000-0000-0000-0000-000000000000", "hello")
+    ]
 
 
 async def test_persisted_turn_is_keyed_by_easy_auth_principal_header(
@@ -1101,20 +1105,21 @@ async def test_persisted_turn_is_keyed_by_easy_auth_principal_header(
 ) -> None:
     """The persisted turn is keyed by the ``x-ms-client-principal-id``
     Easy Auth header (the signed-in user), proving per-user history
-    isolation rather than the ``local-dev`` fallback."""
+    isolation rather than the anonymous default-id fallback."""
     recorder = _RecordingDatabaseClient()
     app_with_fakes.dependency_overrides[get_database_client] = lambda: recorder
     _FakeOrchestrator.scripted = [
         OrchestratorEvent(channel="answer", content="answer"),
     ]
 
+    principal_id = "11111111-1111-1111-1111-111111111111"
     async with _client(app_with_fakes) as client:
         resp = await client.post(
             "/api/conversation",
             json={"messages": [{"role": "user", "content": "q"}]},
-            headers={"x-ms-client-principal-id": "user-42"},
+            headers={"x-ms-client-principal-id": principal_id},
         )
 
     assert resp.status_code == 200
-    assert recorder.created == [("user-42", "q")]
-    assert all(uid == "user-42" for (_cid, uid, _m) in recorder.added)
+    assert recorder.created == [(principal_id, "q")]
+    assert all(uid == principal_id for (_cid, uid, _m) in recorder.added)

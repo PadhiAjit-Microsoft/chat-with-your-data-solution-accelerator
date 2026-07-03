@@ -9,17 +9,19 @@ live HTTPS traffic.
 
 import json
 import logging
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Sequence
 
 import azure.functions as func
 import pytest
 from azure.core.exceptions import AzureError
 
+from backend.core.providers.search.base import BaseSearch
 from backend.core.settings import AppSettings, get_settings
-from backend.core.types import SearchDocument
+from backend.core.types import SearchDocument, SearchResult
 from functions.add_url import blueprint as bp_module
 from functions.add_url.blueprint import _parser_key_for_url, add_url
 from functions.add_url.handler import AddUrlRequest
+from functions.core import search_resolution
 from functions.function_app import app
 
 
@@ -38,8 +40,7 @@ _BASE_ENV: dict[str, str] = {
     "AZURE_AI_PROJECT_ENDPOINT": "https://ai-cwyd001.services.ai.azure.com/api/projects/proj",
     "AZURE_AI_AGENT_API_VERSION": "2025-05-01",
     "AZURE_OPENAI_API_VERSION": "2024-12-01-preview",
-    "AZURE_OPENAI_GPT_DEPLOYMENT": "gpt-4.1",
-    "AZURE_OPENAI_REASONING_DEPLOYMENT": "o4-mini",
+    "AZURE_OPENAI_GPT_DEPLOYMENT": "gpt-5.1",
     "AZURE_OPENAI_EMBEDDING_DEPLOYMENT": "text-embedding-3-small",
     "AZURE_DB_TYPE": "cosmosdb",
     "AZURE_INDEX_STORE": "AzureSearch",
@@ -329,7 +330,7 @@ def _patch_execute_collaborators(
             return None
 
     monkeypatch.setattr(bp_module.embedders_registry.registry, "get", lambda _key: _Embedder)
-    monkeypatch.setattr(bp_module.search_registry.registry, "get", lambda _key: lambda **_kw: search_stub)
+    monkeypatch.setattr(search_resolution.search_registry.registry, "get", lambda _key: lambda **_kw: search_stub)
 
     async def _stub_handler(*_a: object, **_kw: object) -> list[SearchDocument]:
         record.append("add_url_handler")
@@ -344,9 +345,17 @@ async def test_execute_calls_ensure_schema_before_handler_and_aclose_after(
 ) -> None:
     record: list[str] = []
 
-    class _StubSearch:
+    class _StubSearch(BaseSearch):
         def __init__(self, **_kw: object) -> None:
             pass
+
+        async def search(
+            self, query: str, **_kwargs: object
+        ) -> Sequence[SearchResult]:
+            return []
+
+        async def delete_by_source(self, source: str) -> int:
+            return 0
 
         async def ensure_schema(self) -> None:
             record.append("ensure_schema")
@@ -375,9 +384,17 @@ async def test_execute_propagates_ensure_schema_failure_and_still_closes_provide
 ) -> None:
     record: list[str] = []
 
-    class _FailingSearch:
+    class _FailingSearch(BaseSearch):
         def __init__(self, **_kw: object) -> None:
             pass
+
+        async def search(
+            self, query: str, **_kwargs: object
+        ) -> Sequence[SearchResult]:
+            return []
+
+        async def delete_by_source(self, source: str) -> int:
+            return 0
 
         async def ensure_schema(self) -> None:
             record.append("ensure_schema")
