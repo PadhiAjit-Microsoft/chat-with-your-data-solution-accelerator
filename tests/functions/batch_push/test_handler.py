@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 — tests for v2/src/functions/batch_push/handler.py."""
+"""Pillar: Stable Core / Phase: 6 — tests for src/functions/batch_push/handler.py."""
 
 from typing import cast
 from unittest.mock import AsyncMock
@@ -23,7 +23,9 @@ class _FakeDownloader:
 
 
 class _FakeContainerClient:
-    def __init__(self, *, container_name: str = "documents", payload: bytes = b"") -> None:
+    def __init__(
+        self, *, container_name: str = "documents", payload: bytes = b""
+    ) -> None:
         self.container_name = container_name
         self._payload = payload
         self.calls: list[str] = []
@@ -105,9 +107,7 @@ async def test_pipeline_pushes_documents_with_vectors_and_returns_them() -> None
             content_vector=[0.3, 0.4],
         ),
     ]
-    search_provider.merge_or_upload_documents.assert_awaited_once_with(
-        documents=docs
-    )
+    search_provider.merge_or_upload_documents.assert_awaited_once_with(documents=docs)
 
 
 @pytest.mark.asyncio
@@ -148,7 +148,9 @@ async def test_vector_count_mismatch_raises_runtimeerror() -> None:
     ]
     parser = _StubParser(chunks)
     embedder = _StubEmbedder(
-        [EmbeddingResult(vectors=[[0.1, 0.2]], model="fake")]  # only 1 vector for 2 chunks
+        [
+            EmbeddingResult(vectors=[[0.1, 0.2]], model="fake")
+        ]  # only 1 vector for 2 chunks
     )
     container = _FakeContainerClient(payload=b"hello\n\nworld")
     search_provider = cast(BaseSearch, AsyncMock(spec=["merge_or_upload_documents"]))

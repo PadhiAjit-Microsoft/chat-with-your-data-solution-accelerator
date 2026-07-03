@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 — tests for v2/src/functions/blob_event/handler.py."""
+"""Pillar: Stable Core / Phase: 6 — tests for src/functions/blob_event/handler.py."""
 
 from typing import cast
 

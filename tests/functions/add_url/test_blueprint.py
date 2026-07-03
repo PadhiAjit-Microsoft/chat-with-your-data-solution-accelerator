@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 — tests for v2/src/functions/add_url/blueprint.py.
+"""Pillar: Stable Core / Phase: 6 — tests for src/functions/add_url/blueprint.py.
 
 Mirrors ``tests/functions/batch_start/test_blueprint.py`` for the
 HTTP-trigger exception ladder + monkeypatch seam, and asserts the
@@ -23,7 +23,6 @@ from functions.add_url.blueprint import _parser_key_for_url, add_url
 from functions.add_url.handler import AddUrlRequest
 from functions.core import search_resolution
 from functions.function_app import app
-
 
 # Minimal env that satisfies AppSettings + nested cross-field validators.
 # Mirrors the fixture in tests/functions/batch_start/test_blueprint.py.
@@ -186,9 +185,7 @@ async def test_missing_url_field_returns_422() -> None:
 
 @pytest.mark.asyncio
 async def test_extra_field_returns_422_due_to_extra_forbid() -> None:
-    req = _make_req(
-        json.dumps({"url": "https://example.invalid/", "evil": 1}).encode()
-    )
+    req = _make_req(json.dumps({"url": "https://example.invalid/", "evil": 1}).encode())
     resp = await add_url(req)
     assert resp.status_code == 422
 
@@ -315,12 +312,18 @@ def _patch_execute_collaborators(
     bootstrap runs **before** the handler and that `aclose` still
     runs when `ensure_schema` raises.
     """
-    monkeypatch.setattr(bp_module.credentials_registry, "select_default", lambda _cid: "managed_identity")
+    monkeypatch.setattr(
+        bp_module.credentials_registry,
+        "select_default",
+        lambda _cid: "managed_identity",
+    )
     monkeypatch.setattr(
         bp_module.credentials_registry.registry, "get", lambda _key: _StubCredProvider
     )
     parser = type("Parser", (), {"__init__": lambda self, **_kw: None})
-    monkeypatch.setattr(bp_module.ingestion_parsers_registry.registry, "get", lambda _key: parser)
+    monkeypatch.setattr(
+        bp_module.ingestion_parsers_registry.registry, "get", lambda _key: parser
+    )
 
     class _Embedder:
         def __init__(self, **_kw: object) -> None:
@@ -329,8 +332,14 @@ def _patch_execute_collaborators(
         async def aclose(self) -> None:
             return None
 
-    monkeypatch.setattr(bp_module.embedders_registry.registry, "get", lambda _key: _Embedder)
-    monkeypatch.setattr(search_resolution.search_registry.registry, "get", lambda _key: lambda **_kw: search_stub)
+    monkeypatch.setattr(
+        bp_module.embedders_registry.registry, "get", lambda _key: _Embedder
+    )
+    monkeypatch.setattr(
+        search_resolution.search_registry.registry,
+        "get",
+        lambda _key: lambda **_kw: search_stub,
+    )
 
     async def _stub_handler(*_a: object, **_kw: object) -> list[SearchDocument]:
         record.append("add_url_handler")
@@ -349,9 +358,7 @@ async def test_execute_calls_ensure_schema_before_handler_and_aclose_after(
         def __init__(self, **_kw: object) -> None:
             pass
 
-        async def search(
-            self, query: str, **_kwargs: object
-        ) -> Sequence[SearchResult]:
+        async def search(self, query: str, **_kwargs: object) -> Sequence[SearchResult]:
             return []
 
         async def delete_by_source(self, source: str) -> int:
@@ -388,9 +395,7 @@ async def test_execute_propagates_ensure_schema_failure_and_still_closes_provide
         def __init__(self, **_kw: object) -> None:
             pass
 
-        async def search(
-            self, query: str, **_kwargs: object
-        ) -> Sequence[SearchResult]:
+        async def search(self, query: str, **_kwargs: object) -> Sequence[SearchResult]:
             return []
 
         async def delete_by_source(self, source: str) -> int:

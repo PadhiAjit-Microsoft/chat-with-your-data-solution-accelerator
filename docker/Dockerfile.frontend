@@ -17,8 +17,8 @@
 # ---- dev stage ----
 # The frontend is a self-contained npm package: its package.json carries
 # every runtime + build dependency, so the dev server starts standalone with
-# zero coupling to the v2/ npm workspace or the sibling test package. The
-# workspace (v2/package.json) exists only so the Vitest tree under
+# zero coupling to the npm workspace or the sibling test package. The
+# workspace (package.json) exists only so the Vitest tree under
 # tests/frontend can resolve the frontend's deps from one hoisted
 # node_modules; the deployable frontend never needs it.
 FROM node:20-alpine AS dev
@@ -31,7 +31,7 @@ CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
 
 # ---- build stage ----
 # Standalone production build (see dev-stage note). The reproducible,
-# lockfile-pinned install lives at the workspace root (v2/package-lock.json)
+# lockfile-pinned install lives at the workspace root (package-lock.json)
 # and is exercised by CI; this image installs from the frontend package.json
 # so the frontend-only build stays independent per the plug-and-play
 # rationale at the top of this file.

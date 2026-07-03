@@ -1,13 +1,13 @@
-"""AST invariant: no silent exception swallows in v2/src/**.
+"""AST invariant: no silent exception swallows in src/**.
 
 Pillar: Stable Core
 Phase: 5.5 (Phase C — Try/catch policy + sweep, sub-unit C1)
 
 Per [v2/docs/exception_handling_policy.md](../docs/exception_handling_policy.md)
 cross-cutting rules: silent swallow (`except <anything>: pass`) and
-`except BaseException` are banned everywhere under `v2/src/**`.
+`except BaseException` are banned everywhere under `src/**`.
 
-This test walks every `*.py` under `v2/src/**` (skip `__pycache__`,
+This test walks every `*.py` under `src/**` (skip `__pycache__`,
 `.venv`, `build`) and asserts:
 
 1. **No `except BaseException`.** Catches `KeyboardInterrupt` /
@@ -17,7 +17,7 @@ This test walks every `*.py` under `v2/src/**` (skip `__pycache__`,
    banned. If you genuinely want to ignore an exception, log it
    (`logger.debug("ignoring X: %s", exc)`) so the decision is visible.
 
-The scope is `v2/src/**` only (NOT tests / scripts):
+The scope is `src/**` only (NOT tests / scripts):
 - Tests legitimately use `pytest.raises(...)` blocks and may use
   `try/except: pass` patterns to test exception code paths.
 - Scripts are one-off automation and not part of the production
@@ -38,8 +38,8 @@ Adding a new entry here is **not the right escape hatch**: fix the
 construct (log via `logger.debug(...)` if the swallow is genuinely
 intentional, otherwise narrow the catch and surface the failure).
 
-Companion to [v2/tests/shared/test_no_legacy_shared_imports.py] and
-[v2/tests/shared/test_no_type_checking_or_future_annotations.py],
+Companion to [tests/shared/test_no_legacy_shared_imports.py] and
+[tests/shared/test_no_type_checking_or_future_annotations.py],
 which use the same AST-walker + parametrize-per-file pattern.
 """
 
@@ -48,12 +48,12 @@ from pathlib import Path
 
 import pytest
 
-# v2/ root resolves from this file: v2/tests/test_no_silent_excepts.py -> v2/
-_V2_ROOT = Path(__file__).resolve().parents[1]
+# Repo root resolves from this file: tests/test_no_silent_excepts.py -> repo root
+_REPO_ROOT = Path(__file__).resolve().parents[1]
 
 # Production-surface scan root only. Tests + scripts are intentionally
 # excluded (see module docstring).
-_SCAN_ROOT = _V2_ROOT / "src"
+_SCAN_ROOT = _REPO_ROOT / "src"
 
 # Per-file exemption list. Empty by design after Phase C3 closure --
 # every pre-policy silent-swallow site has been migrated to
@@ -63,13 +63,18 @@ _EXEMPTIONS: frozenset[Path] = frozenset()
 
 
 def _iter_v2_src_python_files() -> list[Path]:
-    """Return every `*.py` under `v2/src/`, sorted for stable output."""
+    """Return every `*.py` under `src/`, sorted for stable output."""
     files: list[Path] = []
     if not _SCAN_ROOT.is_dir():
         return files
     for path in _SCAN_ROOT.rglob("*.py"):
         parts = set(path.parts)
-        if "__pycache__" in parts or ".venv" in parts or "build" in parts or "node_modules" in parts:
+        if (
+            "__pycache__" in parts
+            or ".venv" in parts
+            or "build" in parts
+            or "node_modules" in parts
+        ):
             continue
         files.append(path)
     return sorted(files)
@@ -172,21 +177,19 @@ _ALL_FILES = _iter_v2_src_python_files()
 @pytest.mark.parametrize(
     "py_file",
     _ALL_FILES,
-    ids=lambda p: str(p.relative_to(_V2_ROOT)),
+    ids=lambda p: str(p.relative_to(_REPO_ROOT)),
 )
 def test_no_silent_excepts(py_file: Path) -> None:
     if py_file in _EXEMPTIONS:
-        pytest.skip(f"explicitly exempted: {py_file.relative_to(_V2_ROOT)}")
+        pytest.skip(f"explicitly exempted: {py_file.relative_to(_REPO_ROOT)}")
 
     source = py_file.read_text(encoding="utf-8")
     tree = ast.parse(source, filename=str(py_file))
 
     violations = _exception_handler_violations(tree)
     if violations:
-        rel = py_file.relative_to(_V2_ROOT)
-        formatted = "\n".join(
-            f"  line {lineno}: {kind}" for lineno, kind in violations
-        )
+        rel = py_file.relative_to(_REPO_ROOT)
+        formatted = "\n".join(f"  line {lineno}: {kind}" for lineno, kind in violations)
         pytest.fail(
             f"{rel}: banned exception-handler construct(s):\n{formatted}\n"
             f"See v2/docs/exception_handling_policy.md cross-cutting rules. "
@@ -204,11 +207,11 @@ def test_silent_excepts_scan_walked_files() -> None:
     because the test runs from an unexpected cwd in CI), the
     parametrised test would generate zero cases and quietly pass.
     """
-    assert _ALL_FILES, "no Python files discovered under v2/src/"
-    rel_parts = {p.relative_to(_V2_ROOT).parts[0] for p in _ALL_FILES}
-    assert rel_parts == {"src"}, (
-        f"unexpected scan roots: {rel_parts} (expected only 'src')"
-    )
+    assert _ALL_FILES, "no Python files discovered under src/"
+    rel_parts = {p.relative_to(_REPO_ROOT).parts[0] for p in _ALL_FILES}
+    assert rel_parts == {
+        "src"
+    }, f"unexpected scan roots: {rel_parts} (expected only 'src')"
 
 
 def test_silent_swallow_detector_self_check() -> None:

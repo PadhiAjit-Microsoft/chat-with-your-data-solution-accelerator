@@ -5,13 +5,13 @@ Phase: 7 (router cleanup -- locks the U-P7-ROUTER-CLEAN-N series in place)
 
 Per `.github/copilot-instructions.md` Hard Rule #10 (Option 1 bucket
 plan locked CLEAN-6, dev_plan §0.1 ROUTERS-NON-ROUTE-CONTENT-DEBT):
-router modules under `v2/src/backend/routers/` are route-only files.
+router modules under `src/backend/routers/` are route-only files.
 Helpers belong in `backend.services.<domain>`, dependency wrappers
 in `backend.dependencies`, request / response models in
 `backend.models.<domain>`, persisted types in `backend.core.types`.
 
 This gate walks the AST body of each router file in
-`v2/src/backend/routers/` and asserts every top-level node is one of:
+`src/backend/routers/` and asserts every top-level node is one of:
 
 1. **Module docstring** -- the `Pillar:` / `Phase:` header.
 2. **Imports** -- `ast.Import` / `ast.ImportFrom` (Hard Rule #17 keeps
@@ -32,7 +32,7 @@ moving the displaced code to the canonical sibling per Hard Rule #10
 (services / dependencies / models / core.types).
 
 `_CLEANED_ROUTERS` is derived from a `*.py` scan of
-`v2/src/backend/routers/` with `__init__.py` excluded as the package
+`src/backend/routers/` with `__init__.py` excluded as the package
 marker (Hard Rule #13). New router modules dropped into that
 directory are auto-enrolled.
 """
@@ -42,11 +42,11 @@ from pathlib import Path
 
 import pytest
 
-# v2/ root resolves from this file: v2/tests/shared/test_*.py -> v2/
-_V2_ROOT = Path(__file__).resolve().parents[2]
-_ROUTERS_DIR = _V2_ROOT / "src" / "backend" / "routers"
+# Repo root resolves from this file: tests/shared/test_*.py -> repo root
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_ROUTERS_DIR = _REPO_ROOT / "src" / "backend" / "routers"
 
-# All `*.py` files under `v2/src/backend/routers/` are router modules
+# All `*.py` files under `src/backend/routers/` are router modules
 # bound by the route-only invariant. `__init__.py` is excluded as the
 # package marker (Hard Rule #13).
 _CLEANED_ROUTERS: tuple[str, ...] = tuple(
@@ -122,7 +122,7 @@ def test_router_is_route_only(router_filename: str) -> None:
     router_path = _ROUTERS_DIR / router_filename
     source = router_path.read_text(encoding="utf-8")
     tree = ast.parse(source, filename=str(router_path))
-    rel = router_path.relative_to(_V2_ROOT)
+    rel = router_path.relative_to(_REPO_ROOT)
 
     for node in tree.body:
         if isinstance(node, ast.Import | ast.ImportFrom):
@@ -157,13 +157,13 @@ def test_router_directory_scan_is_non_empty() -> None:
     the gate.
     """
     assert _ROUTERS_DIR.is_dir(), f"router directory missing: {_ROUTERS_DIR}"
-    assert _CLEANED_ROUTERS, (
-        "no `*.py` router files discovered under v2/src/backend/routers/"
-    )
+    assert (
+        _CLEANED_ROUTERS
+    ), "no `*.py` router files discovered under src/backend/routers/"
     # 5 router files at gate-landing. Treat any drop below 5 as a
     # sign the scan started silently dropping files.
     assert len(_CLEANED_ROUTERS) >= 5, (
         f"only {len(_CLEANED_ROUTERS)} router files discovered under "
-        f"v2/src/backend/routers/ -- path resolution likely broken "
+        f"src/backend/routers/ -- path resolution likely broken "
         f"(expected >=5)"
     )

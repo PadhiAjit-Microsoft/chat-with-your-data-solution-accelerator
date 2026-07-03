@@ -11,11 +11,9 @@ from pathlib import Path
 
 import pytest
 
-# The script lives in v2/scripts/, which is not on pythonpath. Load it
+# The script lives in scripts/, which is not on pythonpath. Load it
 # directly with importlib so tests don't depend on PYTHONPATH munging.
-_SCRIPT_PATH = (
-    Path(__file__).resolve().parents[2] / "scripts" / "post_provision.py"
-)
+_SCRIPT_PATH = Path(__file__).resolve().parents[2] / "scripts" / "post_provision.py"
 _spec = importlib.util.spec_from_file_location("_post_provision", _SCRIPT_PATH)
 assert _spec and _spec.loader
 post_provision = importlib.util.module_from_spec(_spec)
@@ -62,9 +60,7 @@ def test_ensure_search_index_skips_when_endpoint_missing(monkeypatch, capsys):
         sentinel["called"] = True
         raise AssertionError("client_factory should not be invoked")
 
-    result = post_provision._ensure_search_index(
-        dry_run=False, client_factory=factory
-    )
+    result = post_provision._ensure_search_index(dry_run=False, client_factory=factory)
 
     assert result == "skipped"
     assert sentinel["called"] is False
@@ -77,9 +73,7 @@ def test_ensure_search_index_dry_run_makes_no_calls(monkeypatch, capsys):
     def factory():
         raise AssertionError("dry-run must not build a client")
 
-    result = post_provision._ensure_search_index(
-        dry_run=True, client_factory=factory
-    )
+    result = post_provision._ensure_search_index(dry_run=True, client_factory=factory)
 
     out = capsys.readouterr().out
     assert result == "dry-run"
@@ -135,9 +129,7 @@ def test_ensure_search_index_propagates_unexpected_errors(monkeypatch):
 
     fake = _ExplodingClient(exists=False)
     with pytest.raises(_Boom):
-        post_provision._ensure_search_index(
-            dry_run=False, client_factory=lambda: fake
-        )
+        post_provision._ensure_search_index(dry_run=False, client_factory=lambda: fake)
     # close() still called from the finally block.
     assert fake.closed is True
 
@@ -242,9 +234,7 @@ def test_ensure_knowledge_base_dry_run_makes_no_calls(monkeypatch, capsys):
     def factory():
         raise AssertionError("dry-run must not build a client")
 
-    result = post_provision._ensure_knowledge_base(
-        dry_run=True, client_factory=factory
-    )
+    result = post_provision._ensure_knowledge_base(dry_run=True, client_factory=factory)
 
     out = capsys.readouterr().out
     assert result == "dry-run"
@@ -282,9 +272,7 @@ def test_ensure_knowledge_base_puts_source_then_base(monkeypatch):
     assert kb_put["params"] == {"api-version": "2025-11-01-preview"}
     # Bodies are wired from _build_knowledge_base_seed.
     assert ks_put["json"]["kind"] == "searchIndex"
-    assert (
-        ks_put["json"]["searchIndexParameters"]["searchIndexName"] == "cwyd-index"
-    )
+    assert ks_put["json"]["searchIndexParameters"]["searchIndexName"] == "cwyd-index"
     assert kb_put["json"]["knowledgeSources"] == [{"name": "cwyd-index-ks"}]
     aoai = kb_put["json"]["models"][0]["azureOpenAIParameters"]
     assert aoai["resourceUri"] == "https://aoai.example/"
@@ -372,9 +360,7 @@ def test_kb_mcp_connection_constants():
     # The connection PUT is an ARM control-plane call -- a different scope and
     # api-version from the search data-plane KB seed.
     assert post_provision.ARM_SCOPE == "https://management.azure.com/.default"
-    assert (
-        post_provision.KB_MCP_CONNECTION_API_VERSION == "2025-04-01-preview"
-    )
+    assert post_provision.KB_MCP_CONNECTION_API_VERSION == "2025-04-01-preview"
 
 
 def test_ensure_kb_mcp_connection_skips_when_endpoint_missing(capsys):
@@ -394,9 +380,7 @@ def test_ensure_kb_mcp_connection_skips_when_endpoint_missing(capsys):
     assert "skipping KB-MCP connection" in capsys.readouterr().out
 
 
-def test_ensure_kb_mcp_connection_skips_when_project_id_missing(
-    monkeypatch, capsys
-):
+def test_ensure_kb_mcp_connection_skips_when_project_id_missing(monkeypatch, capsys):
     # Endpoint set but no project resource id -- the PUT URL is built from
     # the project id, so the seed cannot proceed (still a no-op).
     monkeypatch.setenv("AZURE_AI_SEARCH_ENDPOINT", "https://srch.example/")
@@ -481,9 +465,7 @@ def test_ensure_kb_mcp_connection_raises_on_non_2xx(monkeypatch, capsys):
     assert "cwyd-kb-mcp" in err
 
 
-def test_main_dry_run_cosmosdb_skips_postgres_and_search_calls(
-    monkeypatch, capsys
-):
+def test_main_dry_run_cosmosdb_skips_postgres_and_search_calls(monkeypatch, capsys):
     monkeypatch.setenv("AZURE_DB_TYPE", "cosmosdb")
 
     rc = post_provision.main(["--dry-run"])
@@ -517,9 +499,7 @@ def test_main_cosmosdb_seeds_kb_mcp_connection_after_kb(monkeypatch):
 
     monkeypatch.setattr(post_provision, "_ensure_search_index", _record("search"))
     monkeypatch.setattr(post_provision, "_ensure_knowledge_base", _record("kb"))
-    monkeypatch.setattr(
-        post_provision, "_ensure_kb_mcp_connection", _record("kb-mcp")
-    )
+    monkeypatch.setattr(post_provision, "_ensure_kb_mcp_connection", _record("kb-mcp"))
 
     rc = post_provision.main(["--dry-run"])
 
@@ -679,9 +659,7 @@ def test_ensure_public_network_access_dry_run_makes_no_calls(monkeypatch, capsys
     assert "[dry-run] would run" in capsys.readouterr().out
 
 
-def test_ensure_public_network_access_skips_without_resource_group(
-    monkeypatch, capsys
-):
+def test_ensure_public_network_access_skips_without_resource_group(monkeypatch, capsys):
     monkeypatch.delenv("AZURE_ENV_ENABLE_PRIVATE_NETWORKING", raising=False)
     monkeypatch.delenv("AZURE_RESOURCE_GROUP", raising=False)
     monkeypatch.setenv("AZURE_STORAGE_ACCOUNT_NAME", "stx")
@@ -697,9 +675,7 @@ def test_ensure_public_network_access_skips_without_resource_group(
 
 def test_run_az_reraises_on_command_failure(monkeypatch, capsys):
     def _boom(*args, **kwargs):
-        raise subprocess.CalledProcessError(
-            returncode=3, cmd=["az"], stderr="denied"
-        )
+        raise subprocess.CalledProcessError(returncode=3, cmd=["az"], stderr="denied")
 
     monkeypatch.setattr(post_provision.subprocess, "run", _boom)
 

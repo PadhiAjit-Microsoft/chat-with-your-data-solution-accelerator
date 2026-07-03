@@ -113,7 +113,7 @@ StyleCopReport.xml
 .builds
 # Bicep transient build output (az bicep build --outdir)
 .build/
-v2/infra/.build/
+infra/.build/
 build-functions/
 *.pidb
 *.svclog

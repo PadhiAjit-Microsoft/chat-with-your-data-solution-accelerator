@@ -40,7 +40,7 @@ Fetch only the parts you need. Cite specific files/sections.
 ## Signature
 ```python
 # proposed signature only — implementer writes the body
-# v2/src/providers/llm/foundry_iq.py
+# src/providers/llm/foundry_iq.py
 from . import registry
 from .base import BaseLLMProvider
 
@@ -89,7 +89,7 @@ For every file, dependency, container, sidecar, abstraction, or config format th
 
 1. **Dev_plan citation.** Which task # in [v2/docs/development_plan.md](../../v2/docs/development_plan.md) §3.4 or §4 does this implement? Cite it. Without a citation → drop the item, or stop and request a plan amendment from the user.
 2. **Pillar declaration.** Which pillar in [v2/docs/pillars_of_development.md](../../v2/docs/pillars_of_development.md) does it belong to? Record it in the Work Order `## Scope` block and require it in the file docstring.
-3. **Plug-and-play impact.** Does the change keep `--profile backend-only` and `--profile frontend-only` (per `v2/docker/docker-compose.dev.yml`) booting independently? If it introduces coupling, redesign or escalate.
+3. **Plug-and-play impact.** Does the change keep `--profile backend-only` and `--profile frontend-only` (per `docker/docker-compose.dev.yml`) booting independently? If it introduces coupling, redesign or escalate.
 4. **Simplest thing.** One runtime per container, no invented sidecars, no abstractions without ≥2 concrete callers today. v1 is **not** a reference — it is the spaghetti being replaced. Borrow patterns from MACAE/CGSA only as read-only references with a citation.
 
 ## Structural changes — STOP and ask the user
@@ -97,12 +97,12 @@ For every file, dependency, container, sidecar, abstraction, or config format th
 If the request implies any of the following, do **not** emit a Work Order until the user confirms:
 
 - New top-level folder under `v2/`.
-- New package directory under `v2/src/**` beyond dev_plan §3.4.
-- New entry in `pyproject.toml` dependencies or `v2/src/frontend/package.json` dependencies.
+- New package directory under `src/**` beyond dev_plan §3.4.
+- New entry in `pyproject.toml` dependencies or `src/frontend/package.json` dependencies.
 - Renames/moves of existing modules.
 - New module layout (e.g., splitting an existing package).
 
-Ask one concise question, wait for the answer, then record it in the Work Order's `## References` block (e.g., `User-confirmed structure: add v2/src/backend/core/agents/ — 2026-04-23`).
+Ask one concise question, wait for the answer, then record it in the Work Order's `## References` block (e.g., `User-confirmed structure: add src/backend/core/agents/ — 2026-04-23`).
 
 ## Durable tracking (Hard Rule #19)
 

@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 -- tests for v2/src/functions/search_skill/models.py.
+"""Pillar: Stable Core / Phase: 6 -- tests for src/functions/search_skill/models.py.
 
 Validates the AI Search WebApiSkill request/response envelope
 contract: camelCase ``recordId`` wire field maps to Python
@@ -23,7 +23,6 @@ from functions.search_skill.models import (
     SearchSkillResponse,
     SkillMessage,
 )
-
 
 # ---------------------------------------------------------------------------
 # SkillMessage
@@ -108,9 +107,7 @@ def test_input_record_rejects_missing_record_id() -> None:
 
 def test_input_record_rejects_empty_record_id() -> None:
     with pytest.raises(ValidationError):
-        SearchSkillInputRecord.model_validate(
-            {"recordId": "", "data": {"text": "x"}}
-        )
+        SearchSkillInputRecord.model_validate({"recordId": "", "data": {"text": "x"}})
 
 
 def test_input_record_rejects_missing_data() -> None:
@@ -317,6 +314,4 @@ def test_response_round_trip_through_json_string() -> None:
     )
     payload = response.model_dump_json(by_alias=True, exclude_none=True)
     parsed = json.loads(payload)
-    assert parsed == {
-        "values": [{"recordId": "1", "data": {"embedding": [0.1]}}]
-    }
+    assert parsed == {"values": [{"recordId": "1", "data": {"embedding": [0.1]}}]}

@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 — tests for v2/src/functions/add_url/handler.py."""
+"""Pillar: Stable Core / Phase: 6 — tests for src/functions/add_url/handler.py."""
 
 from typing import cast
 from unittest.mock import AsyncMock
@@ -164,9 +164,7 @@ async def test_vector_count_mismatch_raises_runtimeerror(
     ]
     parser = _StubParser(chunks)
     # Only 1 vector for 2 chunks -- triggers the mismatch guard.
-    embedder = _StubEmbedder(
-        [EmbeddingResult(vectors=[[0.1, 0.2]], model="fake")]
-    )
+    embedder = _StubEmbedder([EmbeddingResult(vectors=[[0.1, 0.2]], model="fake")])
     search_provider = _make_search_provider()
 
     with pytest.raises(RuntimeError, match="vector count mismatch"):
@@ -180,11 +178,16 @@ async def test_injected_client_is_passed_through_to_fetch_url(
 ) -> None:
     fetch_calls = _patch_fetch(monkeypatch, b"hello")
     parser = _StubParser(
-        [Chunk(id="u__0", content="hello", source="https://example.invalid/page", index=0)]
+        [
+            Chunk(
+                id="u__0",
+                content="hello",
+                source="https://example.invalid/page",
+                index=0,
+            )
+        ]
     )
-    embedder = _StubEmbedder(
-        [EmbeddingResult(vectors=[[0.5, 0.6]], model="fake")]
-    )
+    embedder = _StubEmbedder([EmbeddingResult(vectors=[[0.5, 0.6]], model="fake")])
     search_provider = _make_search_provider()
     sentinel_client = object()
 

@@ -2,7 +2,7 @@
 name = "cwyd-v2"
 version = "0.1.0"
 description = "Chat With Your Data Solution Accelerator — v2 (FastAPI + Functions + Foundry IQ)"
-readme = "../README.md"
+readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     # Core web + Functions runtime
@@ -110,7 +110,7 @@ asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
 markers = [
     "unit: fast unit tests with all I/O mocked",
-    "integration: opt-in live tests that boot the real app against real Azure data-plane services; deselected by default; require a populated v2/.env + az login (see tests/integration)",
+    "integration: opt-in live tests that boot the real app against real Azure data-plane services; deselected by default; require a populated .env + az login (see tests/integration)",
     "smoke: CI-only live-container end-to-end checks; excluded from default pytest run by addopts",
 ]
 

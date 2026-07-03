@@ -1,6 +1,6 @@
 ---
-description: "CWYD v2 FastAPI backend conventions. Use when: editing v2/src/backend/**, adding a router, adding a route, wiring dependency injection, configuring lifespan, adding middleware, adding OpenTelemetry, defining Pydantic request/response models, or exposing a new endpoint."
-applyTo: "v2/src/backend/**"
+description: "CWYD v2 FastAPI backend conventions. Use when: editing src/backend/**, adding a router, adding a route, wiring dependency injection, configuring lifespan, adding middleware, adding OpenTelemetry, defining Pydantic request/response models, or exposing a new endpoint."
+applyTo: "src/backend/**"
 ---
 
 # v2 Backend (FastAPI) Conventions
@@ -37,7 +37,7 @@ applyTo: "v2/src/backend/**"
 - Synchronous I/O (`requests`, `psycopg2.connect`) — use `httpx.AsyncClient` and `asyncpg`.
 - Catching `Exception` without re-raising or logging with `exc_info=True`.
 - Adding a route without an OpenAPI summary + tag.
-- In-function imports — Hard Rule #17 in [.github/copilot-instructions.md](../copilot-instructions.md) requires all imports at module top (no lazy stdlib imports, no profile-conditional branches). Enforced by `v2/tests/shared/test_imports_at_top_only.py`.
+- In-function imports — Hard Rule #17 in [.github/copilot-instructions.md](../copilot-instructions.md) requires all imports at module top (no lazy stdlib imports, no profile-conditional branches). Enforced by `tests/shared/test_imports_at_top_only.py`.
 
 ## Testing pattern
 

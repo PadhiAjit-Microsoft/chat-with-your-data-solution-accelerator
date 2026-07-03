@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 — tests for v2/src/functions/batch_start/blueprint.py.
+"""Pillar: Stable Core / Phase: 6 — tests for src/functions/batch_start/blueprint.py.
 
 Post-U7g the blueprint composes ``functions/core/`` helpers (resolve
 endpoints, storage_clients ctx manager, json_response, the
@@ -24,7 +24,6 @@ from functions.batch_start.blueprint import batch_start
 from functions.batch_start.models import BatchStartRequest
 from functions.core.contracts import BatchPushQueueMessage
 from functions.function_app import app
-
 
 # Minimal env that satisfies AppSettings + nested cross-field validators.
 # Mirrors the cosmosdb fixture in tests/backend/core/test_settings.py.
@@ -69,7 +68,9 @@ def _env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def _patch_route_deps(
     monkeypatch: pytest.MonkeyPatch,
-    execute: Callable[[BatchStartRequest, AppSettings], Awaitable[list[BatchPushQueueMessage]]],
+    execute: Callable[
+        [BatchStartRequest, AppSettings], Awaitable[list[BatchPushQueueMessage]]
+    ],
     settings: AppSettings | None = None,
 ) -> None:
     resolved = settings or AppSettings()
@@ -181,7 +182,9 @@ async def test_azure_error_returns_502_and_logs(
 
     assert resp.status_code == 502
     assert json.loads(resp.get_body()) == {"error": "upstream_storage_error"}
-    record = next(r for r in caplog.records if r.message == "batch_start storage call failed")
+    record = next(
+        r for r in caplog.records if r.message == "batch_start storage call failed"
+    )
     assert record.operation == "batch_start"  # type: ignore[attr-defined]
     assert record.trigger == "http"  # type: ignore[attr-defined]
     assert record.status_code == 502  # type: ignore[attr-defined]
@@ -204,7 +207,9 @@ async def test_unexpected_exception_returns_500_safety_net(
 
     assert resp.status_code == 500
     assert json.loads(resp.get_body()) == {"error": "internal_server_error"}
-    record = next(r for r in caplog.records if r.message == "batch_start handler failed")
+    record = next(
+        r for r in caplog.records if r.message == "batch_start handler failed"
+    )
     assert record.status_code == 500  # type: ignore[attr-defined]
 
 

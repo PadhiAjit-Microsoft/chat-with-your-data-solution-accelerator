@@ -7,7 +7,7 @@ Per ``.github/copilot-instructions.md`` Hard Rule #18 and
 ``v2/docs/adr/0019-no-env-specific-content-in-tracked-files.md``, no tracked
 file may carry real environment values (subscription / tenant ids, resource
 group, azd env name, resource-name suffix, individual resource names, deployer
-principal ids). Real values live only in the gitignored ``v2/.azure/<env>/.env``
+principal ids). Real values live only in the gitignored ``.azure/<env>/.env``
 and the operator's ``az`` / ``azd`` session.
 
 ADR-0019 was discipline-only until this gate: the same class of leak recurred
@@ -38,10 +38,9 @@ from pathlib import Path
 
 import pytest
 
-# v2/ root resolves from this file: v2/tests/shared/test_*.py -> v2/ -> repo.
-_V2_ROOT = Path(__file__).resolve().parents[2]
-_REPO_ROOT = _V2_ROOT.parent
-_AZURE_DIR = _V2_ROOT / ".azure"
+# Repo root resolves from this file: tests/shared/test_*.py -> repo root.
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_AZURE_DIR = _REPO_ROOT / ".azure"
 
 # azd env-var keys whose VALUES are env-specific per ADR-0019. Region /
 # model-name / boolean / generic-endpoint keys are intentionally absent so
@@ -241,7 +240,7 @@ def test_no_tracked_file_leaks_local_env_values() -> None:
     denylist = _load_env_denylist()
     if not denylist:
         pytest.skip(
-            "No azd env under v2/.azure/; the env-ID leak gate is a "
+            "No azd env under .azure/; the env-ID leak gate is a "
             "developer-machine safety net and has nothing local to compare."
         )
     hits = sorted(set(_scan_tracked(denylist)))
@@ -257,7 +256,7 @@ def test_no_tracked_file_leaks_local_env_values() -> None:
 
 def test_parse_dotenv_handles_quotes_comments_blanks() -> None:
     parsed = _parse_dotenv(
-        '# comment\n'
+        "# comment\n"
         'AZURE_ENV_NAME="my-env"\n'
         "\n"
         "AZURE_RESOURCE_GROUP=rg-my-env\n"

@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 — tests for v2/src/functions/blob_event/blueprint.py.
+"""Pillar: Stable Core / Phase: 6 — tests for src/functions/blob_event/blueprint.py.
 
 Mirrors ``tests/functions/batch_push/test_blueprint.py``: the trigger
 body is exercised via the private ``_execute`` seam (which tests
@@ -110,9 +110,7 @@ class _FakeQueueMessage:
 def _make_msg(
     subject: str, event_type: str = "Microsoft.Storage.BlobCreated"
 ) -> func.QueueMessage:
-    return cast(
-        func.QueueMessage, _FakeQueueMessage(_event_body(subject, event_type))
-    )
+    return cast(func.QueueMessage, _FakeQueueMessage(_event_body(subject, event_type)))
 
 
 def _patch_route_deps(
@@ -138,9 +136,7 @@ async def test_happy_path_dispatches_message_to_execute(
     ) -> BlobEventOutcome | None:
         captured["body"] = msg.get_body()
         captured["settings_type"] = type(settings).__name__
-        return BlobEventOutcome(
-            event_type=BlobEventType.CREATED, filename="a.pdf"
-        )
+        return BlobEventOutcome(event_type=BlobEventType.CREATED, filename="a.pdf")
 
     _patch_route_deps(monkeypatch, fake_execute)
 
@@ -248,7 +244,9 @@ async def test_execute_enqueues_translated_envelope_to_doc_processing(
             sent.append(content)
 
     monkeypatch.setattr(
-        bp_module.credentials_registry, "select_default", lambda _cid: "managed_identity"
+        bp_module.credentials_registry,
+        "select_default",
+        lambda _cid: "managed_identity",
     )
     monkeypatch.setattr(
         bp_module.credentials_registry.registry, "get", lambda _key: _StubCredProvider
@@ -302,9 +300,7 @@ async def test_execute_deindexes_on_blob_deleted(
         def __init__(self, **_kw: object) -> None:
             pass
 
-        async def search(
-            self, query: str, **_kwargs: object
-        ) -> Sequence[SearchResult]:
+        async def search(self, query: str, **_kwargs: object) -> Sequence[SearchResult]:
             return []
 
         async def ensure_schema(self) -> None:
@@ -318,7 +314,9 @@ async def test_execute_deindexes_on_blob_deleted(
             return None
 
     monkeypatch.setattr(
-        bp_module.credentials_registry, "select_default", lambda _cid: "managed_identity"
+        bp_module.credentials_registry,
+        "select_default",
+        lambda _cid: "managed_identity",
     )
     monkeypatch.setattr(
         bp_module.credentials_registry.registry, "get", lambda _key: _StubCredProvider

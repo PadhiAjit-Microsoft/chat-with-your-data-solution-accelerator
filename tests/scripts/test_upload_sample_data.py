@@ -23,7 +23,7 @@ _PS1 = _SCRIPTS_DIR / "upload-sample-data.ps1"
 
 
 def _load_module():
-    """Import upload_sample_data from v2/scripts/ without a top-level import.
+    """Import upload_sample_data from scripts/ without a top-level import.
 
     `import upload_sample_data` after a sys.path mutation would trip the
     imports-at-top gate; importlib.import_module is a call, not an import
@@ -38,7 +38,9 @@ def _load_module():
 
 
 class _FakeBlobClient:
-    def __init__(self, name: str, existing: set[str], upload_log: list[tuple[str, bool]]) -> None:
+    def __init__(
+        self, name: str, existing: set[str], upload_log: list[tuple[str, bool]]
+    ) -> None:
         self._name = name
         self._existing = existing
         self._upload_log = upload_log
@@ -143,6 +145,11 @@ def test_windows_wrapper_fails_fast_and_runs_uploader() -> None:
 # --- pure helpers ------------------------------------------------------------
 
 
+def test_curated_data_dir_targets_repo_root_data() -> None:
+    module = _load_module()
+    assert module._curated_data_dir() == _SCRIPTS_DIR.parent / "data"
+
+
 def test_resolve_named_files_skips_missing(tmp_path: Path) -> None:
     module = _load_module()
     data_dir = _seed_data_dir(tmp_path, ("Benefit_Options.pdf",))
@@ -154,7 +161,10 @@ def test_parse_selection_token_maps_known_and_unknown() -> None:
     module = _load_module()
     assert module.parse_selection_token("default") == module.AssistantType.DEFAULT
     assert module.parse_selection_token("Contract") == module.AssistantType.CONTRACT
-    assert module.parse_selection_token("employee assistant") == module.AssistantType.EMPLOYEE
+    assert (
+        module.parse_selection_token("employee assistant")
+        == module.AssistantType.EMPLOYEE
+    )
     assert module.parse_selection_token("all") == module.SeedScope.ALL
     assert module.parse_selection_token("skip") == module.SeedScope.SKIP
     assert module.parse_selection_token("bogus") is None
@@ -171,15 +181,28 @@ def test_files_for_selection_named_contract_and_all(tmp_path: Path) -> None:
     for name in ("Master_Agreement_V1.pdf", "Legal.PDF"):
         (contract_dir / name).write_bytes(b"%PDF-1.4\n")
 
-    default_names = {p.name for p in module.files_for_selection(data_dir, module.AssistantType.DEFAULT)}
+    default_names = {
+        p.name
+        for p in module.files_for_selection(data_dir, module.AssistantType.DEFAULT)
+    }
     assert "Benefit_Options.pdf" in default_names
     assert "Woodgrove.pdf" not in default_names
 
-    contract_names = {p.name for p in module.files_for_selection(data_dir, module.AssistantType.CONTRACT)}
+    contract_names = {
+        p.name
+        for p in module.files_for_selection(data_dir, module.AssistantType.CONTRACT)
+    }
     assert contract_names == {"Master_Agreement_V1.pdf", "Legal.PDF"}
 
-    all_names = {p.name for p in module.files_for_selection(data_dir, module.SeedScope.ALL)}
-    assert {"Benefit_Options.pdf", "Woodgrove.pdf", "Master_Agreement_V1.pdf", "Legal.PDF"} <= all_names
+    all_names = {
+        p.name for p in module.files_for_selection(data_dir, module.SeedScope.ALL)
+    }
+    assert {
+        "Benefit_Options.pdf",
+        "Woodgrove.pdf",
+        "Master_Agreement_V1.pdf",
+        "Legal.PDF",
+    } <= all_names
 
 
 def test_resolve_selection_cli_and_env_skip_prompt() -> None:
@@ -190,34 +213,51 @@ def test_resolve_selection_cli_and_env_skip_prompt() -> None:
         prompted.append("called")
         return "1"
 
-    assert module.resolve_selection("contract", "all", True, _prompt, lambda _m: None) == module.AssistantType.CONTRACT
-    assert module.resolve_selection("", "all", False, _prompt, lambda _m: None) == module.SeedScope.ALL
+    assert (
+        module.resolve_selection("contract", "all", True, _prompt, lambda _m: None)
+        == module.AssistantType.CONTRACT
+    )
+    assert (
+        module.resolve_selection("", "all", False, _prompt, lambda _m: None)
+        == module.SeedScope.ALL
+    )
     assert prompted == []
 
 
 def test_resolve_selection_non_tty_defaults() -> None:
     module = _load_module()
     msgs: list[str] = []
-    assert module.resolve_selection("", "", False, lambda _p: "1", msgs.append) == module.AssistantType.DEFAULT
+    assert (
+        module.resolve_selection("", "", False, lambda _p: "1", msgs.append)
+        == module.AssistantType.DEFAULT
+    )
     assert any("non-interactive" in m for m in msgs)
 
 
 def test_resolve_selection_non_tty_none_token_opts_out() -> None:
     module = _load_module()
-    assert module.resolve_selection("", "none", False, lambda _p: "1", lambda _m: None) == module.SeedScope.SKIP
+    assert (
+        module.resolve_selection("", "none", False, lambda _p: "1", lambda _m: None)
+        == module.SeedScope.SKIP
+    )
 
 
 def test_resolve_selection_prompts_until_valid_when_tty() -> None:
     module = _load_module()
     answers = iter(["9", "2"])
-    selection = module.resolve_selection("", "", True, lambda _p: next(answers), lambda _m: None)
+    selection = module.resolve_selection(
+        "", "", True, lambda _p: next(answers), lambda _m: None
+    )
     assert selection == module.AssistantType.CONTRACT
 
 
 def test_resolve_selection_unknown_token_skips() -> None:
     module = _load_module()
     msgs: list[str] = []
-    assert module.resolve_selection("bogus", "", True, lambda _p: "1", msgs.append) == module.SeedScope.SKIP
+    assert (
+        module.resolve_selection("bogus", "", True, lambda _p: "1", msgs.append)
+        == module.SeedScope.SKIP
+    )
     assert any("unknown sample-data selection" in m for m in msgs)
 
 
@@ -226,7 +266,9 @@ def test_resolve_endpoints_default_and_override() -> None:
     blob, queue = module.resolve_endpoints("acct", "")
     assert blob == "https://acct.blob.core.windows.net"
     assert queue == "https://acct.queue.core.windows.net"
-    blob_gov, queue_gov = module.resolve_endpoints("acct", "https://acct.blob.core.usgovcloudapi.net")
+    blob_gov, queue_gov = module.resolve_endpoints(
+        "acct", "https://acct.blob.core.usgovcloudapi.net"
+    )
     assert blob_gov == "https://acct.blob.core.usgovcloudapi.net"
     assert queue_gov == "https://acct.queue.core.usgovcloudapi.net"
 
@@ -254,7 +296,9 @@ def test_upload_blob_if_absent_uploads_new(tmp_path: Path) -> None:
 def test_enqueue_ingest_message_sends_raw_json() -> None:
     module = _load_module()
     sent: list[str] = []
-    module.enqueue_ingest_message(_FakeQueueClient(sent), "documents", "Benefit_Options.pdf")
+    module.enqueue_ingest_message(
+        _FakeQueueClient(sent), "documents", "Benefit_Options.pdf"
+    )
     assert len(sent) == 1
     payload = json.loads(sent[0])
     assert payload["container_name"] == "documents"
@@ -306,16 +350,24 @@ def test_wait_for_index_completion_fails_on_timeout_with_remediation() -> None:
 
 def test_missing_required_env_exits_2(monkeypatch: pytest.MonkeyPatch) -> None:
     module = _load_module()
-    for name in ("AZURE_STORAGE_ACCOUNT_NAME", "AZURE_DOCUMENTS_CONTAINER", "AZURE_DOC_PROCESSING_QUEUE"):
+    for name in (
+        "AZURE_STORAGE_ACCOUNT_NAME",
+        "AZURE_DOCUMENTS_CONTAINER",
+        "AZURE_DOC_PROCESSING_QUEUE",
+    ):
         monkeypatch.delenv(name, raising=False)
     with pytest.raises(SystemExit) as exc:
         module.main([])
     assert exc.value.code == 2
 
 
-def test_dry_run_makes_no_sdk_calls(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_dry_run_makes_no_sdk_calls(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     module = _load_module()
-    data_dir = _seed_data_dir(tmp_path, module.SAMPLE_SETS[module.AssistantType.DEFAULT])
+    data_dir = _seed_data_dir(
+        tmp_path, module.SAMPLE_SETS[module.AssistantType.DEFAULT]
+    )
     monkeypatch.setattr(module, "_curated_data_dir", lambda: data_dir)
     monkeypatch.setenv("AZURE_STORAGE_ACCOUNT_NAME", "sampleacct")
     monkeypatch.setenv("AZURE_DOCUMENTS_CONTAINER", "documents")
@@ -330,7 +382,9 @@ def test_dry_run_makes_no_sdk_calls(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     assert module.main(["--dry-run", "--set", "default"]) == 0
 
 
-def test_main_skips_when_scope_none(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_main_skips_when_scope_none(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     module = _load_module()
     monkeypatch.setenv("AZURE_STORAGE_ACCOUNT_NAME", "sampleacct")
     monkeypatch.setenv("AZURE_DOCUMENTS_CONTAINER", "documents")
@@ -343,7 +397,9 @@ def test_main_skips_when_scope_none(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     assert module.main(["--set", "none"]) == 0
 
 
-def test_main_uploads_and_enqueues_then_is_idempotent(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_main_uploads_and_enqueues_then_is_idempotent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     module = _load_module()
     sample = module.SAMPLE_SETS[module.AssistantType.DEFAULT]
     data_dir = _seed_data_dir(tmp_path, sample)
@@ -356,7 +412,9 @@ def test_main_uploads_and_enqueues_then_is_idempotent(tmp_path: Path, monkeypatc
     existing: set[str] = set()
     upload_log: list[tuple[str, bool]] = []
     sent: list[str] = []
-    blob_service, queue_client, credential = _install_fakes(monkeypatch, module, existing, upload_log, sent)
+    blob_service, queue_client, credential = _install_fakes(
+        monkeypatch, module, existing, upload_log, sent
+    )
 
     assert module.main(["--set", "default"]) == 0
     expected = sorted(sample)
@@ -372,7 +430,9 @@ def test_main_uploads_and_enqueues_then_is_idempotent(tmp_path: Path, monkeypatc
     assert sorted(json.loads(body)["filename"] for body in sent) == expected
 
 
-def test_main_event_grid_suppresses_enqueue(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_main_event_grid_suppresses_enqueue(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     module = _load_module()
     sample = module.SAMPLE_SETS[module.AssistantType.DEFAULT]
     data_dir = _seed_data_dir(tmp_path, sample)

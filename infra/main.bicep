@@ -341,7 +341,7 @@ module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = if (en
 // ----------------------------------------------------------------------
 // Virtual network (conditional, dev_plan task #7). Wraps AVM
 // `network/virtual-network:0.7.0` + per-subnet NSGs. Address plan and
-// subnet roles documented in v2/infra/modules/virtualNetwork.bicep.
+// subnet roles documented in infra/modules/virtualNetwork.bicep.
 //
 // `databaseType` is forwarded so the wrapper only allocates the
 // Postgres-delegated subnet in postgresql mode. Diagnostic logs are
@@ -694,8 +694,8 @@ module aiProject 'modules/ai-project.bicep' = {
 //
 // Standalone `Microsoft.CognitiveServices/accounts` of kind
 // `SpeechServices` powers the browser-side mic button on the chat
-// composer (v2/src/frontend/src/hooks/useSpeechRecognition.ts). The
-// backend `mint_speech_token()` helper (v2/src/backend/core/speech.py)
+// composer (src/frontend/src/hooks/useSpeechRecognition.ts). The
+// backend `mint_speech_token()` helper (src/backend/core/speech.py)
 // exchanges the UAMI's AAD token for a 10-minute Speech authorization
 // token via the regional `sts/v1.0/issueToken` endpoint, then the
 // browser SDK talks to Speech directly — no audio ever flows back
@@ -1417,7 +1417,7 @@ var effectiveCosmosEndpoint = useExistingCosmos ? existingCosmos!.properties.doc
 // Single server hosts BOTH chat history (relational tables) AND the
 // vector index (pgvector extension). Auth is Entra-only — the workload
 // UAMI is the Entra admin, and the post-provision script
-// (`v2/scripts/post-provision.sh`, task #19) connects via `psql` with
+// (`scripts/post-provision.sh`, task #19) connects via `psql` with
 // the deployer's az token to:
 //   1. CREATE EXTENSION vector;
 //   2. Create the chat_history + document_chunks schema.
@@ -1547,7 +1547,7 @@ module postgresServer 'br/public:avm/res/db-for-postgre-sql/flexible-server:0.15
 //
 // Phase 1 deploys a placeholder image so the resources exist; the real
 // image is wired in azure.yaml `services.backend` once the backend
-// Dockerfile (v2/docker/Dockerfile.backend) ships in Phase 2.
+// Dockerfile (docker/Dockerfile.backend) ships in Phase 2.
 // ----------------------------------------------------------------------
 var containerAppsEnvName = 'cae-${solutionSuffix}'
 var backendAppName = 'ca-backend-${solutionSuffix}'
@@ -2423,7 +2423,7 @@ resource existingEventGridSubscription 'Microsoft.EventGrid/systemTopics/eventSu
 // Outputs               //
 // ===================== //
 // Every AZURE_* output is consumed by either:
-//   - azd post-provision hooks (v2/scripts/post-provision.{sh,ps1}, #19)
+//   - azd post-provision hooks (scripts/post-provision.{sh,ps1}, #19)
 //   - the backend / function / frontend at build or run time
 //   - operator inspection via `azd env get-values`
 // Conditional outputs (cosmosdb-only / postgresql-only / monitoring-only)

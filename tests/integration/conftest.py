@@ -4,7 +4,7 @@ Pillar: Stable Core
 Phase: 6
 
 This conftest powers the opt-in ``@pytest.mark.integration`` lane. Unlike the
-mocked unit suite, these fixtures load the real ``v2/.env`` and run the real
+mocked unit suite, these fixtures load the real ``.env`` and run the real
 application lifespan so requests hit live Azure data-plane services (Foundry
 IQ, Azure AI Search, Cosmos DB). The lane is deselected by default via
 ``addopts = "... -m 'not smoke and not integration'"`` and self-skips when the
@@ -31,9 +31,9 @@ from fastapi import FastAPI
 from backend.app import create_app
 from backend.core.settings import DbType, OrchestratorName, get_settings
 
-# v2/ root resolves from this file: v2/tests/integration/conftest.py -> v2/
-_V2_ROOT = Path(__file__).resolve().parents[2]
-_ENV_FILE = _V2_ROOT / ".env"
+# Repo root resolves from this file: tests/integration/conftest.py -> repo root
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_ENV_FILE = _REPO_ROOT / ".env"
 
 # Minimum keys that must be present for the live app to boot in any mode.
 # Absent -> the whole lane self-skips with a capability reason.
@@ -52,11 +52,11 @@ class SSEEvent(NamedTuple):
 
 @pytest.fixture(autouse=True)
 def _load_real_env(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
-    """Re-load the real ``v2/.env`` after the root ``_reset_env`` stripper.
+    """Re-load the real ``.env`` after the root ``_reset_env`` stripper.
 
     The root autouse fixture deletes every ``AZURE_*`` / ``CWYD_*`` var for
     unit isolation; this deeper autouse fixture runs afterwards and restores
-    the real values from ``v2/.env`` so the live app boots against the real
+    the real values from ``.env`` so the live app boots against the real
     environment. Skips the entire lane when the file or its required keys are
     absent, so the suite self-disables on an unconfigured machine.
     """
@@ -70,7 +70,7 @@ def _load_real_env(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     }
     missing = [key for key in _REQUIRED_ENV_KEYS if not values.get(key)]
     if missing:
-        pytest.skip("requires a populated v2/.env; missing keys: " + ", ".join(missing))
+        pytest.skip("requires a populated .env; missing keys: " + ", ".join(missing))
 
     for key, value in values.items():
         monkeypatch.setenv(key, value)

@@ -1,6 +1,6 @@
 ---
-description: "CWYD v2 backend/core conventions (registry primitive, settings, observability, types; LLM, embedders, parsers, search, chat history, orchestrators, credentials providers; ingestion + chat pipelines). Use when: editing v2/src/backend/core/**, v2/src/backend/core/providers/**, or v2/src/backend/core/pipelines/**; building an orchestrator; adding a tool; calling Foundry IQ; adding a search handler; adding an embedder; adding a chat history backend; defining the OrchestratorEvent contract; wiring async credentials."
-applyTo: "v2/src/backend/core/**"
+description: "CWYD v2 backend/core conventions (registry primitive, settings, observability, types; LLM, embedders, parsers, search, chat history, orchestrators, credentials providers; ingestion + chat pipelines). Use when: editing src/backend/core/**, src/backend/core/providers/**, or src/backend/core/pipelines/**; building an orchestrator; adding a tool; calling Foundry IQ; adding a search handler; adding an embedder; adding a chat history backend; defining the OrchestratorEvent contract; wiring async credentials."
+applyTo: "src/backend/core/**"
 ---
 
 # v2 backend/core / Providers / Pipelines Conventions
@@ -8,7 +8,7 @@ applyTo: "v2/src/backend/core/**"
 ## Layout (binding — matches dev_plan §3.4)
 
 ```
-v2/src/backend/
+src/backend/
   core/                  primitives only — registry.py, settings.py, types.py, observability.py
     providers/           registry-keyed plug-ins, one folder per domain:
                            credentials/  llm/  embedders/  parsers/
@@ -22,10 +22,10 @@ v2/src/backend/
 
 ## Pluggability contract (registry-first)
 
-The generic `Registry[T]` lives in `v2/src/backend/core/registry.py`. Per Hard Rule #13 in [.github/copilot-instructions.md](../copilot-instructions.md), every provider `__init__.py` is a **package marker only** (module docstring + nothing else) — the registry, eager imports, and any helpers live in a sibling `registry.py`. The recipe:
+The generic `Registry[T]` lives in `src/backend/core/registry.py`. Per Hard Rule #13 in [.github/copilot-instructions.md](../copilot-instructions.md), every provider `__init__.py` is a **package marker only** (module docstring + nothing else) — the registry, eager imports, and any helpers live in a sibling `registry.py`. The recipe:
 
 ```python
-# v2/src/backend/core/providers/<domain>/__init__.py  -- MARKER ONLY
+# src/backend/core/providers/<domain>/__init__.py  -- MARKER ONLY
 """<Domain> provider package.
 
 Pillar: Stable Core
@@ -34,7 +34,7 @@ Phase: <n>
 ```
 
 ```python
-# v2/src/backend/core/providers/<domain>/registry.py
+# src/backend/core/providers/<domain>/registry.py
 from backend.core.registry import Registry
 from .base import Base<Domain>
 
@@ -45,7 +45,7 @@ from . import provider_a, provider_b  # noqa: E402, F401
 ```
 
 ```python
-# v2/src/backend/core/providers/<domain>/provider_a.py
+# src/backend/core/providers/<domain>/provider_a.py
 from .registry import registry
 
 @registry.register("a")
@@ -60,7 +60,7 @@ from backend.core.providers.<domain> import registry as <domain>_registry
 instance = <domain>_registry.registry.get(settings.<key>)(**kwargs)
 ```
 
-**Forbidden:** `if/elif` over provider names anywhere outside a registry; lazy `import` of provider classes inside functions; module-level client instantiation; **any runtime code in `__init__.py`** (enforced by `v2/tests/shared/test_init_files_are_marker_only.py`); `create(key, **kwargs)` factory wrappers (call `registry.get(key)(**kwargs)` directly).
+**Forbidden:** `if/elif` over provider names anywhere outside a registry; lazy `import` of provider classes inside functions; module-level client instantiation; **any runtime code in `__init__.py`** (enforced by `tests/shared/test_init_files_are_marker_only.py`); `create(key, **kwargs)` factory wrappers (call `registry.get(key)(**kwargs)` directly).
 
 ## Stack rules
 
@@ -71,7 +71,7 @@ instance = <domain>_registry.registry.get(settings.<key>)(**kwargs)
 
 ## Orchestrator contract
 
-`v2/src/backend/core/providers/orchestrators/base.py` defines:
+`src/backend/core/providers/orchestrators/base.py` defines:
 
 ```python
 class OrchestratorBase(ABC):
@@ -84,50 +84,50 @@ Every concrete orchestrator (`langgraph.py`, `agent_framework.py`):
 1. Inherits `OrchestratorBase`.
 2. Self-registers via `@registry.register("<key>")` against the registry exposed in `backend/core/providers/orchestrators/__init__.py`.
 3. Emits events on channels: `reasoning`, `tool`, `answer`, `citation`, `error`. Never inline reasoning into `answer`.
-4. Pre-pipeline: content safety check on input. Post-pipeline: post-prompt formatting + content safety check on output. Both live in `v2/src/backend/core/tools/` (cross-cutting helpers, not registry providers).
+4. Pre-pipeline: content safety check on input. Post-pipeline: post-prompt formatting + content safety check on output. Both live in `src/backend/core/tools/` (cross-cutting helpers, not registry providers).
 
 ### Citations (shared format contract — ADR 0026)
 
 Citation formatting is **shared infrastructure**, not per-orchestrator code. The orchestrator set is open (Hard Rule #4), so adding the Nth orchestrator adds **zero** new prompt and **zero** new formatter (copilot-instructions Hard Rule #20). Three invariants:
 
 - **R1 — one prompt input point.** Ground through `resolve_cwyd_instructions(...)` over the shared `CWYD_DEFAULT_BODY`; the fixed `CWYD_GUARDRAIL` owns the citation directive + no-context fallback. Do not author a per-orchestrator system / grounding prompt.
-- **R2 — one response-format point.** All citation shaping lives in `v2/src/backend/core/tools/citations.py`: `format_sources_block` (client-side `[docN]` injection, used by `langgraph`) and `normalize_kb_citations` (native `【N:M†source】` → `[docN]` rewrite, used by `agent_framework`). Both emit the same inline `[docN]` marker + `Citation` model on the `citation` channel. `run()` returns `(answer, citations)` and delegates to `citations.py` — never format markers inline, never invent a citation shape.
+- **R2 — one response-format point.** All citation shaping lives in `src/backend/core/tools/citations.py`: `format_sources_block` (client-side `[docN]` injection, used by `langgraph`) and `normalize_kb_citations` (native `【N:M†source】` → `[docN]` rewrite, used by `agent_framework`). Both emit the same inline `[docN]` marker + `Citation` model on the `citation` channel. `run()` returns `(answer, citations)` and delegates to `citations.py` — never format markers inline, never invent a citation shape.
 - **R3 — backend-agnostic formatting.** Retrieval is keyed by `index_store` (registry dispatch) but the citation format is identical for Azure AI Search and pgvector. The `agent_framework` + pgvector cell grounds app-side over `BaseSearch.search` (no KB), reusing the shared formatter (ADR 0027 supersedes the ADR 0022 rejection rule), never given a divergent formatter.
 
 ## LLM provider (Foundry IQ)
 
-- Class `FoundryIQ` in `v2/src/backend/core/providers/llm/foundry_iq.py`, registered as `@registry.register("foundry_iq")` against `backend/core/providers/llm/__init__.py`.
-- Inherits `BaseLLMProvider` (`v2/src/backend/core/providers/llm/base.py`).
+- Class `FoundryIQ` in `src/backend/core/providers/llm/foundry_iq.py`, registered as `@registry.register("foundry_iq")` against `backend/core/providers/llm/__init__.py`.
+- Inherits `BaseLLMProvider` (`src/backend/core/providers/llm/base.py`).
 - Methods: `chat(...)`, `chat_stream(...)`, `embed(...)`, `reason(...)` (o-series; routes to a reasoning deployment).
 - Constructor takes `AppSettings` and a `TokenCredential`. Never reads env vars directly.
 - `reason()` yields `OrchestratorEvent(channel="reasoning", ...)` and `OrchestratorEvent(channel="answer", ...)` separately.
 
 ## Credentials provider
 
-- `v2/src/backend/core/providers/credentials/managed_identity.py` registered as `"managed_identity"` (returns `DefaultAzureCredential`).
-- `v2/src/backend/core/providers/credentials/cli.py` registered as `"cli"` (returns `AzureCliCredential`).
+- `src/backend/core/providers/credentials/managed_identity.py` registered as `"managed_identity"` (returns `DefaultAzureCredential`).
+- `src/backend/core/providers/credentials/cli.py` registered as `"cli"` (returns `AzureCliCredential`).
 - Selected via `AppSettings.identity.client_id` presence (deployed Managed Identity has it set) or explicit setting.
 - Async: prefer `azure.identity.aio.DefaultAzureCredential` for use in async clients.
 
 ## Tool registration
 
-- Each tool in `v2/src/backend/core/tools/<name>.py` exports a `Tool` instance with `name`, `description`, `args_schema` (Pydantic), `arun(...)` async method. Tools are cross-cutting helpers (content safety, post-prompt, etc.) and are referenced directly — they are not a registry domain.
+- Each tool in `src/backend/core/tools/<name>.py` exports a `Tool` instance with `name`, `description`, `args_schema` (Pydantic), `arun(...)` async method. Tools are cross-cutting helpers (content safety, post-prompt, etc.) and are referenced directly — they are not a registry domain.
 - Tools are pillar-tagged in their docstring. Most are **Stable Core**; scenario-specific ones are **Scenario Pack**.
 
 ## Search providers
 
-- `v2/src/backend/core/providers/search/azure_search.py` (registered `"azure_search"`) and `v2/src/backend/core/providers/search/pgvector.py` (registered `"pgvector"`) implement `BaseSearch` (`v2/src/backend/core/providers/search/base.py`) with `async def search(query, top_k, filters) -> list[SearchResult]`.
-- `SearchResult` is a Pydantic model in `v2/src/backend/core/types.py` with `id`, `content`, `score`, `metadata`.
+- `src/backend/core/providers/search/azure_search.py` (registered `"azure_search"`) and `src/backend/core/providers/search/pgvector.py` (registered `"pgvector"`) implement `BaseSearch` (`src/backend/core/providers/search/base.py`) with `async def search(query, top_k, filters) -> list[SearchResult]`.
+- `SearchResult` is a Pydantic model in `src/backend/core/types.py` with `id`, `content`, `score`, `metadata`.
 - Selected at runtime via `search.create(settings.database.index_store, ...)`.
 
 ## Chat history providers
 
-- `v2/src/backend/core/providers/databases/cosmosdb.py` (registered `"cosmosdb"`) and `v2/src/backend/core/providers/databases/postgres.py` (registered `"postgres"`) implement `BaseChatHistory` (CRUD + feedback). Async only.
+- `src/backend/core/providers/databases/cosmosdb.py` (registered `"cosmosdb"`) and `src/backend/core/providers/databases/postgres.py` (registered `"postgres"`) implement `BaseChatHistory` (CRUD + feedback). Async only.
 - Selected at runtime via `databases.create(settings.database.db_type, ...)`.
 
 ## Settings
 
-- Single root `AppSettings` in `v2/src/backend/core/settings.py` (Pydantic-Settings, nested per Azure service). Reads every Bicep output env var.
+- Single root `AppSettings` in `src/backend/core/settings.py` (Pydantic-Settings, nested per Azure service). Reads every Bicep output env var.
 - Cached `get_settings()` accessor. Never read env vars directly outside this module.
 
 ## Resilience
@@ -171,7 +171,7 @@ async def search(self, query: str, *, top: int = 10) -> list[SearchResult]:
 
 **Cleanup paths own resource release, NOT error reporting.** `finally:` / `async with __aexit__` close pools, sockets, file handles. Logging stays in the `except` block. Do not log inside `finally:` unless reporting a cleanup failure that itself just occurred.
 
-**Status checks classify failures** as `pass | degraded | fail` per `v2/src/backend/models/health.py` (`CheckStatus` / `OverallStatus` — Q12 ledger entry for the `StrEnum` migration). Router code never lets an SDK exception escape:
+**Status checks classify failures** as `pass | degraded | fail` per `src/backend/models/health.py` (`CheckStatus` / `OverallStatus` — Q12 ledger entry for the `StrEnum` migration). Router code never lets an SDK exception escape:
 
 ```python
 async def _check_search(self) -> HealthCheck:
@@ -183,13 +183,13 @@ async def _check_search(self) -> HealthCheck:
     return HealthCheck(name="azure_search", status="pass")
 ```
 
-**Silent excepts are forbidden.** `except: pass`, `except Exception: pass`, and `except ...: ...` blocks that swallow without logging or re-raising are AST-enforced banned by `v2/tests/shared/test_no_silent_excepts.py`. The only allowed "consume" pattern is a narrow `except <Specific> as exc: logger.warning(..., extra={...})` followed by a documented fallback value — and the log line is required.
+**Silent excepts are forbidden.** `except: pass`, `except Exception: pass`, and `except ...: ...` blocks that swallow without logging or re-raising are AST-enforced banned by `tests/test_no_silent_excepts.py`. The only allowed "consume" pattern is a narrow `except <Specific> as exc: logger.warning(..., extra={...})` followed by a documented fallback value — and the log line is required.
 
 **Module-level clients are forbidden.** Long-lived SDK clients (Cosmos, Search, Storage, OpenAI) are constructed in FastAPI lifespan and injected via `Depends(...)` so cleanup is owned by the framework. Constructor-injected `_client` attributes inside providers are fine; module-level singletons are not.
 
 ## Typing standard
 
-Per `.github/copilot-instructions.md` Hard Rule #11 (Python bullet, `Any` only at boundaries): `pyright --strict` runs on `v2/src/backend/**` + `v2/src/functions/core/**` with a 0/0/0 CI target (errors / warnings / information). This subsection is the canonical boundary classification.
+Per `.github/copilot-instructions.md` Hard Rule #11 (Python bullet, `Any` only at boundaries): `pyright --strict` runs on `src/backend/**` + `src/functions/core/**` with a 0/0/0 CI target (errors / warnings / information). This subsection is the canonical boundary classification.
 
 **Every method has explicit return type + parameter types.** No bare generic containers (`list` → `list[Chunk]`, `dict` → `dict[str, Any]`). No implicit `Optional` (`x: str = None` → `x: str | None = None`). No missing `-> None` on side-effect-only methods.
 
@@ -229,18 +229,18 @@ Per `.github/copilot-instructions.md` Hard Rule #11 (Python bullet, **CU-013 ame
 
 - All imports go in the regular import block. All annotations resolve to real symbols at class-definition time. No string-quoted forward references.
 - Self-references use `typing.Self` (PEP 673, Python 3.11+) — never `"MyClass"` quoted strings.
-- The invariant is enforced by [v2/tests/shared/test_no_type_checking_or_future_annotations.py](../../v2/tests/shared/test_no_type_checking_or_future_annotations.py) (AST walk over every `*.py` under `v2/`). The test fails the build if either construct surfaces.
+- The invariant is enforced by [tests/shared/test_no_type_checking_or_future_annotations.py](../../tests/shared/test_no_type_checking_or_future_annotations.py) (AST walk over every `*.py` under `v2/`). The test fails the build if either construct surfaces.
 - **Why**: lazy / quoted annotations created two recurring failure modes — (a) silent drift where the runtime symbol disappeared but the string annotation kept type-checking green; (b) Pydantic v2 + LangGraph wiring that introspects `__annotations__` at runtime and crashed on unresolved forward refs. The micro-optimisation of "avoid runtime import cost" was not worth the operational risk.
-- **No exceptions.** If a genuine circular import surfaces (the only legitimate historical use case), the fix is **structural**: extract the shared type to a leaf module (e.g. [v2/src/backend/core/types.py](../../v2/src/backend/core/types.py) or a new `v2/src/backend/core/contracts/` package). This is a structural change and triggers Hard Rule #10 (ask the user first).
+- **No exceptions.** If a genuine circular import surfaces (the only legitimate historical use case), the fix is **structural**: extract the shared type to a leaf module (e.g. [src/backend/core/types.py](../../src/backend/core/types.py) or a new `src/backend/core/contracts/` package). This is a structural change and triggers Hard Rule #10 (ask the user first).
 - **Cost note**: Azure SDK type imports (`AgentsClient`, `AsyncTokenCredential`, `ContentSafetyClient`) are already loaded at boot by the concrete provider modules — hoisting them into `base.py` adds ~0 incremental cost. Internal v2 base classes (`BaseDatabaseClient`, `BaseLLMProvider`, etc.) flow only one direction (concrete → base), so no circular risk in current architecture.
 
 
 ## Banned
 
-- `from openai import …` anywhere in `v2/src/backend/core/**`.
+- `from openai import …` anywhere in `src/backend/core/**`.
 - `semantic_kernel`, `promptflow`.
 - Module-level `client = SomeClient(...)`.
 - Sync DB drivers (`psycopg2` for runtime paths, blocking `azure.cosmos.CosmosClient`). `psycopg2-binary` is acceptable for migration scripts only.
 - `if/elif` over provider names anywhere outside a `Registry[T]`.
 - `from __future__ import annotations` and `if TYPE_CHECKING:` — see Runtime types section above (CU-013).
-- In-function imports (lazy stdlib or third-party imports inside `def` / `async def` / `class` bodies, profile-conditional `if/else` import branches, `try/except ImportError` soft-dependency shims) — see Hard Rule #17 in [.github/copilot-instructions.md](../copilot-instructions.md). Enforced by `v2/tests/shared/test_imports_at_top_only.py`.
+- In-function imports (lazy stdlib or third-party imports inside `def` / `async def` / `class` bodies, profile-conditional `if/else` import branches, `try/except ImportError` soft-dependency shims) — see Hard Rule #17 in [.github/copilot-instructions.md](../copilot-instructions.md). Enforced by `tests/shared/test_imports_at_top_only.py`.

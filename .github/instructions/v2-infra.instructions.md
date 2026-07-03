@@ -1,6 +1,6 @@
 ---
-description: "CWYD v2 Bicep + azd infrastructure conventions. Use when: editing v2/infra/**, adding a Bicep module, wiring main.bicep, adding outputs, configuring RBAC, adding a managed identity role assignment, adjusting azure.yaml, choosing a SKU, enabling WAF flags, or preparing for azd up."
-applyTo: "v2/infra/**"
+description: "CWYD v2 Bicep + azd infrastructure conventions. Use when: editing infra/**, adding a Bicep module, wiring main.bicep, adding outputs, configuring RBAC, adding a managed identity role assignment, adjusting azure.yaml, choosing a SKU, enabling WAF flags, or preparing for azd up."
+applyTo: "infra/**"
 ---
 
 # v2 Infrastructure (Bicep + azd) Conventions
@@ -46,9 +46,9 @@ Use the `azure-rbac` skill or known role IDs — never invent role GUIDs.
 
 ## Validation
 
-- `bicep build v2/infra/main.bicep` must produce no warnings classified as errors.
+- `bicep build infra/main.bicep` must produce no warnings classified as errors.
 - `az deployment sub what-if` (or `group what-if`) must be clean before `azd up`.
-- The CI image (`v2/docker/Dockerfile.ci-validate`) runs both above on every PR.
+- The CI image (`docker/Dockerfile.ci-validate`) runs both above on every PR.
 
 ## Banned
 

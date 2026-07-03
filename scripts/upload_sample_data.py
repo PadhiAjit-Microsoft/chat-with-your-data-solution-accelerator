@@ -138,14 +138,16 @@ def _require(name: str) -> str:
     """Return a required non-empty environment variable or exit non-zero."""
     value = os.environ.get(name, "").strip()
     if not value:
-        sys.stderr.write(f"upload-sample-data: required environment variable {name} is not set.\n")
+        sys.stderr.write(
+            f"upload-sample-data: required environment variable {name} is not set.\n"
+        )
         sys.exit(_EXIT_MISSING_ENV)
     return value
 
 
 def _curated_data_dir() -> Path:
     """Return the repo-root data/ folder that holds the sample corpus."""
-    return Path(__file__).resolve().parents[2] / "data"
+    return Path(__file__).resolve().parents[1] / "data"
 
 
 def parse_selection_token(token: str) -> Selection | None:
@@ -169,7 +171,9 @@ def resolve_named_files(data_dir: Path, filenames: Sequence[str]) -> list[Path]:
         if candidate.is_file():
             resolved.append(candidate)
         else:
-            sys.stderr.write(f"upload-sample-data: sample file {name} not found in {data_dir}; skipping.\n")
+            sys.stderr.write(
+                f"upload-sample-data: sample file {name} not found in {data_dir}; skipping.\n"
+            )
     return resolved
 
 
@@ -185,15 +189,22 @@ def files_for_selection(data_dir: Path, selection: Selection) -> list[Path]:
 def _menu_text() -> str:
     """Return the interactive scenario menu text."""
     rows = [f"  {key}) {label}" for key, _selection, label in _MENU]
-    return "\n".join(["", "Sample data -- choose an assistant scenario to seed:", *rows])
+    return "\n".join(
+        ["", "Sample data -- choose an assistant scenario to seed:", *rows]
+    )
 
 
-def prompt_menu(prompt_fn: Callable[[str], str], output_fn: Callable[[str], None]) -> Selection:
+def prompt_menu(
+    prompt_fn: Callable[[str], str], output_fn: Callable[[str], None]
+) -> Selection:
     """Show the menu and read a choice until one is valid."""
     by_key: dict[str, Selection] = {key: selection for key, selection, _label in _MENU}
     output_fn(_menu_text())
     while True:
-        choice = prompt_fn(f"Enter choice [{_MENU_DEFAULT_KEY}]: ").strip() or _MENU_DEFAULT_KEY
+        choice = (
+            prompt_fn(f"Enter choice [{_MENU_DEFAULT_KEY}]: ").strip()
+            or _MENU_DEFAULT_KEY
+        )
         selection = by_key.get(choice)
         if selection is not None:
             return selection
@@ -229,9 +240,13 @@ def resolve_selection(
     return prompt_menu(prompt_fn, output_fn)
 
 
-def resolve_endpoints(account_name: str, blob_endpoint_override: str) -> tuple[str, str]:
+def resolve_endpoints(
+    account_name: str, blob_endpoint_override: str
+) -> tuple[str, str]:
     """Return ``(blob_endpoint, queue_endpoint)`` for the storage account."""
-    blob_endpoint = blob_endpoint_override or f"https://{account_name}.blob.core.windows.net"
+    blob_endpoint = (
+        blob_endpoint_override or f"https://{account_name}.blob.core.windows.net"
+    )
     queue_endpoint = blob_endpoint.replace(".blob.", ".queue.", 1)
     return blob_endpoint, queue_endpoint
 
@@ -249,7 +264,9 @@ def upload_blob_if_absent(container_client: ContainerClient, file_path: Path) ->
     return True
 
 
-def enqueue_ingest_message(queue_client: QueueClient, container_name: str, filename: str) -> None:
+def enqueue_ingest_message(
+    queue_client: QueueClient, container_name: str, filename: str
+) -> None:
     """Send a raw-JSON ingestion message for one uploaded blob."""
     message = BatchPushQueueMessage(container_name=container_name, filename=filename)
     queue_client.send_message(message.model_dump_json())
@@ -300,7 +317,9 @@ def wait_for_index_completion(
 
 
 def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Seed sample documents and enqueue ingestion.")
+    parser = argparse.ArgumentParser(
+        description="Seed sample documents and enqueue ingestion."
+    )
     parser.add_argument(
         "--set",
         dest="scope",
@@ -322,7 +341,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     container_name = _require(_ENV_CONTAINER)
     queue_name = _require(_ENV_QUEUE)
     blob_endpoint_override = os.environ.get(_ENV_BLOB_ENDPOINT, "").strip()
-    trigger = os.environ.get(_ENV_INGESTION_TRIGGER, "").strip() or IngestionTrigger.DIRECT_ENQUEUE
+    trigger = (
+        os.environ.get(_ENV_INGESTION_TRIGGER, "").strip()
+        or IngestionTrigger.DIRECT_ENQUEUE
+    )
     enqueue = trigger == IngestionTrigger.DIRECT_ENQUEUE
     search_endpoint = os.environ.get(_ENV_SEARCH_ENDPOINT, "").strip()
     search_index = os.environ.get(_ENV_SEARCH_INDEX, "").strip()
@@ -341,7 +363,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     data_dir = _curated_data_dir()
     files = files_for_selection(data_dir, selection)
     if not files:
-        sys.stderr.write(f"upload-sample-data: no sample files found for '{selection}' in {data_dir}; nothing to seed.\n")
+        sys.stderr.write(
+            f"upload-sample-data: no sample files found for '{selection}' in {data_dir}; nothing to seed.\n"
+        )
         return 0
 
     if args.dry_run:
@@ -353,7 +377,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(f"[dry-run] {action}")
         return 0
 
-    blob_endpoint, queue_endpoint = resolve_endpoints(account_name, blob_endpoint_override)
+    blob_endpoint, queue_endpoint = resolve_endpoints(
+        account_name, blob_endpoint_override
+    )
     credential = DefaultAzureCredential()
     blob_service = BlobServiceClient(account_url=blob_endpoint, credential=credential)
     container_client = blob_service.get_container_client(container_name)
@@ -365,7 +391,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     search_client = None
     if search_endpoint and search_index:
-        search_client = SearchClient(endpoint=search_endpoint, index_name=search_index, credential=credential)
+        search_client = SearchClient(
+            endpoint=search_endpoint, index_name=search_index, credential=credential
+        )
 
     last_known_count = 0
 
@@ -393,7 +421,9 @@ def main(argv: Sequence[str] | None = None) -> int:
                 print(f"upload-sample-data: uploaded {file_path.name}.")
             else:
                 skipped += 1
-                print(f"upload-sample-data: {file_path.name} already present; skipping.")
+                print(
+                    f"upload-sample-data: {file_path.name} already present; skipping."
+                )
 
         if search_client is None:
             print(
@@ -424,7 +454,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         blob_service.close()
         credential.close()
 
-    print(f"upload-sample-data: uploaded {uploaded}, skipped {skipped} (already present).")
+    print(
+        f"upload-sample-data: uploaded {uploaded}, skipped {skipped} (already present)."
+    )
     return 0
 
 

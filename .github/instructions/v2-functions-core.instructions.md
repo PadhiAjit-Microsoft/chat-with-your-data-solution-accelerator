@@ -1,6 +1,6 @@
 ---
-description: "CWYD v2 functions/core conventions — ingestion-only code, backend.core extensions, AND Functions-only runtime helpers (HTTP response shaping, exception mapping decorators, cross-blueprint wire contracts). Use when: editing v2/src/functions/core/**; adding an ingestion-only parser or chunker subclass; extending a backend.core provider with blob/queue-storage tracking; wiring a Functions blueprint that reuses backend.core machinery; adding a Functions-runtime helper that wraps azure.functions types or carries a queue envelope."
-applyTo: "v2/src/functions/core/**"
+description: "CWYD v2 functions/core conventions — ingestion-only code, backend.core extensions, AND Functions-only runtime helpers (HTTP response shaping, exception mapping decorators, cross-blueprint wire contracts). Use when: editing src/functions/core/**; adding an ingestion-only parser or chunker subclass; extending a backend.core provider with blob/queue-storage tracking; wiring a Functions blueprint that reuses backend.core machinery; adding a Functions-runtime helper that wraps azure.functions types or carries a queue envelope."
+applyTo: "src/functions/core/**"
 ---
 
 # v2 functions/core Conventions
@@ -11,7 +11,7 @@ applyTo: "v2/src/functions/core/**"
 
 ## Anti-duplication invariant (binding)
 
-> **No symbol is defined twice.** If a parser, chunker, embedder, or any other building block is needed by both backend (chat) and functions (ingestion), it lives in `v2/src/backend/core/` and `functions/core/` imports it. `functions/core/` only exists for ingestion-side code that backend has no use for, or for thin extension classes that subclass a `backend.core` base.
+> **No symbol is defined twice.** If a parser, chunker, embedder, or any other building block is needed by both backend (chat) and functions (ingestion), it lives in `src/backend/core/` and `functions/core/` imports it. `functions/core/` only exists for ingestion-side code that backend has no use for, or for thin extension classes that subclass a `backend.core` base.
 
 This means every file under `functions/core/` should fall into one of three shapes:
 
@@ -23,11 +23,11 @@ This means every file under `functions/core/` should fall into one of three shap
 
 | Use case | Destination | Why |
 |---|---|---|
-| Used **only** by backend at chat/query time | `v2/src/backend/core/` | Backend stays standalone. |
-| Used **only** by functions for ingestion | `v2/src/functions/core/` | Functions-specific; backend has no need to load it. |
-| Used by **both** backend and functions | `v2/src/backend/core/` (functions imports it) | Single source of truth; backend container is the always-on consumer, so the canonical home is there. |
-| Used **only** by functions but extends a `backend.core` library | `v2/src/functions/core/` (subclass) + base in `backend.core` | Extension lives where it is consumed; base stays where it is shared. |
-| Wraps `azure.functions` types or carries a queue envelope shared across blueprints | `v2/src/functions/core/` | Functions-runtime surface FastAPI does not have; nothing for backend to consume. |
+| Used **only** by backend at chat/query time | `src/backend/core/` | Backend stays standalone. |
+| Used **only** by functions for ingestion | `src/functions/core/` | Functions-specific; backend has no need to load it. |
+| Used by **both** backend and functions | `src/backend/core/` (functions imports it) | Single source of truth; backend container is the always-on consumer, so the canonical home is there. |
+| Used **only** by functions but extends a `backend.core` library | `src/functions/core/` (subclass) + base in `backend.core` | Extension lives where it is consumed; base stays where it is shared. |
+| Wraps `azure.functions` types or carries a queue envelope shared across blueprints | `src/functions/core/` | Functions-runtime surface FastAPI does not have; nothing for backend to consume. |
 
 **Tie-breaker for storage/messaging clients**: anything that builds a `ContainerClient` / `QueueClient` / `CosmosClient` / `BlobClient` from a credential + endpoint is **storage-account math + SDK plumbing**, not Functions-specific. It lives in `backend/core/providers/storage/` (or the equivalent provider domain) and Functions blueprints import it. Do not put `client_factory`-style code under `functions/core/`.
 
@@ -39,7 +39,7 @@ This means every file under `functions/core/` should fall into one of three shap
 * `functions/core/http.py` — `json_response()`, `read_json_body()`, status constants for `func.HttpResponse`.
 * `functions/core/exception_mapping.py` — `@map_function_exceptions("op_name")` decorator that owns the `ValidationError` → 422 / `AzureError` → 502 / `Exception` → 500 ladder per `v2/docs/exception_handling_policy.md` §"Functions blueprints".
 
-Storage-side primitives (`resolve_storage_endpoints()`, `storage_clients()` async context manager) do **not** live here — they land under `v2/src/backend/core/providers/storage/` so backend can also consume them. Do not seed this folder with placeholder modules beyond the U7 set.
+Storage-side primitives (`resolve_storage_endpoints()`, `storage_clients()` async context manager) do **not** live here — they land under `src/backend/core/providers/storage/` so backend can also consume them. Do not seed this folder with placeholder modules beyond the U7 set.
 
 ## Pillar header (binding)
 
@@ -57,13 +57,13 @@ Most files here will be **Stable Core** (the indexing pipeline is part of the al
 
 ## Pyright strict (binding)
 
-`functions/core/**` is on `pyright --strict` from day one (`v2/pyproject.toml` `[tool.pyright]` `strict` block). This is non-negotiable per the Phase 5.5 decision: the standalone-functions image must hold the same type-safety bar as the standalone-backend image.
+`functions/core/**` is on `pyright --strict` from day one (`pyproject.toml` `[tool.pyright]` `strict` block). This is non-negotiable per the Phase 5.5 decision: the standalone-functions image must hold the same type-safety bar as the standalone-backend image.
 
 ## Resilience
 
 Per `.github/copilot-instructions.md` Hard Rule #14 (SDK boundary resilience): every external SDK call inside a Functions blueprint, helper, or extension class is wrapped in `try/except <SDK error umbrella>` with structured logging + the trigger-type-specific re-raise contract. Functions has two trigger surfaces; each has a distinct contract.
 
-**Queue trigger contract** — the handler must return `None` and re-raise on failure so the Functions host's retry → poison-queue policy engages. The `@log_queue_errors("<op_name>")` decorator in `v2/src/functions/core/exception_mapping.py` (U7i) owns the boundary: it wraps the handler body in `try/except Exception as exc: logger.exception("<op_name> queue handler failed", extra={"operation": "<op_name>", ...}); raise`. Application code inside the handler still wraps its own SDK calls in narrow `except AzureError` / `except asyncpg.PostgresError` blocks with operation-specific `extra=` keys; the decorator is the outer safety net, not the only line of defense.
+**Queue trigger contract** — the handler must return `None` and re-raise on failure so the Functions host's retry → poison-queue policy engages. The `@log_queue_errors("<op_name>")` decorator in `src/functions/core/exception_mapping.py` (U7i) owns the boundary: it wraps the handler body in `try/except Exception as exc: logger.exception("<op_name> queue handler failed", extra={"operation": "<op_name>", ...}); raise`. Application code inside the handler still wraps its own SDK calls in narrow `except AzureError` / `except asyncpg.PostgresError` blocks with operation-specific `extra=` keys; the decorator is the outer safety net, not the only line of defense.
 
 ```python
 @app.queue_trigger(arg_name="msg", queue_name="doc-chunks", connection="AzureWebJobsStorage")
@@ -80,7 +80,7 @@ async def batch_push(msg: func.QueueMessage) -> None:
         raise
 ```
 
-**HTTP trigger contract** — the handler must always return `func.HttpResponse` (never raise into the host, never `return None`). The `@map_function_exceptions("<op_name>")` decorator in `v2/src/functions/core/exception_mapping.py` (U7 series) owns the `ValidationError` → 422 / `AzureError` → 502 / `Exception` → 500 ladder per `v2/docs/exception_handling_policy.md` §"Functions blueprints". Application code inside the handler still wraps SDK calls in narrow excepts so the structured `extra=` log line fires at the boundary; the decorator translates uncaught exceptions into the right `HttpResponse` shape.
+**HTTP trigger contract** — the handler must always return `func.HttpResponse` (never raise into the host, never `return None`). The `@map_function_exceptions("<op_name>")` decorator in `src/functions/core/exception_mapping.py` (U7 series) owns the `ValidationError` → 422 / `AzureError` → 502 / `Exception` → 500 ladder per `v2/docs/exception_handling_policy.md` §"Functions blueprints". Application code inside the handler still wraps SDK calls in narrow excepts so the structured `extra=` log line fires at the boundary; the decorator translates uncaught exceptions into the right `HttpResponse` shape.
 
 ```python
 @app.route(route="add_url", methods=["POST"])
@@ -97,13 +97,13 @@ async def add_url(req: func.HttpRequest) -> func.HttpResponse:
 
 **Three obligations stay identical** to backend-core (logger.exception + structured `extra=` with `operation` + `provider`/domain keys + re-raise). The trigger-type contracts above just set how the re-raise reaches the host.
 
-**Silent excepts are forbidden** under the same `v2/tests/shared/test_no_silent_excepts.py` AST gate that covers backend code.
+**Silent excepts are forbidden** under the same `tests/test_no_silent_excepts.py` AST gate that covers backend code.
 
 **Idempotency is the resilience pair to retries.** Because queue triggers re-deliver on failure, every blueprint handler must compute a deterministic message key (document hash, blob path, URL+timestamp) and skip if already processed. The retry loop is correctness only if the side effects are safe to repeat.
 
 ## Typing standard
 
-Same discipline as `.github/instructions/v2-backend-core.instructions.md` §Typing standard. `pyright --strict` runs on `v2/src/functions/core/**` with 0/0/0 CI target. Boundary classification for `Any`:
+Same discipline as `.github/instructions/v2-backend-core.instructions.md` §Typing standard. `pyright --strict` runs on `src/functions/core/**` with 0/0/0 CI target. Boundary classification for `Any`:
 
 | Class | Functions-side example | Why permitted |
 |---|---|---|
@@ -117,7 +117,7 @@ Same discipline as `.github/instructions/v2-backend-core.instructions.md` §Typi
 
 ## Banned (mirrors v2-backend-core)
 
-- `from openai import …` anywhere in `v2/src/functions/core/**` — Foundry IQ via `backend.core.providers.llm` only.
+- `from openai import …` anywhere in `src/functions/core/**` — Foundry IQ via `backend.core.providers.llm` only.
 - `semantic_kernel`, `promptflow`.
 - Module-level `client = SomeClient(...)`.
 - Sync DB drivers (`psycopg2`) on runtime paths; `asyncpg` only.
@@ -128,4 +128,4 @@ Same discipline as `.github/instructions/v2-backend-core.instructions.md` §Typi
 
 ## Tests
 
-Tests for `functions/core/**` mirror the source tree at `v2/tests/functions/core/**`. They follow the same conventions as `v2/tests/backend/core/**` — see [`v2-tests.instructions.md`](v2-tests.instructions.md) for fixture patterns, mock strategy, and SSE-event assertion helpers.
+Tests for `functions/core/**` mirror the source tree at `tests/functions/core/**`. They follow the same conventions as `tests/backend/core/**` — see [`v2-tests.instructions.md`](v2-tests.instructions.md) for fixture patterns, mock strategy, and SSE-event assertion helpers.

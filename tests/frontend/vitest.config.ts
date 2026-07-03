@@ -7,7 +7,7 @@ import react from "@vitejs/plugin-react";
 // Phase: 1
 //
 // Vitest config for the v2 frontend test tree. This package is a sibling
-// workspace member of cwyd-frontend; both hoist to v2/node_modules, so a
+// workspace member of cwyd-frontend; both hoist to node_modules, so a
 // bare import in a spec ("@testing-library/react", the auto-injected
 // "react/jsx-runtime") resolves from the shared hoisted tree with no
 // per-package shims. The "@" alias points at the frontend source under

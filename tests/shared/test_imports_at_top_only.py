@@ -20,7 +20,7 @@ statement.
 
 Scope: `src`, `tests`, and `scripts`. The full v2/ Python surface is
 gated; the `tests` root joined after the IMPORTS-AT-TOP-DEBT refactor
-pass hoisted every in-function import in `v2/tests/**` to module top.
+pass hoisted every in-function import in `tests/**` to module top.
 
 If a circular import surfaces, fix it structurally via leaf-module
 extraction per Hard Rule #11 precedent (extract the shared type /
@@ -34,8 +34,8 @@ from pathlib import Path
 
 import pytest
 
-# v2/ root resolves from this file: v2/tests/shared/test_*.py -> v2/
-_V2_ROOT = Path(__file__).resolve().parents[2]
+# Repo root resolves from this file: tests/shared/test_*.py -> repo root
+_REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # Subtrees under v2/ that get scanned. Full v2/ Python surface
 # (production + scripts + tests) is gated.
@@ -51,12 +51,17 @@ def _iter_v2_python_files() -> list[Path]:
     """Return every `*.py` under the scan roots, sorted for stable output."""
     files: list[Path] = []
     for root in _SCAN_ROOTS:
-        root_dir = _V2_ROOT / root
+        root_dir = _REPO_ROOT / root
         if not root_dir.is_dir():
             continue
         for path in root_dir.rglob("*.py"):
             parts = set(path.parts)
-            if "__pycache__" in parts or ".venv" in parts or "build" in parts or "node_modules" in parts:
+            if (
+                "__pycache__" in parts
+                or ".venv" in parts
+                or "build" in parts
+                or "node_modules" in parts
+            ):
                 continue
             files.append(path)
     return sorted(files)
@@ -121,11 +126,11 @@ _ALL_FILES = _iter_v2_python_files()
 @pytest.mark.parametrize(
     "py_file",
     _ALL_FILES,
-    ids=lambda p: str(p.relative_to(_V2_ROOT)),
+    ids=lambda p: str(p.relative_to(_REPO_ROOT)),
 )
 def test_imports_at_module_top(py_file: Path) -> None:
     if py_file in _EXEMPTIONS:
-        pytest.skip(f"explicitly exempted: {py_file.relative_to(_V2_ROOT)}")
+        pytest.skip(f"explicitly exempted: {py_file.relative_to(_REPO_ROOT)}")
 
     source = py_file.read_text(encoding="utf-8")
     tree = ast.parse(source, filename=str(py_file))
@@ -134,10 +139,8 @@ def test_imports_at_module_top(py_file: Path) -> None:
     if not findings:
         return
 
-    rel = py_file.relative_to(_V2_ROOT)
-    formatted = "\n".join(
-        f"  line {lineno}: {reason}" for lineno, reason in findings
-    )
+    rel = py_file.relative_to(_REPO_ROOT)
+    formatted = "\n".join(f"  line {lineno}: {reason}" for lineno, reason in findings)
     pytest.fail(
         f"{rel}: misplaced imports detected (Hard Rule #17 -- all imports at "
         f"module top, zero carve-outs):\n{formatted}\n\n"
@@ -155,11 +158,11 @@ def test_scan_actually_walked_files() -> None:
     because the test runs from an unexpected cwd in CI), the
     parametrised test would generate zero cases and quietly pass.
     """
-    assert _ALL_FILES, "no Python files discovered under v2/{src,scripts}"
-    rel_parts = {p.relative_to(_V2_ROOT).parts[0] for p in _ALL_FILES}
-    assert "src" in rel_parts, (
-        "no files found under v2/src/ -- path resolution likely broken"
-    )
-    assert "scripts" in rel_parts, (
-        "no files found under v2/scripts/ -- path resolution likely broken"
-    )
+    assert _ALL_FILES, "no Python files discovered under {src,scripts}"
+    rel_parts = {p.relative_to(_REPO_ROOT).parts[0] for p in _ALL_FILES}
+    assert (
+        "src" in rel_parts
+    ), "no files found under src/ -- path resolution likely broken"
+    assert (
+        "scripts" in rel_parts
+    ), "no files found under scripts/ -- path resolution likely broken"

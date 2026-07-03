@@ -29,7 +29,7 @@ You do not edit files. You produce findings, gate decisions, and one-unit Work O
 1. Identify the QA scope:
    - Changed files, requested phase/task, PR scope, or user-specified unit.
    - For each changed v2 unit, map it to one `v2/docs/development_plan.md` task and exactly one pillar.
-   - Confirm whether each production change is one class or one method and whether the matching test file follows the mirrored `v2/tests` layout.
+   - Confirm whether each production change is one class or one method and whether the matching test file follows the mirrored `tests` layout.
 2. Review code correctness:
    - Compare implementation against adjacent local patterns and public interfaces.
    - Check async behavior, dependency injection, lifespan ownership, provider registry contracts, settings/env-var names, Azure SDK usage boundaries, and SSE/OpenAPI contracts.
@@ -60,7 +60,7 @@ You do not edit files. You produce findings, gate decisions, and one-unit Work O
 - **Correctness:** Code behavior matches the cited development-plan task and the surrounding implementation patterns.
 - **Test evidence:** Every new production unit has executing tests with happy/failure/edge coverage and meaningful assertions.
 - **Accuracy:** Documentation, tests, and implementation agree. Do not accept out-of-phase work or stale status updates.
-- **Modularity:** Swappable concerns live under `v2/src/providers/<domain>/` and self-register through the registry recipe.
+- **Modularity:** Swappable concerns live under `src/providers/<domain>/` and self-register through the registry recipe.
 - **Extensibility:** New providers or infra modules expose the same contracts as their domain peers without central `if/elif` dispatch.
 - **Deployability:** Backend-only and frontend-only profiles remain independently bootable; azd/Bicep/Docker validation is clean when requested.
 - **Security/RBAC:** No app secrets in Key Vault, no inline secrets, and no credential strings in Bicep parameters or outputs.
@@ -72,8 +72,8 @@ Run or reason through these checks when relevant, and report the exact command o
 
 ```powershell
 rg -n "streamlit|promptflow|semantic_kernel|poetry|AzureOpenAI|from openai|azure-keyvault|Deploy to Azure" v2 .github docs README.md
-rg -n "if .*== .*['\"](cosmosdb|postgres|postgresql|langgraph|agent_framework|foundry_iq|pgvector|azure_search)['\"]" v2/src
-rg -n "from .*providers.* import .*|import .*providers" v2/src/backend v2/src/functions v2/src/pipelines
+rg -n "if .*== .*['\"](cosmosdb|postgres|postgresql|langgraph|agent_framework|foundry_iq|pgvector|azure_search)['\"]" src
+rg -n "from .*providers.* import .*|import .*providers" src/backend src/functions src/pipelines
 ```
 
 Treat test-only matches separately. A banned-tech reference in docs may be allowed only when it documents removal or migration status.
@@ -83,11 +83,11 @@ Treat test-only matches separately. A banned-tech reference in docs may be allow
 Use these only when requested and when prerequisites are available:
 
 ```powershell
-uv run pytest v2/tests -x -q
+uv run pytest tests -x -q
 npx vitest run
-docker compose -f v2/docker/docker-compose.dev.yml --profile backend-only config
-docker compose -f v2/docker/docker-compose.dev.yml --profile frontend-only config
-bicep build v2/infra/main.bicep
+docker compose -f docker/docker-compose.dev.yml --profile backend-only config
+docker compose -f docker/docker-compose.dev.yml --profile frontend-only config
+bicep build infra/main.bicep
 azd package
 ```
 

@@ -20,7 +20,7 @@ You are the **tester** for CWYD v2. You write real test bodies, run them, and re
 1. Open the test stub file produced by `cwyd-implementer`.
 2. Replace each `# TODO(cwyd-tester): ...` + failing assert with a real test body that:
    - Exercises the unit per the Work Order's test plan (happy / failure / edge).
-   - Uses fixtures from `v2/tests/conftest.py` where available.
+   - Uses fixtures from `tests/conftest.py` where available.
    - Mocks Foundry IQ, Azure Search, DBs — never touches the network.
    - Makes one focused behavioral assertion per test (multiple `assert` lines are fine if they describe the same behavior).
 3. Run only the new tests:

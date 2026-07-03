@@ -6,8 +6,8 @@ name: v2 backend-only smoke
 # FastAPI app serves all routes -- the literal "backend works without
 # functions" claim of `v2/docs/development_plan.md` §3.
 #
-# Tests live under `v2/tests/smoke/` and are gated by the `smoke`
-# pytest marker (registered in `v2/pyproject.toml`). The default
+# Tests live under `tests/smoke/` and are gated by the `smoke`
+# pytest marker (registered in `pyproject.toml`). The default
 # pytest run excludes them via `addopts = "-m 'not smoke'"`, so the
 # main test suite count is unaffected.
 
@@ -16,34 +16,31 @@ on:
     branches:
       - main
     paths:
-      - "v2/src/backend/**"
-      - "v2/docker/Dockerfile.backend"
-      - "v2/docker/docker-compose.dev.yml"
-      - "v2/docker/docker-compose.smoke.yml"
-      - "v2/tests/smoke/**"
-      - "v2/pyproject.toml"
-      - "v2/uv.lock"
+      - "src/backend/**"
+      - "docker/Dockerfile.backend"
+      - "docker/docker-compose.dev.yml"
+      - "docker/docker-compose.smoke.yml"
+      - "tests/smoke/**"
+      - "pyproject.toml"
+      - "uv.lock"
       - ".github/workflows/v2-backend-only-smoke.yml"
   pull_request:
     branches:
       - main
     paths:
-      - "v2/src/backend/**"
-      - "v2/docker/Dockerfile.backend"
-      - "v2/docker/docker-compose.dev.yml"
-      - "v2/docker/docker-compose.smoke.yml"
-      - "v2/tests/smoke/**"
-      - "v2/pyproject.toml"
-      - "v2/uv.lock"
+      - "src/backend/**"
+      - "docker/Dockerfile.backend"
+      - "docker/docker-compose.dev.yml"
+      - "docker/docker-compose.smoke.yml"
+      - "tests/smoke/**"
+      - "pyproject.toml"
+      - "uv.lock"
       - ".github/workflows/v2-backend-only-smoke.yml"
   workflow_dispatch:
 
 jobs:
   smoke:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: v2
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -52,7 +49,7 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true
-          cache-dependency-glob: "v2/uv.lock"
+          cache-dependency-glob: "uv.lock"
 
       - name: Install dependencies
         run: uv sync --frozen --group dev

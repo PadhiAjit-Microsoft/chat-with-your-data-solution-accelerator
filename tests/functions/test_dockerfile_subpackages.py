@@ -17,9 +17,9 @@ instead of in a silently handler-less cloud deploy.
 import re
 from pathlib import Path
 
-_V2_ROOT = Path(__file__).resolve().parents[2]
-_FUNCTIONS_SRC = _V2_ROOT / "src" / "functions"
-_DOCKERFILE = _V2_ROOT / "docker" / "Dockerfile.functions"
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_FUNCTIONS_SRC = _REPO_ROOT / "src" / "functions"
+_DOCKERFILE = _REPO_ROOT / "docker" / "Dockerfile.functions"
 
 # Matches `COPY src/functions/<name> ./functions/<name>`; the backreference
 # guarantees the source package and its deploy-layout destination agree.

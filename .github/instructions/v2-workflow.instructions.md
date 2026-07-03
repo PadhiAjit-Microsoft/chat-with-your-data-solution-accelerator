@@ -1,15 +1,15 @@
 ---
-description: "CWYD v2 always-on workflow contract. Use when: editing anything under v2/, adding a class, adding a method, building a feature, planning work, scoping a change, deciding what to test, classifying by pillar, wiring a new orchestrator, adding plug-and-play surface, exposing a reasoning channel, or before opening a PR for v2."
-applyTo: "v2/**"
+description: "CWYD v2 always-on workflow contract. Use when: editing anything under the code tree (`src/`, `tests/`, `infra/`, `docker/`, `scripts/`, `azure.yaml`), adding a class, adding a method, building a feature, planning work, scoping a change, deciding what to test, classifying by pillar, wiring a new orchestrator, adding plug-and-play surface, exposing a reasoning channel, or before opening a PR for v2."
+applyTo: "src/**,tests/**,infra/**,docker/**,scripts/**,azure.yaml"
 ---
 
 # v2 Workflow Contract
 
-This file applies to every edit under `v2/`. It encodes the non-negotiable process.
+This file applies to every edit under the code tree (`src/`, `tests/`, `infra/`, `docker/`, `scripts/`, `azure.yaml`). It encodes the non-negotiable process.
 
 ## Step 0 — sync agent guidance first (gate)
 
-Before any reorganization, refactor, or error fix under `v2/`, read the agent instructions and prompt files that scope the change (`.github/copilot-instructions.md` + the relevant `.github/instructions/v2-*.instructions.md`). If guidance is stale, contradicts the requested change, or is silent on a decision the change implies, **propose an instruction update first and wait for user approval** before touching code or other docs. Skipping Step 0 causes re-work and re-introduces removed concepts. The pillars file (`v2/docs/pillars_of_development.md`) is read-only product policy — never edit it.
+Before any reorganization, refactor, or error fix under the code tree, read the agent instructions and prompt files that scope the change (`.github/copilot-instructions.md` + the relevant `.github/instructions/v2-*.instructions.md`). If guidance is stale, contradicts the requested change, or is silent on a decision the change implies, **propose an instruction update first and wait for user approval** before touching code or other docs. Skipping Step 0 causes re-work and re-introduces removed concepts. The pillars file (`v2/docs/pillars_of_development.md`) is read-only product policy — never edit it.
 
 ## The loop (per request)
 
@@ -21,7 +21,7 @@ Before any reorganization, refactor, or error fix under `v2/`, read the agent in
 
 ## Pillar header (required)
 
-Every new file in `v2/src/**` must start with one of:
+Every new file in `src/**` must start with one of:
 
 ```python
 """
@@ -45,18 +45,18 @@ Valid pillars: `Stable Core`, `Scenario Pack`, `Configuration Layer`, `Customiza
 
 - **Backend-only deployments must work.** No code path may assume the bundled frontend is reachable. Health check, OpenAPI docs (`/docs`), and all routers must function with the frontend container removed.
 - **Frontend-only deployments must work.** All API calls go through a single `apiClient` that reads `VITE_BACKEND_URL`. Never hardcode `/api`. Never assume same-origin.
-- **OpenAPI is the contract.** Backend changes that affect request/response shapes must regenerate the TS client (`make openapi` or pre-commit hook). Do not hand-edit `v2/src/frontend/src/api/generated/`.
+- **OpenAPI is the contract.** Backend changes that affect request/response shapes must regenerate the TS client (`make openapi` or pre-commit hook). Do not hand-edit `src/frontend/src/api/generated/`.
 
 ## Multi-agent readiness
 
-All orchestrators implement `v2/src/backend/core/providers/orchestrators/base.py::OrchestratorBase` with:
+All orchestrators implement `src/backend/core/providers/orchestrators/base.py::OrchestratorBase` with:
 
 ```python
 async def run(self, request: ConversationRequest) -> AsyncIterator[OrchestratorEvent]:
     ...
 ```
 
-Concrete orchestrators self-register via `@registry.register("langgraph")` / `@registry.register("agent_framework")` against the registry in `v2/src/backend/core/providers/orchestrators/__init__.py`. Caller code is `orchestrators.create(settings.orchestrator, ...)` — no `if/elif` over orchestrator names anywhere.
+Concrete orchestrators self-register via `@registry.register("langgraph")` / `@registry.register("agent_framework")` against the registry in `src/backend/core/providers/orchestrators/__init__.py`. Caller code is `orchestrators.create(settings.orchestrator, ...)` — no `if/elif` over orchestrator names anywhere.
 
 `OrchestratorEvent` is a discriminated union over channels: `reasoning | tool | answer | citation | error`. Never collapse reasoning into the answer string. A future multi-agent coordinator will route `tool` and `reasoning` events between agents — keep them clean.
 
@@ -77,7 +77,7 @@ Concrete orchestrators self-register via `@registry.register("langgraph")` / `@r
 
 **Removed features (do not re-add, do not re-document as a feature):** one-click "Deploy to Azure" ARM button (v2 is `azd`-only), Streamlit admin app (merged into the React/Vite frontend), Azure Bot Service integration, Teams extension. Full list: [v2/docs/development_plan.md](../../v2/docs/development_plan.md) §2.1.
 
-**Forbidden code patterns:** `if/elif` provider dispatch outside a `Registry[T]`; lazy in-function imports of provider classes (and any other in-function import — see Hard Rule #17 in [.github/copilot-instructions.md](../copilot-instructions.md), enforced by `v2/tests/shared/test_imports_at_top_only.py`); module-level client instantiation. Pluggable concerns belong under `v2/src/backend/core/providers/<domain>/` and self-register.
+**Forbidden code patterns:** `if/elif` provider dispatch outside a `Registry[T]`; lazy in-function imports of provider classes (and any other in-function import — see Hard Rule #17 in [.github/copilot-instructions.md](../copilot-instructions.md), enforced by `tests/shared/test_imports_at_top_only.py`); module-level client instantiation. Pluggable concerns belong under `src/backend/core/providers/<domain>/` and self-register.
 
 ## Anti-overengineering gate (4 questions, all must pass)
 
@@ -85,7 +85,7 @@ Before introducing **any** new file, container, sidecar, package, Bicep module, 
 
 1. **Which dev_plan task # does this implement?** Cite [v2/docs/development_plan.md](../../v2/docs/development_plan.md) §3.4 (project structure) or §4 (phase task table) by line/task number. "It seems useful" is not a citation.
 2. **Which pillar does it belong to?** Pick exactly one from [v2/docs/pillars_of_development.md](../../v2/docs/pillars_of_development.md): Stable Core, Scenario Pack, Configuration Layer, or Customization Layer. Declare it in the file/class docstring.
-3. **Does it preserve plug-and-play?** Both `--profile backend-only` and `--profile frontend-only` (in `v2/docker/docker-compose.dev.yml`) must still boot independently after the change. No hidden coupling, no shared in-process state, no mandatory sidecar.
+3. **Does it preserve plug-and-play?** Both `--profile backend-only` and `--profile frontend-only` (in `docker/docker-compose.dev.yml`) must still boot independently after the change. No hidden coupling, no shared in-process state, no mandatory sidecar.
 4. **Is this the simplest thing that works?** One runtime per container. No reverse proxies, no collectors, no caches, no message buses, no factories without ≥2 concrete callers *today*. v1 is **not** a reference — v1 is the spaghetti we are replacing.
 
 **Worked examples of overengineering to reject:**
@@ -99,9 +99,9 @@ Before introducing **any** new file, container, sidecar, package, Bicep module, 
 
 The following require an explicit user prompt **before** any agent acts:
 
-- New top-level folder under `v2/`.
-- New package directory under `v2/src/**` (anything beyond what dev_plan.md §3.4 enumerates).
-- New entry in `pyproject.toml` `[project] dependencies` or `v2/src/frontend/package.json` `dependencies`.
+- New top-level folder at the repo root.
+- New package directory under `src/**` (anything beyond what dev_plan.md §3.4 enumerates).
+- New entry in `pyproject.toml` `[project] dependencies` or `src/frontend/package.json` `dependencies`.
 - Renames or moves of existing modules.
 - New module layout (e.g., splitting `backend/core/providers/orchestrators/` into sub-packages, or moving anything between `backend/core/`, `backend/core/providers/`, and `backend/core/pipelines/`).
 

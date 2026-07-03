@@ -687,7 +687,7 @@ def test_document_intelligence_settings_reads_env_prefix(
 
 def test_document_intelligence_settings_no_endpoint_field() -> None:
     """Endpoint is intentionally derived from `FoundrySettings.services_endpoint`
-    (unified AI Services account per `v2/infra/main.bicep`) rather than a
+    (unified AI Services account per `infra/main.bicep`) rather than a
     standalone env var. Guard against accidental re-introduction of an
     `AZURE_DOCUMENT_INTELLIGENCE_ENDPOINT` field.
     """
@@ -699,7 +699,7 @@ def test_document_intelligence_settings_no_endpoint_field() -> None:
                 f"DocumentIntelligenceSettings.{field_name} looks like a "
                 f"standalone endpoint field; endpoint MUST derive from "
                 f"FoundrySettings.services_endpoint per the unified AI "
-                f"Services account in v2/infra/main.bicep."
+                f"Services account in infra/main.bicep."
             )
 
 
@@ -834,17 +834,17 @@ _ENV_EXAMPLE_EXEMPTIONS: dict[str, str] = {
 
 
 def test_env_sample_keys_round_trip_through_appsettings() -> None:
-    """Every non-comment key in v2/.env.sample must be consumed by
+    """Every non-comment key in .env.sample must be consumed by
     AppSettings (or be an explicitly documented exemption).
 
     Guards against the v1->v2 alias drift that CU-007 cleaned up. New
     keys added to the sample without a matching AppSettings field will
-    fail this test loudly so the operator's `v2/.env` does not silently
-    do nothing. Path moved from v2/docker/.env.dev.example to v2/.env.sample
+    fail this test loudly so the operator's `.env` does not silently
+    do nothing. Path moved from docker/.env.dev.example to .env.sample
     in CU-008a (single source of truth at v2/ root). Test file moved from
-    v2/tests/shared/test_settings.py to v2/tests/backend/core/test_settings.py
+    tests/shared/test_settings.py to tests/backend/core/test_settings.py
     in REFACTOR-B (Phase 5.5, 2026-05-06); parents index bumped 2 -> 3 to
-    keep resolving v2/.env.sample.
+    keep resolving .env.sample.
     """
     example = (
         Path(__file__).resolve().parents[3]
@@ -873,7 +873,7 @@ def test_env_sample_keys_round_trip_through_appsettings() -> None:
         unknown.add(key)
 
     assert not unknown, (
-        "v2/.env.sample contains keys that AppSettings does not consume "
+        ".env.sample contains keys that AppSettings does not consume "
         "and that are not in the documented exemption list: "
         f"{sorted(unknown)}. Either add the field to backend/core/settings.py "
         "or document the exemption in _ENV_EXAMPLE_EXEMPTIONS with a "

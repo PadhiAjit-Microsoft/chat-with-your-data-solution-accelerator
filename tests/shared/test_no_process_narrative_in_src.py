@@ -4,13 +4,13 @@ Pillar: Stable Core
 Phase: 6 (Standards / Audit turn between U11 and U12, codifies Hard Rule #16)
 
 Per ``.github/copilot-instructions.md`` Hard Rule #16 (codified 2026-05-28):
-comments and docstrings under ``v2/src/**`` describe **what the code is** --
+comments and docstrings under ``src/**`` describe **what the code is** --
 never how it got there, what unit shipped it, what work lands next, what date
 the line was written, or what dev_plan section it traces to. Process state
 lives in ``v2/docs/development_plan.md``, commit history, and tracked debt
 rows; production source files are not the work-tracker.
 
-This gate walks every ``*.py`` under ``v2/src/``, harvests:
+This gate walks every ``*.py`` under ``src/``, harvests:
 
 * every module / class / function docstring (via ``ast.get_docstring``);
 * every comment token (via ``tokenize.generate_tokens``);
@@ -63,9 +63,9 @@ from pathlib import Path
 
 import pytest
 
-# v2/ root resolves from this file: v2/tests/shared/test_*.py -> v2/
-_V2_ROOT = Path(__file__).resolve().parents[2]
-_SRC_ROOT = _V2_ROOT / "src"
+# Repo root resolves from this file: tests/shared/test_*.py -> repo root
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_SRC_ROOT = _REPO_ROOT / "src"
 
 
 # --- Banned-pattern regex set -------------------------------------------------
@@ -95,24 +95,25 @@ _CHECKS: tuple[tuple[re.Pattern[str], str], ...] = (
 
 def _line_is_carved_out(line: str) -> bool:
     """True if the line carries a Hard Rule #16 carve-out marker."""
-    return (
-        "pyright: ignore" in line
-        or "-DEBT" in line
-        or "Hard Rule" in line
-    )
+    return "pyright: ignore" in line or "-DEBT" in line or "Hard Rule" in line
 
 
 # --- Source walkers -----------------------------------------------------------
 
 
 def _iter_v2_src_python_files() -> list[Path]:
-    """Return every ``*.py`` under ``v2/src/``, sorted for stable output."""
+    """Return every ``*.py`` under ``src/``, sorted for stable output."""
     files: list[Path] = []
     if not _SRC_ROOT.is_dir():
         return files
     for path in _SRC_ROOT.rglob("*.py"):
         parts = set(path.parts)
-        if "__pycache__" in parts or ".venv" in parts or "build" in parts or "node_modules" in parts:
+        if (
+            "__pycache__" in parts
+            or ".venv" in parts
+            or "build" in parts
+            or "node_modules" in parts
+        ):
             continue
         files.append(path)
     return sorted(files)
@@ -130,11 +131,7 @@ def _iter_docstrings(tree: ast.Module) -> list[tuple[int, str]]:
             (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef),
         ):
             ds = ast.get_docstring(node, clean=False)
-            if (
-                ds is not None
-                and node.body
-                and isinstance(node.body[0], ast.Expr)
-            ):
+            if ds is not None and node.body and isinstance(node.body[0], ast.Expr):
                 results.append((node.body[0].lineno, ds))
     return results
 
@@ -206,13 +203,13 @@ def _scan_file(path: Path) -> list[str]:
 @pytest.mark.parametrize(
     "path",
     _iter_v2_src_python_files(),
-    ids=lambda p: str(p.relative_to(_V2_ROOT)),
+    ids=lambda p: str(p.relative_to(_REPO_ROOT)),
 )
 def test_no_process_narrative_in_src(path: Path) -> None:
-    """Per-file gate: each ``*.py`` under v2/src/ must be narrative-free."""
+    """Per-file gate: each ``*.py`` under src/ must be narrative-free."""
     violations = _scan_file(path)
     if violations:
-        rel = path.relative_to(_V2_ROOT)
+        rel = path.relative_to(_REPO_ROOT)
         pytest.fail(
             f"\n{rel}: Hard Rule #16 violations:\n"
             + "\n".join(violations)
@@ -235,13 +232,13 @@ def test_scan_actually_walked_files() -> None:
     case would skip and the gate would falsely pass.
     """
     files = _iter_v2_src_python_files()
-    assert files, "no `*.py` files discovered under v2/src/"
+    assert files, "no `*.py` files discovered under src/"
     rel_parts = {p.relative_to(_SRC_ROOT).parts[0] for p in files}
     assert "backend" in rel_parts, (
-        "no `*.py` files found under v2/src/backend/ -- path resolution "
+        "no `*.py` files found under src/backend/ -- path resolution "
         "likely broken"
     )
     assert "functions" in rel_parts, (
-        "no `*.py` files found under v2/src/functions/ -- path resolution "
+        "no `*.py` files found under src/functions/ -- path resolution "
         "likely broken"
     )

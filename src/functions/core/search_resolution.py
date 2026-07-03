@@ -83,16 +83,22 @@ async def resolve_search_provider(
         "credential": credential,
     }
     provider: BaseSearch | None = None
+    resolved = False
     try:
         if search_key == IndexStore.PGVECTOR:
             pool_helper = PgVectorPool(settings=settings, credential=credential)
             search_kwargs["pool"] = await pool_helper.acquire()
         provider = search_registry.registry.get(search_key)(**search_kwargs)
         await provider.ensure_schema()
-    except BaseException:
-        if provider is not None:
-            await provider.aclose()
-        if pool_helper is not None:
-            await pool_helper.aclose()
-        raise
-    return ResolvedSearch(provider=provider, pool_helper=pool_helper)
+        resolved = True
+        return ResolvedSearch(provider=provider, pool_helper=pool_helper)
+    finally:
+        # On any early exit (error or cancellation) release what was
+        # already opened, provider before pool, so the SDK client is
+        # closed over the connection it was layered on; the in-flight
+        # exception then propagates to the trigger-level decorators.
+        if not resolved:
+            if provider is not None:
+                await provider.aclose()
+            if pool_helper is not None:
+                await pool_helper.aclose()

@@ -423,7 +423,7 @@ async def test_status_does_not_leak_sensitive_settings(
 
 
 def test_admin_router_module_declares_pillar_and_phase() -> None:
-    """Hard Rule #3: every new module under v2/src/** opens with a
+    """Hard Rule #3: every new module under src/** opens with a
     Pillar / Phase docstring header so reviewers and future agents
     can map the file to the development plan.
     """

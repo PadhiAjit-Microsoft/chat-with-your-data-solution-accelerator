@@ -122,7 +122,7 @@ def test_load_entry_points_fires_for_canonical_group() -> None:
 
     Note: this domain has no first-party side-effect imports at backend
     startup (PDF/DOCX/MD/HTML/TXT concretes live under
-    `v2/src/functions/core/parsers/` and self-register at Functions
+    `src/functions/core/parsers/` and self-register at Functions
     startup), so there is no `test_first_party_key_registered_at_import`
     companion case.
     """

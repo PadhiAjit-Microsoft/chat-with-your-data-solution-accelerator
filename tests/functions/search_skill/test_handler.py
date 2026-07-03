@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 — tests for v2/src/functions/search_skill/handler.py."""
+"""Pillar: Stable Core / Phase: 6 — tests for src/functions/search_skill/handler.py."""
 
 import pytest
 
@@ -75,9 +75,7 @@ async def test_embeds_and_returns_response_with_vectors_per_record() -> None:
 @pytest.mark.asyncio
 async def test_embedder_called_with_synthetic_chunks_built_from_records() -> None:
     request = _request(("a", "alpha"), ("b", "bravo"))
-    embedder = _StubEmbedder(
-        [EmbeddingResult(vectors=[[0.0], [0.0]], model="fake")]
-    )
+    embedder = _StubEmbedder([EmbeddingResult(vectors=[[0.0], [0.0]], model="fake")])
 
     await search_skill_handler(request, embedder)
 
@@ -147,9 +145,7 @@ async def test_embedder_exception_propagates_to_caller() -> None:
 
     with pytest.raises(RuntimeError, match="openai down"):
         await search_skill_handler(request, embedder)
-    assert embedder.calls == [
-        [Chunk(id="1", content="hello", source="1", index=0)]
-    ]
+    assert embedder.calls == [[Chunk(id="1", content="hello", source="1", index=0)]]
 
 
 @pytest.mark.asyncio

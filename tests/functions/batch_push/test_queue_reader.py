@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 — tests for v2/src/functions/batch_push/queue_reader.py."""
+"""Pillar: Stable Core / Phase: 6 — tests for src/functions/batch_push/queue_reader.py."""
 
 from typing import cast
 
@@ -34,7 +34,9 @@ def test_parses_canonical_envelope_round_trip() -> None:
         ingestion_job_id="job-abc",
         force_reindex=True,
     )
-    msg = _as_queue_message(_FakeQueueMessage(original.model_dump_json().encode("utf-8")))
+    msg = _as_queue_message(
+        _FakeQueueMessage(original.model_dump_json().encode("utf-8"))
+    )
     assert parse_push_message(msg) == original
 
 

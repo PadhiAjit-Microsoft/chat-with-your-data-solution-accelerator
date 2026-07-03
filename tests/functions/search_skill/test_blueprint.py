@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 -- tests for v2/src/functions/search_skill/blueprint.py.
+"""Pillar: Stable Core / Phase: 6 -- tests for src/functions/search_skill/blueprint.py.
 
 Mirrors ``tests/functions/add_url/test_blueprint.py`` for the
 HTTP-trigger exception ladder + monkeypatch seam. ``_execute`` is
@@ -24,7 +24,6 @@ from functions.search_skill.models import (
     SearchSkillRequest,
     SearchSkillResponse,
 )
-
 
 # Minimal env that satisfies AppSettings + nested cross-field validators.
 # Mirrors the fixture in tests/functions/add_url/test_blueprint.py.
@@ -69,7 +68,9 @@ def _env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def _patch_route_deps(
     monkeypatch: pytest.MonkeyPatch,
-    execute: Callable[[SearchSkillRequest, AppSettings], Awaitable[SearchSkillResponse]],
+    execute: Callable[
+        [SearchSkillRequest, AppSettings], Awaitable[SearchSkillResponse]
+    ],
     settings: AppSettings | None = None,
 ) -> None:
     resolved = settings or AppSettings()
@@ -89,11 +90,7 @@ def _make_req(body: bytes) -> func.HttpRequest:
 def _wire_request(*records: tuple[str, str]) -> bytes:
     """Build a wire-shape (camelCase ``recordId``) JSON request body."""
     return json.dumps(
-        {
-            "values": [
-                {"recordId": rid, "data": {"text": text}} for rid, text in records
-            ]
-        }
+        {"values": [{"recordId": rid, "data": {"text": text}} for rid, text in records]}
     ).encode()
 
 

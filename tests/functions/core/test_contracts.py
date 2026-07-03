@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 — tests for v2/src/functions/core/contracts.py."""
+"""Pillar: Stable Core / Phase: 6 — tests for src/functions/core/contracts.py."""
 
 import json
 

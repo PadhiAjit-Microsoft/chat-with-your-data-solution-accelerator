@@ -2,7 +2,7 @@
 # Pillar: Stable Core
 # Phase: 1
 #
-# Build: docker build -f v2/docker/Dockerfile.ci-validate -t cwyd-ci .
+# Build: docker build -f docker/Dockerfile.ci-validate -t cwyd-ci .
 # Run:   docker run --rm -v $PWD:/work -w /work cwyd-ci
 
 FROM mcr.microsoft.com/azure-cli:latest AS azcli
@@ -39,7 +39,7 @@ RUN pip install --no-cache-dir uv pre-commit
 
 WORKDIR /work
 
-COPY v2/docker/ci-entrypoint.sh /usr/local/bin/ci-entrypoint
+COPY docker/ci-entrypoint.sh /usr/local/bin/ci-entrypoint
 RUN chmod +x /usr/local/bin/ci-entrypoint
 
 ENTRYPOINT ["/usr/local/bin/ci-entrypoint"]

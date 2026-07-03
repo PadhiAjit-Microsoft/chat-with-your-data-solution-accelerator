@@ -9,7 +9,12 @@
 			"isBackground": true,
 			"dependsOn": "uv sync",
 			"options": {
-				"cwd": "${workspaceFolder}/src/functions"
+				"cwd": "${workspaceFolder}/src/functions",
+				"env": {
+					"VIRTUAL_ENV": "${workspaceFolder}/.venv",
+					"PYTHONPATH": "${workspaceFolder}/src",
+					"PATH": "${workspaceFolder}/.venv/Scripts;${env:PATH}"
+				}
 			}
 		},
 		{
@@ -31,54 +36,11 @@
 			}
 		},
 		{
-			"label": "npm install admin",
-			"type": "shell",
-			"command": "npm install",
-			"problemMatcher": [],
-			"options": {
-				"cwd": "${workspaceFolder}/src/admin"
-			}
-		},
-		{
-			"label": "v2: uv sync",
-			"type": "shell",
-			"command": "uv sync",
-			"problemMatcher": [],
-			"options": {
-				"cwd": "${workspaceFolder}/v2"
-			}
-		},
-		{
-			"type": "func",
-			"label": "v2: func host start",
-			"command": "host start",
-			"problemMatcher": "$func-python-watch",
-			"isBackground": true,
-			"dependsOn": "v2: uv sync",
-			"options": {
-				"cwd": "${workspaceFolder}/v2/src/functions",
-				"env": {
-					"VIRTUAL_ENV": "${workspaceFolder}/v2/.venv",
-					"PYTHONPATH": "${workspaceFolder}/v2/src",
-					"PATH": "${workspaceFolder}/v2/.venv/Scripts;${env:PATH}"
-				}
-			}
-		},
-		{
-			"label": "v2: npm install frontend",
-			"type": "shell",
-			"command": "npm install",
-			"problemMatcher": [],
-			"options": {
-				"cwd": "${workspaceFolder}/v2/src/frontend"
-			}
-		},
-		{
-			"label": "v2: frontend dev",
+			"label": "frontend dev",
 			"type": "shell",
 			"command": "npm run dev",
 			"isBackground": true,
-			"dependsOn": "v2: npm install frontend",
+			"dependsOn": "npm install frontend",
 			"problemMatcher": {
 				"owner": "vite",
 				"pattern": {
@@ -91,7 +53,7 @@
 				}
 			},
 			"options": {
-				"cwd": "${workspaceFolder}/v2/src/frontend"
+				"cwd": "${workspaceFolder}/src/frontend"
 			}
 		}
 	]

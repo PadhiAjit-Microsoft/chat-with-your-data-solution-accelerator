@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 — tests for v2/src/functions/batch_start/blob_listing.py."""
+"""Pillar: Stable Core / Phase: 6 — tests for src/functions/batch_start/blob_listing.py."""
 
 import logging
 from collections.abc import AsyncIterator
@@ -31,7 +31,9 @@ class _FakeContainerClient:
         self._raises = raises
         self.last_prefix: str | None = "<<unset>>"  # sentinel — replaced on first call
 
-    def list_blob_names(self, *, name_starts_with: str | None = None) -> AsyncIterator[str]:
+    def list_blob_names(
+        self, *, name_starts_with: str | None = None
+    ) -> AsyncIterator[str]:
         self.last_prefix = name_starts_with
         if self._raises is not None:
             raise self._raises

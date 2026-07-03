@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 — tests for v2/src/functions/batch_start/handler.py."""
+"""Pillar: Stable Core / Phase: 6 — tests for src/functions/batch_start/handler.py."""
 
 from collections.abc import AsyncIterator
 from typing import cast
@@ -57,7 +57,9 @@ async def test_fans_out_one_message_per_blob() -> None:
     queue = _FakeQueueClient()
     request = BatchStartRequest(container_name="documents")
 
-    result = await batch_start_handler(request, _as_container(container), _as_queue(queue))
+    result = await batch_start_handler(
+        request, _as_container(container), _as_queue(queue)
+    )
 
     assert len(result) == 3
     assert [m.filename for m in result] == ["a.pdf", "b.pdf", "c.pdf"]
@@ -73,7 +75,9 @@ async def test_empty_container_enqueues_nothing() -> None:
     queue = _FakeQueueClient()
     request = BatchStartRequest(container_name="documents")
 
-    result = await batch_start_handler(request, _as_container(container), _as_queue(queue))
+    result = await batch_start_handler(
+        request, _as_container(container), _as_queue(queue)
+    )
 
     assert result == []
     assert queue.sent == []
@@ -96,7 +100,9 @@ async def test_force_reindex_is_propagated_into_every_message() -> None:
     queue = _FakeQueueClient()
     request = BatchStartRequest(container_name="documents", force_reindex=True)
 
-    result = await batch_start_handler(request, _as_container(container), _as_queue(queue))
+    result = await batch_start_handler(
+        request, _as_container(container), _as_queue(queue)
+    )
 
     assert all(m.force_reindex is True for m in result)
 
@@ -107,7 +113,9 @@ async def test_all_messages_share_one_ingestion_job_id() -> None:
     queue = _FakeQueueClient()
     request = BatchStartRequest(container_name="documents")
 
-    result = await batch_start_handler(request, _as_container(container), _as_queue(queue))
+    result = await batch_start_handler(
+        request, _as_container(container), _as_queue(queue)
+    )
 
     job_ids = {m.ingestion_job_id for m in result}
     assert len(job_ids) == 1

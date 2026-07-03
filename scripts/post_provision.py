@@ -60,14 +60,14 @@ from azure.search.documents.indexes.models import (
 )
 
 REQUIRED_ENV = ("AZURE_DB_TYPE",)
-# Mirrors the @allowed() list on `databaseType` in v2/infra/main.bicep.
+# Mirrors the @allowed() list on `databaseType` in infra/main.bicep.
 # Kept in sync by hand: a typo here or there silently breaks deploys.
 ALLOWED_DB_TYPES = ("cosmosdb", "postgresql")
 POSTGRES_AAD_SCOPE = "https://ossrdbms-aad.database.windows.net/.default"
 POSTGRES_DB = "postgres"
 
 # Chat search index schema. Field names match those the
-# `azure_search` provider reads in v2/src/providers/search/azure_search.py
+# `azure_search` provider reads in src/providers/search/azure_search.py
 # (id / content / title / url / content_vector). Re-naming here without
 # the corresponding provider change breaks Phase 3 RAG retrieval.
 DEFAULT_INDEX_NAME = "cwyd-index"
@@ -155,9 +155,7 @@ def _is_private_networking() -> bool:
     means the default public profile.
     """
     return (
-        os.environ.get("AZURE_ENV_ENABLE_PRIVATE_NETWORKING", "false")
-        .strip()
-        .lower()
+        os.environ.get("AZURE_ENV_ENABLE_PRIVATE_NETWORKING", "false").strip().lower()
         == "true"
     )
 
@@ -245,21 +243,33 @@ def _ensure_public_network_access(*, dry_run: bool, runner=None) -> str:
     if cosmos_account:
         commands.append(
             [
-                "az", "cosmosdb", "update",
-                "--resource-group", resource_group,
-                "--name", cosmos_account,
-                "--public-network-access", "ENABLED",
+                "az",
+                "cosmosdb",
+                "update",
+                "--resource-group",
+                resource_group,
+                "--name",
+                cosmos_account,
+                "--public-network-access",
+                "ENABLED",
             ]
         )
     storage_account = os.environ.get("AZURE_STORAGE_ACCOUNT_NAME", "").strip()
     if storage_account:
         commands.append(
             [
-                "az", "storage", "account", "update",
-                "--resource-group", resource_group,
-                "--name", storage_account,
-                "--public-network-access", "Enabled",
-                "--default-action", "Allow",
+                "az",
+                "storage",
+                "account",
+                "update",
+                "--resource-group",
+                resource_group,
+                "--name",
+                storage_account,
+                "--public-network-access",
+                "Enabled",
+                "--default-action",
+                "Allow",
             ]
         )
 
@@ -424,7 +434,9 @@ def _ensure_search_index(*, dry_run: bool, client_factory=None) -> str:
     )
     dimensions_raw = os.environ.get("AZURE_OPENAI_EMBEDDING_DIMENSIONS", "").strip()
     try:
-        dimensions = int(dimensions_raw) if dimensions_raw else DEFAULT_EMBEDDING_DIMENSIONS
+        dimensions = (
+            int(dimensions_raw) if dimensions_raw else DEFAULT_EMBEDDING_DIMENSIONS
+        )
     except ValueError:
         sys.stderr.write(
             f"post-provision: AZURE_OPENAI_EMBEDDING_DIMENSIONS={dimensions_raw!r} "
@@ -440,6 +452,7 @@ def _ensure_search_index(*, dry_run: bool, client_factory=None) -> str:
         return "dry-run"
 
     if client_factory is None:
+
         def client_factory():  # type: ignore[no-redef]
             return SearchIndexClient(
                 endpoint=endpoint, credential=DefaultAzureCredential()
@@ -618,12 +631,9 @@ def _ensure_knowledge_base(*, dry_run: bool, client_factory=None) -> str:
     )
 
     if client_factory is None:
+
         def client_factory():  # type: ignore[no-redef]
-            token = (
-                DefaultAzureCredential()
-                .get_token(SEARCH_DATA_PLANE_SCOPE)
-                .token
-            )
+            token = DefaultAzureCredential().get_token(SEARCH_DATA_PLANE_SCOPE).token
             return httpx.Client(
                 headers={
                     "Authorization": f"Bearer {token}",
@@ -639,7 +649,10 @@ def _ensure_knowledge_base(*, dry_run: bool, client_factory=None) -> str:
         # Order matters: the knowledge base references the source by name,
         # so the source PUT must land first. Both PUTs are create-or-update.
         for url, body in (
-            (f"{base}/knowledgesources('{knowledge_source_name}')", knowledge_source_body),
+            (
+                f"{base}/knowledgesources('{knowledge_source_name}')",
+                knowledge_source_body,
+            ),
             (f"{base}/knowledgebases('{knowledge_base_name}')", knowledge_base_body),
         ):
             response = client.put(url, params=params, json=body)
@@ -679,9 +692,7 @@ def _ensure_kb_mcp_connection(*, dry_run: bool, client_factory=None) -> str:
     plane.
     """
     search_endpoint = os.environ.get("AZURE_AI_SEARCH_ENDPOINT", "").strip()
-    project_resource_id = os.environ.get(
-        "AZURE_AI_PROJECT_RESOURCE_ID", ""
-    ).strip()
+    project_resource_id = os.environ.get("AZURE_AI_PROJECT_RESOURCE_ID", "").strip()
     if not search_endpoint or not project_resource_id:
         print(
             "post-provision: AZURE_AI_SEARCH_ENDPOINT or "
@@ -727,6 +738,7 @@ def _ensure_kb_mcp_connection(*, dry_run: bool, client_factory=None) -> str:
     body: dict[str, object] = {"properties": properties}
 
     if client_factory is None:
+
         def client_factory():  # type: ignore[no-redef]
             token = DefaultAzureCredential().get_token(ARM_SCOPE).token
             return httpx.Client(
@@ -780,7 +792,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         sys.stderr.write(
             f"post-provision: AZURE_DB_TYPE={db_type!r} is not one of "
             f"{ALLOWED_DB_TYPES}. Check the `databaseType` parameter in "
-            "v2/infra/main.parameters.json (or the AZURE_ENV_DB_TYPE "
+            "infra/main.parameters.json (or the AZURE_ENV_DB_TYPE "
             "value set via `azd env set`).\n"
         )
         return 6

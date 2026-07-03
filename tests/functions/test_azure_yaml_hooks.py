@@ -14,8 +14,8 @@ from pathlib import Path
 
 import yaml
 
-_V2_ROOT = Path(__file__).resolve().parents[2]
-_AZURE_YAML = _V2_ROOT / "azure.yaml"
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_AZURE_YAML = _REPO_ROOT / "azure.yaml"
 
 
 def _load_azure_yaml() -> dict[str, object]:

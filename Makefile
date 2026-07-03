@@ -8,7 +8,7 @@
 # beyond what `uv` provisions (`uv` bootstraps the interpreter via
 # `pyproject.toml`'s `requires-python`).
 #
-# Usage from the `v2/` directory:
+# Usage from the repo root:
 #   make typecheck   # Q13: static type check (pyright --strict scoped via pyproject)
 #   make test        # full pytest suite
 #   make lint        # black + flake8

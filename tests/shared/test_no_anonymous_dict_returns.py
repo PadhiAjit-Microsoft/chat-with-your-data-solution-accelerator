@@ -11,7 +11,7 @@ known-at-author-time* schema, the function must return a Pydantic v2
 the SDK boundary via ``model.model_dump(...)`` — the model is the source of
 truth for the schema, the dict is a transport detail.
 
-This gate walks every ``*.py`` under ``v2/src/`` (tests excluded — capture
+This gate walks every ``*.py`` under ``src/`` (tests excluded — capture
 buffers like ``captured: dict[str, object] = {}`` are local accumulators, not
 returns), inspects each ``FunctionDef`` / ``AsyncFunctionDef`` return
 annotation, and fails if any function returns a closed-set dict shape that
@@ -58,11 +58,11 @@ from pathlib import Path
 
 import pytest
 
-# v2/ root resolves from this file: v2/tests/shared/test_*.py -> v2/
-_V2_ROOT = Path(__file__).resolve().parents[2]
-_SRC_ROOT = _V2_ROOT / "src"
+# Repo root resolves from this file: tests/shared/test_*.py -> repo root
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_SRC_ROOT = _REPO_ROOT / "src"
 
-# Allow-list of (module dotted path relative to v2/src/, function qualname)
+# Allow-list of (module dotted path relative to src/, function qualname)
 # tuples. Methods use ``ClassName.method_name``. Each entry is justified in
 # the module docstring above.
 _ALLOWED: frozenset[tuple[str, str]] = frozenset(
@@ -85,7 +85,7 @@ _ALLOWED: frozenset[tuple[str, str]] = frozenset(
 
 
 def _iter_v2_src_python_files() -> list[Path]:
-    """Return every ``*.py`` under ``v2/src/``, sorted for stable output.
+    """Return every ``*.py`` under ``src/``, sorted for stable output.
 
     Skips ``__pycache__`` / ``.venv`` / ``build`` artefacts.
     """
@@ -94,14 +94,19 @@ def _iter_v2_src_python_files() -> list[Path]:
         return files
     for path in _SRC_ROOT.rglob("*.py"):
         parts = set(path.parts)
-        if "__pycache__" in parts or ".venv" in parts or "build" in parts or "node_modules" in parts:
+        if (
+            "__pycache__" in parts
+            or ".venv" in parts
+            or "build" in parts
+            or "node_modules" in parts
+        ):
             continue
         files.append(path)
     return sorted(files)
 
 
 def _module_dotted_path(path: Path) -> str:
-    """Convert ``v2/src/backend/app.py`` -> ``backend.app``.
+    """Convert ``src/backend/app.py`` -> ``backend.app``.
 
     Drops the trailing ``__init__`` segment so package ``__init__.py`` files
     map to their package's dotted path (consistent with how callers import
@@ -138,20 +143,14 @@ def _annotation_is_closed_set_dict(node: ast.expr | None) -> bool:
             name = value.id
             if name in {"dict", "Dict"}:
                 # ``dict[str, X]`` is parsed as Subscript(slice=Tuple(...)).
-                if (
-                    isinstance(slice_node, ast.Tuple)
-                    and len(slice_node.elts) == 2
-                ):
+                if isinstance(slice_node, ast.Tuple) and len(slice_node.elts) == 2:
                     key_ann = slice_node.elts[0]
                     if isinstance(key_ann, ast.Name) and key_ann.id == "str":
                         return True
                 return False
             if name == "Mapping":
                 # ``Mapping[str, X]`` -- same shape as dict[str, X].
-                if (
-                    isinstance(slice_node, ast.Tuple)
-                    and len(slice_node.elts) == 2
-                ):
+                if isinstance(slice_node, ast.Tuple) and len(slice_node.elts) == 2:
                     key_ann = slice_node.elts[0]
                     if isinstance(key_ann, ast.Name) and key_ann.id == "str":
                         return True
@@ -195,9 +194,7 @@ def _iter_functions_with_qualnames(
                 results.append((qualname, stmt))
                 _walk(stmt.body, f"{qualname}.")
             elif isinstance(stmt, ast.ClassDef):
-                inner_prefix = (
-                    f"{prefix}{stmt.name}." if prefix else f"{stmt.name}."
-                )
+                inner_prefix = f"{prefix}{stmt.name}." if prefix else f"{stmt.name}."
                 _walk(stmt.body, inner_prefix)
 
     _walk(tree.body, "")
@@ -226,17 +223,17 @@ _VIOLATIONS = _collect_violations()
 @pytest.mark.parametrize(
     "violation",
     _VIOLATIONS,
-    ids=lambda v: f"{v[0].relative_to(_V2_ROOT)}::{v[1]}",
+    ids=lambda v: f"{v[0].relative_to(_REPO_ROOT)}::{v[1]}",
 )
 def test_no_anonymous_dict_returns(
     violation: tuple[Path, str, _FunctionNode],
 ) -> None:
     path, qualname, node = violation
-    rel = path.relative_to(_V2_ROOT)
+    rel = path.relative_to(_REPO_ROOT)
     pytest.fail(
         f"{rel}:{node.lineno}: `{qualname}` returns a closed-set dict shape "
         f"(Hard Rule #15). Define a Pydantic `BaseModel` (frozen, "
-        f"`extra=\"forbid\"`) and return that; convert to the SDK wire shape "
+        f'`extra="forbid"`) and return that; convert to the SDK wire shape '
         f"via `model.model_dump(...)` at the boundary. If this site is a "
         f"legitimate boundary case (third-party SDK row, externally-defined "
         f"protocol payload, stdlib `Mapping[str, object]` consumer with "
@@ -262,7 +259,7 @@ def test_allow_list_entries_resolve_to_real_functions() -> None:
     missing = _ALLOWED - seen
     assert not missing, (
         f"allow-list entries do not resolve to any function under "
-        f"v2/src/: {sorted(missing)}. Either restore the function, "
+        f"src/: {sorted(missing)}. Either restore the function, "
         f"update the entry, or remove it from `_ALLOWED`."
     )
 
@@ -276,13 +273,13 @@ def test_scan_actually_walked_files() -> None:
     parametrised case would skip and the gate would falsely pass.
     """
     files = _iter_v2_src_python_files()
-    assert files, "no `*.py` files discovered under v2/src/"
+    assert files, "no `*.py` files discovered under src/"
     rel_parts = {p.relative_to(_SRC_ROOT).parts[0] for p in files}
     assert "backend" in rel_parts, (
-        "no `*.py` files found under v2/src/backend/ -- path resolution "
+        "no `*.py` files found under src/backend/ -- path resolution "
         "likely broken"
     )
     assert "functions" in rel_parts, (
-        "no `*.py` files found under v2/src/functions/ -- path resolution "
+        "no `*.py` files found under src/functions/ -- path resolution "
         "likely broken"
     )

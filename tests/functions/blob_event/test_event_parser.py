@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 — tests for v2/src/functions/blob_event/event_parser.py."""
+"""Pillar: Stable Core / Phase: 6 — tests for src/functions/blob_event/event_parser.py."""
 
 import base64
 import json
@@ -93,7 +93,6 @@ def _event_body(subject: str) -> dict[str, object]:
     }
 
 
-
 # ---------------------------------------------------------------------------
 # parse_blob_event — classify the event type + parse the blob reference
 # ---------------------------------------------------------------------------
@@ -183,9 +182,9 @@ def test_event_malformed_body_returns_none() -> None:
 
 def test_parsed_event_is_frozen() -> None:
     parsed = parse_blob_event(
-        json.dumps(
-            _typed_event_body(_SUBJECT, "Microsoft.Storage.BlobCreated")
-        ).encode("utf-8")
+        json.dumps(_typed_event_body(_SUBJECT, "Microsoft.Storage.BlobCreated")).encode(
+            "utf-8"
+        )
     )
     assert parsed is not None
     with pytest.raises(ValidationError):

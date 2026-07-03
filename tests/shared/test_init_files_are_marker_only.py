@@ -8,7 +8,7 @@ finalised 2026-05-26 after IA-B1..IA-B8): an `__init__.py` is a package
 marker. The *only* permitted content is the module docstring (which
 typically carries the `Pillar:` / `Phase:` header).
 
-This test walks every `*__init__.py*` under `v2/src/` and `v2/tests/`
+This test walks every `*__init__.py*` under `src/` and `tests/`
 (excluding `.venv/`, `__pycache__/`, and build artefacts) and asserts
 the AST body is one of:
 
@@ -36,10 +36,10 @@ from pathlib import Path
 
 import pytest
 
-# v2/ root resolves from this file: v2/tests/shared/test_*.py -> v2/
-_V2_ROOT = Path(__file__).resolve().parents[2]
+# Repo root resolves from this file: tests/shared/test_*.py -> repo root
+_REPO_ROOT = Path(__file__).resolve().parents[2]
 
-# Subtrees under v2/ that get scanned. v2/scripts/ has no Python
+# Subtrees under v2/ that get scanned. scripts/ has no Python
 # packages today (dev scripts are plain modules); if that ever changes,
 # add "scripts" here and the gate will pick the new packages up.
 _SCAN_ROOTS = ("src", "tests")
@@ -56,14 +56,19 @@ def _iter_v2_init_files() -> list[Path]:
     """Return every `__init__.py` under the scan roots, sorted for stable output."""
     files: list[Path] = []
     for root in _SCAN_ROOTS:
-        root_dir = _V2_ROOT / root
+        root_dir = _REPO_ROOT / root
         if not root_dir.is_dir():
             continue
         for path in root_dir.rglob("__init__.py"):
             # Skip any cached / venv / build output that may have been
             # dropped under one of the scan roots.
             parts = set(path.parts)
-            if "__pycache__" in parts or ".venv" in parts or "build" in parts or "node_modules" in parts:
+            if (
+                "__pycache__" in parts
+                or ".venv" in parts
+                or "build" in parts
+                or "node_modules" in parts
+            ):
                 continue
             files.append(path)
     return sorted(files)
@@ -86,15 +91,15 @@ _ALL_FILES = _iter_v2_init_files()
 @pytest.mark.parametrize(
     "init_file",
     _ALL_FILES,
-    ids=lambda p: str(p.relative_to(_V2_ROOT)),
+    ids=lambda p: str(p.relative_to(_REPO_ROOT)),
 )
 def test_init_file_is_marker_only(init_file: Path) -> None:
     if init_file in _EXEMPTIONS:
-        pytest.skip(f"explicitly exempted: {init_file.relative_to(_V2_ROOT)}")
+        pytest.skip(f"explicitly exempted: {init_file.relative_to(_REPO_ROOT)}")
 
     source = init_file.read_text(encoding="utf-8")
     tree = ast.parse(source, filename=str(init_file))
-    rel = init_file.relative_to(_V2_ROOT)
+    rel = init_file.relative_to(_REPO_ROOT)
 
     # Allowed shape 1: empty body.
     if not tree.body:
@@ -135,13 +140,12 @@ def test_scan_actually_walked_files() -> None:
     parametrised test would generate zero cases and quietly pass. This
     asserts at least the major source roots are visible.
     """
-    assert _ALL_FILES, "no `__init__.py` files discovered under v2/{src,tests}"
-    rel_parts = {p.relative_to(_V2_ROOT).parts[0] for p in _ALL_FILES}
+    assert _ALL_FILES, "no `__init__.py` files discovered under {src,tests}"
+    rel_parts = {p.relative_to(_REPO_ROOT).parts[0] for p in _ALL_FILES}
     assert "src" in rel_parts, (
-        "no `__init__.py` files found under v2/src/ -- path resolution "
-        "likely broken"
+        "no `__init__.py` files found under src/ -- path resolution " "likely broken"
     )
     assert "tests" in rel_parts, (
-        "no `__init__.py` files found under v2/tests/ -- path resolution "
+        "no `__init__.py` files found under tests/ -- path resolution "
         "likely broken"
     )

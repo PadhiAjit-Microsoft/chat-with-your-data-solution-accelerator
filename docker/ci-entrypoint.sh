@@ -27,23 +27,23 @@ run() {
 
 # -- Python: deps + lint + tests + coverage --------------------------------
 run "uv sync"               bash -c "uv sync --frozen 2>/dev/null || uv sync"
-run "ruff (if configured)"  bash -c "uv run ruff check v2 || true"
-run "pytest (v2)"           bash -c "uv run pytest v2 --maxfail=1 --disable-warnings -q"
+run "ruff (if configured)"  bash -c "uv run ruff check src tests scripts || true"
+run "pytest (v2)"           bash -c "uv run pytest tests --maxfail=1 --disable-warnings -q"
 
 # -- Frontend: install + lint + unit tests --------------------------------
-if [ -f v2/src/frontend/package.json ]; then
-    run "npm ci frontend"   bash -c "cd v2/src/frontend && (npm ci || npm install)"
-    run "npm test frontend" bash -c "cd v2/src/frontend && npm test --silent --if-present"
+if [ -f src/frontend/package.json ]; then
+    run "npm ci frontend"   bash -c "cd src/frontend && (npm ci || npm install)"
+    run "npm test frontend" bash -c "cd src/frontend && npm test --silent --if-present"
 fi
 
 # -- Bicep: build + (optional) what-if -----------------------------------
-if [ -f v2/infra/main.bicep ]; then
-    run "bicep build"       az bicep build --file v2/infra/main.bicep
+if [ -f infra/main.bicep ]; then
+    run "bicep build"       az bicep build --file infra/main.bicep
     if [ -n "${AZURE_SUBSCRIPTION_ID:-}" ] && [ -n "${AZURE_LOCATION:-}" ]; then
         run "az deployment what-if" az deployment sub what-if \
             --location "${AZURE_LOCATION}" \
-            --template-file v2/infra/main.bicep \
-            --parameters v2/infra/main.parameters.json
+            --template-file infra/main.bicep \
+            --parameters infra/main.parameters.json
     else
         echo "[skip] az deployment what-if (set AZURE_SUBSCRIPTION_ID + AZURE_LOCATION to enable)"
     fi

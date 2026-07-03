@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 -- tests for v2/src/functions/batch_push/blueprint.py.
+"""Pillar: Stable Core / Phase: 6 -- tests for src/functions/batch_push/blueprint.py.
 
 Mirrors the structure of ``tests/functions/batch_start/test_blueprint.py``:
 the route body is exercised via the private ``_execute`` seam (which
@@ -29,7 +29,6 @@ from functions.batch_push.blueprint import _parser_key_for_filename, batch_push
 from functions.core import search_resolution
 from functions.core.contracts import BatchPushQueueMessage
 from functions.function_app import app
-
 
 # Minimal env that satisfies AppSettings + nested cross-field validators.
 # Mirrors the cosmosdb fixture in tests/functions/batch_start/test_blueprint.py.
@@ -74,7 +73,9 @@ def _env(monkeypatch: pytest.MonkeyPatch) -> None:
 
 def _patch_route_deps(
     monkeypatch: pytest.MonkeyPatch,
-    execute: Callable[[BatchPushQueueMessage, AppSettings], Awaitable[list[SearchDocument]]],
+    execute: Callable[
+        [BatchPushQueueMessage, AppSettings], Awaitable[list[SearchDocument]]
+    ],
     settings: AppSettings | None = None,
 ) -> None:
     resolved = settings or AppSettings()
@@ -83,7 +84,9 @@ def _patch_route_deps(
 
 
 def _make_msg(envelope: BatchPushQueueMessage | bytes) -> func.QueueMessage:
-    body = envelope if isinstance(envelope, bytes) else envelope.model_dump_json().encode()
+    body = (
+        envelope if isinstance(envelope, bytes) else envelope.model_dump_json().encode()
+    )
     return func.QueueMessage(body=body)
 
 
@@ -167,7 +170,11 @@ async def test_malformed_envelope_raises_validation_error_and_logs_warning(
     with pytest.raises(ValidationError):
         await batch_push(_make_msg(json.dumps({}).encode()))
 
-    record = next(r for r in caplog.records if r.message == "batch_push queue message validation failed")
+    record = next(
+        r
+        for r in caplog.records
+        if r.message == "batch_push queue message validation failed"
+    )
     assert record.levelno == logging.WARNING
     assert record.exc_info is None  # warning, not exception
     assert record.operation == "batch_push"  # type: ignore[attr-defined]
@@ -193,7 +200,9 @@ async def test_azure_error_in_execute_reraises_and_logs_exception(
         await batch_push(_make_msg(envelope))
 
     record = next(
-        r for r in caplog.records if r.message == "batch_push queue handler storage call failed"
+        r
+        for r in caplog.records
+        if r.message == "batch_push queue handler storage call failed"
     )
     assert record.levelno == logging.ERROR
     assert record.exc_info is not None  # logger.exception attaches traceback
@@ -219,7 +228,9 @@ async def test_unexpected_exception_in_execute_reraises_safety_net(
     with pytest.raises(RuntimeError):
         await batch_push(_make_msg(envelope))
 
-    record = next(r for r in caplog.records if r.message == "batch_push queue handler failed")
+    record = next(
+        r for r in caplog.records if r.message == "batch_push queue handler failed"
+    )
     assert record.levelno == logging.ERROR
     assert record.exc_info is not None
     assert record.operation == "batch_push"  # type: ignore[attr-defined]
@@ -291,12 +302,18 @@ def _patch_execute_collaborators(
     schema bootstrap runs **before** the handler and that `aclose`
     still runs when `ensure_schema` raises.
     """
-    monkeypatch.setattr(bp_module.credentials_registry, "select_default", lambda _cid: "managed_identity")
+    monkeypatch.setattr(
+        bp_module.credentials_registry,
+        "select_default",
+        lambda _cid: "managed_identity",
+    )
     monkeypatch.setattr(
         bp_module.credentials_registry.registry, "get", lambda _key: _StubCredProvider
     )
     parser = type("Parser", (), {"__init__": lambda self, **_kw: None})
-    monkeypatch.setattr(bp_module.ingestion_parsers_registry.registry, "get", lambda _key: parser)
+    monkeypatch.setattr(
+        bp_module.ingestion_parsers_registry.registry, "get", lambda _key: parser
+    )
 
     class _Embedder:
         def __init__(self, **_kw: object) -> None:
@@ -305,8 +322,14 @@ def _patch_execute_collaborators(
         async def aclose(self) -> None:
             return None
 
-    monkeypatch.setattr(bp_module.embedders_registry.registry, "get", lambda _key: _Embedder)
-    monkeypatch.setattr(search_resolution.search_registry.registry, "get", lambda _key: lambda **_kw: search_stub)
+    monkeypatch.setattr(
+        bp_module.embedders_registry.registry, "get", lambda _key: _Embedder
+    )
+    monkeypatch.setattr(
+        search_resolution.search_registry.registry,
+        "get",
+        lambda _key: lambda **_kw: search_stub,
+    )
     monkeypatch.setattr(bp_module, "ContainerClient", _StubContainerClient)
     monkeypatch.setattr(
         bp_module,
@@ -331,9 +354,7 @@ async def test_execute_calls_ensure_schema_before_handler_and_aclose_after(
         def __init__(self, **_kw: object) -> None:
             pass
 
-        async def search(
-            self, query: str, **_kwargs: object
-        ) -> Sequence[SearchResult]:
+        async def search(self, query: str, **_kwargs: object) -> Sequence[SearchResult]:
             return []
 
         async def delete_by_source(self, source: str) -> int:
@@ -369,9 +390,7 @@ async def test_execute_propagates_ensure_schema_failure_and_still_closes_provide
         def __init__(self, **_kw: object) -> None:
             pass
 
-        async def search(
-            self, query: str, **_kwargs: object
-        ) -> Sequence[SearchResult]:
+        async def search(self, query: str, **_kwargs: object) -> Sequence[SearchResult]:
             return []
 
         async def delete_by_source(self, source: str) -> int:

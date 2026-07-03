@@ -18,8 +18,8 @@ import re
 import tomllib
 from pathlib import Path
 
-_V2_ROOT = Path(__file__).resolve().parents[2]
-_PYPROJECT = _V2_ROOT / "pyproject.toml"
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+_PYPROJECT = _REPO_ROOT / "pyproject.toml"
 
 
 def _dependency_names() -> set[str]:

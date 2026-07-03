@@ -24,8 +24,8 @@ Pydantic v2 + LangGraph wiring that introspects `__annotations__` at
 runtime and crashed on unresolved forward refs.
 
 If a genuine circular import surfaces, fix it by extracting the shared
-type to a leaf module (e.g. `v2/src/shared/types.py` or a new
-`v2/src/shared/contracts/` package) -- never reach for the guard.
+type to a leaf module (e.g. `src/shared/types.py` or a new
+`src/shared/contracts/` package) -- never reach for the guard.
 Such an extraction is a structural change and triggers Hard Rule #10
 (ask the user first).
 """
@@ -35,8 +35,8 @@ from pathlib import Path
 
 import pytest
 
-# v2/ root resolves from this file: v2/tests/shared/test_*.py -> v2/
-_V2_ROOT = Path(__file__).resolve().parents[2]
+# Repo root resolves from this file: tests/shared/test_*.py -> repo root
+_REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # Subtrees under v2/ that get scanned. Anything else (e.g. .venv, build
 # artefacts) is implicitly excluded by not being listed here.
@@ -54,14 +54,19 @@ def _iter_v2_python_files() -> list[Path]:
     """Return every `*.py` under the scan roots, sorted for stable output."""
     files: list[Path] = []
     for root in _SCAN_ROOTS:
-        root_dir = _V2_ROOT / root
+        root_dir = _REPO_ROOT / root
         if not root_dir.is_dir():
             continue
         for path in root_dir.rglob("*.py"):
             # Skip any cached / venv / build output that may have been
             # dropped under one of the scan roots.
             parts = set(path.parts)
-            if "__pycache__" in parts or ".venv" in parts or "build" in parts or "node_modules" in parts:
+            if (
+                "__pycache__" in parts
+                or ".venv" in parts
+                or "build" in parts
+                or "node_modules" in parts
+            ):
                 continue
             files.append(path)
     return sorted(files)
@@ -120,16 +125,16 @@ _ALL_FILES = _iter_v2_python_files()
 @pytest.mark.parametrize(
     "py_file",
     _ALL_FILES,
-    ids=lambda p: str(p.relative_to(_V2_ROOT)),
+    ids=lambda p: str(p.relative_to(_REPO_ROOT)),
 )
 def test_no_future_annotations_or_type_checking(py_file: Path) -> None:
     if py_file in _EXEMPTIONS:
-        pytest.skip(f"explicitly exempted: {py_file.relative_to(_V2_ROOT)}")
+        pytest.skip(f"explicitly exempted: {py_file.relative_to(_REPO_ROOT)}")
 
     source = py_file.read_text(encoding="utf-8")
     tree = ast.parse(source, filename=str(py_file))
 
-    rel = py_file.relative_to(_V2_ROOT)
+    rel = py_file.relative_to(_REPO_ROOT)
 
     if _has_future_annotations_import(tree):
         pytest.fail(
@@ -145,7 +150,7 @@ def test_no_future_annotations_or_type_checking(py_file: Path) -> None:
             f"{rel}: `if TYPE_CHECKING:` is banned in v2/ (Hard Rule #11, "
             f"CU-013). Hoist the guarded imports into the regular import "
             f"block. If a circular import surfaces, extract the shared "
-            f"type to a leaf module (e.g. `v2/src/shared/types.py`) -- "
+            f"type to a leaf module (e.g. `src/shared/types.py`) -- "
             f"that is a structural change and triggers Hard Rule #10 "
             f"(ask the user first)."
         )
@@ -165,11 +170,11 @@ def test_scan_actually_walked_files() -> None:
     parametrised test would generate zero cases and quietly pass. This
     asserts at least the major source roots are visible.
     """
-    assert _ALL_FILES, "no Python files discovered under v2/{src,tests,scripts}"
-    rel_parts = {p.relative_to(_V2_ROOT).parts[0] for p in _ALL_FILES}
-    assert "src" in rel_parts, (
-        "no files found under v2/src/ -- path resolution likely broken"
-    )
-    assert "tests" in rel_parts, (
-        "no files found under v2/tests/ -- path resolution likely broken"
-    )
+    assert _ALL_FILES, "no Python files discovered under {src,tests,scripts}"
+    rel_parts = {p.relative_to(_REPO_ROOT).parts[0] for p in _ALL_FILES}
+    assert (
+        "src" in rel_parts
+    ), "no files found under src/ -- path resolution likely broken"
+    assert (
+        "tests" in rel_parts
+    ), "no files found under tests/ -- path resolution likely broken"

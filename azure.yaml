@@ -33,7 +33,7 @@ infra:
 # ----------------------------------------------------------------------
 # Typed prompt block — surfaced by `azd up` / `azd provision`. Each
 # answer is persisted in the azd env file under AZURE_ENV_<name> and
-# bound back to a Bicep parameter via v2/infra/main.parameters.json.
+# bound back to a Bicep parameter via infra/main.parameters.json.
 # ----------------------------------------------------------------------
 parameters:
   - name: databaseType
@@ -90,11 +90,11 @@ parameters:
 
 # ----------------------------------------------------------------------
 # Services — bound to Bicep resources by the `azd-service-name` tag in
-# v2/infra/main.bicep:
+# infra/main.bicep:
 #   - backend  → Container App  (tag 'backend')
 #   - frontend → Container App  (tag 'frontend')
 #   - function → Container App  (tag 'function', kind=functionapp)
-# Each service uses its own Dockerfile under v2/docker/. `azd deploy`
+# Each service uses its own Dockerfile under docker/. `azd deploy`
 # builds the image, pushes to the Bicep-deployed ACR, and updates the
 # target resource. Debt #Q4 (Phase 3.5 QA remediation) — closes the
 # blocker that `azure.yaml` `services:` was empty.
