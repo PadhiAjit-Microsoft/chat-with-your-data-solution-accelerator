@@ -323,10 +323,11 @@ module applicationInsights 'br/public:avm/res/insights/component:0.6.0' = if (en
     workspaceResourceId: logAnalyticsWorkspace!.outputs.resourceId
     applicationType: 'web'
     kind: 'web'
-    disableLocalAuth: true
-    // The UAMI ingests telemetry via Entra (local auth disabled above).
-    // Without `Monitoring Metrics Publisher` every workload write path
-    // silently 401s and telemetry vanishes. ADR-0018.
+    disableLocalAuth: false
+    // Local auth is enabled so connection-string / instrumentation-key
+    // ingestion is accepted, matching MACAE's `avm/res/insights/component`
+    // (which omits the flag). The `Monitoring Metrics Publisher` role below
+    // is retained but unused, reserved for a revert to Entra-only ingestion.
     roleAssignments: [
       {
         principalId: userAssignedIdentity.outputs.principalId

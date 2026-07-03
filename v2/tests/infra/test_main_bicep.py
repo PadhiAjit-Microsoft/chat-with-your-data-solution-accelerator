@@ -315,17 +315,18 @@ def test_blob_event_subscription_targets_blob_events_queue(bicep_text: str) -> N
 
 
 # ---------------------------------------------------------------------------
-# ADR-0018: Monitoring Metrics Publisher RBAC for UAMI on AppI.
+# ADR-0018 (+ Amendment 2): Monitoring Metrics Publisher RBAC for UAMI on AppI.
 #
 # The `applicationInsights` AVM module is created with
-# `disableLocalAuth: true`, so ingestion authenticates via Entra. Without
-# `Monitoring Metrics Publisher` granted to the UAMI, every telemetry
-# write from the backend container app + function app silently 401s and
-# telemetry vanishes from AppI -- exactly the observability gap
-# ADR-0018 closes.
+# `disableLocalAuth: false`, so the connection-string-only telemetry
+# exporter ingests via instrumentation key (matching MACAE). The
+# `Monitoring Metrics Publisher` role granted to the UAMI is retained but
+# currently unused -- kept so a revert to Entra-only ingestion (flip the
+# flag back to `true` + pass a managed-identity credential) needs no
+# RBAC change.
 #
 # The role assignment lives inline on the AVM module's `roleAssignments`
-# param (mirrors the aiServices pattern at ~line 552) so it inherits the
+# param (mirrors the aiServices pattern) so it inherits the
 # same `if (enableMonitoring)` gate as the AppI module itself; a sibling
 # top-level resource would either always deploy or need a duplicated gate.
 # ---------------------------------------------------------------------------
@@ -349,9 +350,9 @@ def test_application_insights_grants_metrics_publisher_to_uami(
     """The AppI module must grant `Monitoring Metrics Publisher` to the UAMI (ADR-0018)."""
     assert "roleAssignments:" in application_insights_slice, (
         "applicationInsights AVM module must declare a `roleAssignments` "
-        "param granting the UAMI ingestion permission. AppI is created "
-        "with disableLocalAuth=true, so without this role telemetry "
-        "silently 401s -- the observability gap ADR-0018 closes."
+        "param granting the UAMI ingestion permission. The role is retained "
+        "for a potential future revert to Entra-only ingestion (local auth "
+        "is currently enabled); see ADR-0018."
     )
     assert _MONITORING_METRICS_PUBLISHER_ROLE_NAME in application_insights_slice, (
         "applicationInsights roleAssignments must reference "
@@ -364,6 +365,25 @@ def test_application_insights_grants_metrics_publisher_to_uami(
         "applicationInsights roleAssignments must use "
         "`userAssignedIdentity.outputs.principalId` so the workload UAMI "
         "(not the system MI, not a fixed principal) is the grantee."
+    )
+
+
+def test_application_insights_enables_local_auth(
+    application_insights_slice: str,
+) -> None:
+    """The AppI module must enable local auth so ikey ingestion works (BUG-0055)."""
+    assert "disableLocalAuth: false" in application_insights_slice, (
+        "applicationInsights AVM module must set `disableLocalAuth: false` so "
+        "the connection-string-only telemetry exporter ingests via "
+        "instrumentation key, matching MACAE's `avm/res/insights/component`. "
+        "With local auth disabled the app's ikey writes silently drop "
+        "(BUG-0055)."
+    )
+    assert "disableLocalAuth: true" not in application_insights_slice, (
+        "applicationInsights AVM module must NOT set `disableLocalAuth: true` "
+        "-- Entra-only ingestion drops the app's connection-string writes "
+        "(BUG-0055). The retained `Monitoring Metrics Publisher` role keeps a "
+        "one-line revert path back to Entra-only ingestion."
     )
 
 
