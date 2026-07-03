@@ -1,24 +1,18 @@
 {
-    "azureFunctions.deploySubpath": "src/functions",
-    "azureFunctions.projectSubpath": "src/functions",
-    "azureFunctions.scmDoBuildDuringDeployment": true,
-    "azureFunctions.projectLanguage": "Python",
-    "azureFunctions.projectRuntime": "~4",
-    "debug.internalConsoleOptions": "neverOpen",
-    "azureFunctions.projectLanguageModel": 2,
-    "files.insertFinalNewline": true,
-    "files.trimFinalNewlines": true,
-    "files.trimTrailingWhitespace": true,
-    "githubPullRequests.ignoredPullRequestBranches": [
-        "main"
-    ],
-    "python.testing.pytestArgs": [
-        ".",
-        "-m",
-        "not azure",
-    ],
-    "python.testing.cwd": "${workspaceFolder}",
-    "python.testing.unittestEnabled": false,
+    "python.defaultInterpreterPath": "${workspaceFolder}/v2/.venv/Scripts/python.exe",
     "python.testing.pytestEnabled": true,
-    "pylint.cwd": "${workspaceFolder}/src",
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestArgs": ["v2/tests"],
+    "python.analysis.extraPaths": ["v2/src"],
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportMissingImports": "warning"
+    },
+    "[python]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "ms-python.black-formatter"
+    },
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/.pytest_cache": true
+    }
 }
