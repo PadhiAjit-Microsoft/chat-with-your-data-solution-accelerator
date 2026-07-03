@@ -64,7 +64,6 @@ bash scripts/post_deployment_setup.sh "<your-resource-group-name>"
 
 Consider these additional configurations for enhanced functionality:
 
-- 📚 **[Advanced Image Processing](./advanced_image_processing.md)** - Enable enhanced document processing
-- 🔄 **[Integrated Vectorization](./integrated_vectorization.md)** - Configure advanced AI search features
-- 💬 **[Conversation Flow Options](./conversation_flow_options.md)** - Customize the chat experience
+- � **[Document ingestion](./document_ingestion.md)** - Understand how documents are processed and indexed
+- 🛠️ **[Admin and configuration](./admin.md)** - Ingest and manage documents from the built-in admin pages
 - 🎤 **[Speech-to-Text](./speech_to_text.md)** - Add voice interaction capabilities
