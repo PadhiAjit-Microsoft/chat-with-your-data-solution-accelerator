@@ -3,7 +3,7 @@
 Pillar: Stable Core
 Phase: 5.5 (Phase C -- Try/catch policy + sweep)
 
-Per [v2/docs/exception_handling_policy.md](../../docs/exception_handling_policy.md)
+Per [v2/docs/exception_handling_policy.md](../../v2/docs/exception_handling_policy.md)
 "Routers" row: domain exceptions surface as **sanitized**
 HTTPException-style responses with no SDK stack-trace, no PII, and no
 upstream payload echoed back to the client. The handlers below

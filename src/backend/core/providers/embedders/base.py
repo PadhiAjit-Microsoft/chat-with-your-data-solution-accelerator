@@ -12,7 +12,7 @@ from backend.core.types import Chunk, EmbeddingResult
 class BaseEmbedder(ABC):
     """Turns parsed `Chunk`s into embedding vectors.
 
-    Implementations live under `v2/src/backend/core/providers/embedders/`
+    Implementations live under `src/backend/core/providers/embedders/`
     and self-register via `@registry.register("<key>")` where `key`
     is the runtime selector used by ingestion handlers.
 

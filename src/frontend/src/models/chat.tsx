@@ -3,7 +3,7 @@
  * Phase: 7 (Testing + Documentation)
  *
  * Wire shapes + chat-domain state types. Mirrors the conversation /
- * history / SSE surfaces in `v2/src/backend/`:
+ * history / SSE surfaces in `src/backend/`:
  *
  * - `StreamChannel` / `StreamEvent` / `StreamMessage` mirror the SSE
  *   contract pinned by `backend.core.types.OrchestratorChannel` and

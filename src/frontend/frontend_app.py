@@ -13,7 +13,7 @@ backend base URL from the `BACKEND_API_URL` environment variable so the
 SPA learns the backend at runtime instead of baking it into the bundle.
 The dev profile keeps using Vite's HMR server unchanged; in production
 the App Service runs this module via uvicorn (see the `appCommandLine`
-on the frontend site in `v2/infra/main.bicep`).
+on the frontend site in `infra/main.bicep`).
 """
 
 import os

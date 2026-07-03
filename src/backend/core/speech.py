@@ -29,7 +29,7 @@ STS / `issueToken` HTTP call):
 Required RBAC: the workload identity must hold the
 **Cognitive Services Speech User** role on the Speech account (role
 def id `f2dc8367-1007-4938-bd23-fe263f013447`, already declared in
-`v2/infra/main.bicep`).
+`infra/main.bicep`).
 """
 
 import logging

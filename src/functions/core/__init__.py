@@ -31,11 +31,11 @@ The four "what lives where" rules (locked in for Phase 5.5):
 
 | Rule                                         | Destination                  |
 |----------------------------------------------|------------------------------|
-| Used **only** by backend at chat/query time  | ``v2/src/backend/core/``     |
-| Used **only** by functions for ingestion     | ``v2/src/functions/core/``   |
-| Used by **both**                             | ``v2/src/backend/core/``     |
-| Used **only** by functions but extends a     | ``v2/src/functions/core/``   |
+| Used **only** by backend at chat/query time  | ``src/backend/core/``        |
+| Used **only** by functions for ingestion     | ``src/functions/core/``      |
+| Used by **both**                             | ``src/backend/core/``        |
+| Used **only** by functions but extends a     | ``src/functions/core/``      |
 | ``backend.core`` library                     | (subclass / extension)       |
-| Wraps ``azure.functions`` types or carries   | ``v2/src/functions/core/``   |
+| Wraps ``azure.functions`` types or carries   | ``src/functions/core/``      |
 | a queue envelope shared across blueprints    | (Functions-runtime helper)   |
 """

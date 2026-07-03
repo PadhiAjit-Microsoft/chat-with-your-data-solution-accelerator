@@ -40,8 +40,8 @@ class ParserKey(StrEnum):
 class BaseParser(ABC):
     """Turns raw file bytes into a list of `Chunk`s.
 
-    Implementations live under `v2/src/backend/core/providers/parsers/`
-    (Stable Core defaults) or `v2/src/functions/core/parsers/`
+    Implementations live under `src/backend/core/providers/parsers/`
+    (Stable Core defaults) or `src/functions/core/parsers/`
     (ingestion-only formats like PDF/DOCX). All implementations
     self-register via `@registry.register(ParserKey.<EXT>)` where the
     key is the lowercase file extension without the leading dot

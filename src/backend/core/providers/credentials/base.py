@@ -14,7 +14,7 @@ from backend.core.settings import AppSettings
 class BaseCredentialProvider(ABC):
     """Returns an async Azure `TokenCredential` for use with SDK clients.
 
-    Implementations live under `v2/src/providers/credentials/` and
+    Implementations live under `src/backend/core/providers/credentials/` and
     self-register via `@registry.register("<key>")`.
     """
 

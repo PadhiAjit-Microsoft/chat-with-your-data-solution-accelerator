@@ -24,7 +24,7 @@ class AadScope(StrEnum):
     subscription keys, so every data-plane call goes through one of
     these scopes. ``COGNITIVE_SERVICES`` covers the unified Foundry AI
     Services account (Document Intelligence, Content Understanding,
-    OpenAI, Speech) per ``v2/infra/main.bicep``. ``POSTGRES_FLEX``
+    OpenAI, Speech) per ``infra/main.bicep``. ``POSTGRES_FLEX``
     covers Postgres Flexible Server's Entra-only auth.
 
     ``StrEnum`` subclassing keeps the wire-shape contract intact: SDK

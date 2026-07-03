@@ -18,7 +18,7 @@ format without duplication. Additional formats register by stacking another
 no new credential, no new client.
 
 Endpoint derivation -- the unified ``kind=AIServices`` account
-(``v2/infra/main.bicep``) exposes Document Intelligence on the same host as
+(``infra/main.bicep``) exposes Document Intelligence on the same host as
 chat / agents / speech. The SDK appends ``/documentintelligence/``
 internally, so the client just receives ``FoundrySettings.services_endpoint``
 normalised to one trailing slash. Auth is UAMI bearer for

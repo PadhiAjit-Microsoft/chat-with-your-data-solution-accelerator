@@ -14,7 +14,7 @@ admin route vs. HTTP Functions trigger) share one orchestration
 pipeline.
 
 Cross-package import note: the backend container's Dockerfile copies
-``v2/src`` whole, so ``functions.add_url.handler.add_url_handler`` is
+``src`` whole, so ``functions.add_url.handler.add_url_handler`` is
 importable here at runtime. That import is deliberate -- the
 add-URL orchestration (fetch -> parse -> embed -> push) is identical
 across both entry points; duplicating it would force the two paths

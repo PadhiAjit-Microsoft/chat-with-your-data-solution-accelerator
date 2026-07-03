@@ -5,7 +5,7 @@ Phase: 2
 
 `AppSettings` composes ~9 small `BaseSettings` models, one per Azure
 subsystem, that read **only** the `AZURE_*` env vars emitted by
-`v2/infra/main.bicep` outputs (verified list of 37 vars as of Phase
+`infra/main.bicep` outputs (verified list of 37 vars as of Phase
 1.2). The orchestrator namespace uses the runtime-tunable `CWYD_`
 prefix because it is not infra-pinned.
 
@@ -44,7 +44,7 @@ class Environment(StrEnum):
     Members:
         LOCAL: developer machine; the default for a clean checkout.
         PRODUCTION: cloud deployment, set via `AZURE_ENVIRONMENT` by
-            `v2/infra/main.bicep`.
+            `infra/main.bicep`.
     """
 
     LOCAL = "local"
@@ -302,7 +302,7 @@ class NetworkSettings(BaseSettings):
     # CORS origins for the backend FastAPI CORSMiddleware. Read from the
     # bare `BACKEND_CORS_ORIGINS` env var (no `AZURE_` prefix) so it
     # matches the v1 / Bicep convention and what every operator's
-    # `v2/.env` already uses. The validator accepts:
+    # `.env` already uses. The validator accepts:
     #   - a comma-separated string ("http://a, http://b")  -- env-var shape
     #   - a JSON-style list (`["http://a","http://b"]`)     -- compose YAML
     #   - an already-parsed Python list (programmatic tests)
@@ -469,7 +469,7 @@ class DocumentIntelligenceSettings(BaseSettings):
     `AZURE_DOCUMENT_INTELLIGENCE_MODEL_ID`.
 
     The endpoint is intentionally NOT a field on this submodel. Per
-    `v2/infra/main.bicep` the unified AI Services account (`kind=
+    `infra/main.bicep` the unified AI Services account (`kind=
     AIServices`, `allowProjectManagement=true`) exposes Document
     Intelligence at `{foundry.services_endpoint}documentintelligence/`
     alongside agents, chat, and speech on the same SKU. Parsers derive
@@ -481,7 +481,7 @@ class DocumentIntelligenceSettings(BaseSettings):
     `https://cognitiveservices.azure.com/.default` (Hard Rule #2 -- no
     keys, no Key Vault). RBAC: `Cognitive Services User` role on the
     unified AI Services account, granted to the UAMI in
-    `v2/infra/main.bicep`.
+    `infra/main.bicep`.
 
     `api_version` and `model_id` are operator-pinnable because GA cuts
     of `azure-ai-documentintelligence` occasionally change default
@@ -519,7 +519,7 @@ class AppSettings(BaseSettings):
 
     # Runtime mode. `local` is the default so a clean checkout / dev run
     # boots without surprises. Production deployments set
-    # `AZURE_ENVIRONMENT=production` via `v2/infra/main.bicep` on the
+    # `AZURE_ENVIRONMENT=production` via `infra/main.bicep` on the
     # backend Container App (and Function App) env-vars. The value is a
     # status-report field surfaced by `GET /api/admin/status`; Stable
     # Core code that reads the runtime mode must use this field -- never

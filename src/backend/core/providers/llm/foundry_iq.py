@@ -12,7 +12,7 @@ the project account -- no per-deployment endpoints, no per-deployment
 keys.
 
 Why we don't `from openai import ...`: hard rule #7 bans direct openai
-SDK usage in `v2/src/{shared,providers,pipelines}/**`. We *use* the
+SDK usage in `src/{shared,providers,pipelines}/**`. We *use* the
 client object returned by Foundry, but never import its type, so the
 ban is structurally enforced (grep stays clean). We DO declare narrow
 `Protocol` shapes locally for the response objects we read so pyright
