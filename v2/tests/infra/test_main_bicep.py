@@ -341,6 +341,46 @@ def test_blob_event_subscription_targets_blob_events_queue(bicep_text: str) -> N
         )
 
 
+def test_reuse_path_topic_carries_uami_identity(bicep_text: str) -> None:
+    """The v1-topic-reuse path must MANAGE the topic and assign the UAMI to
+    it, not reference it as `existing`.
+
+    Delivery on the reuse subscription uses `deliveryWithResourceIdentity`
+    pointing at v2's UAMI. Event Grid can only deliver as that identity if
+    the identity is assigned to the TOPIC -- and an `existing` (read-only)
+    reference cannot carry an `identity` block, so a reuse deployment would
+    fail EG's synchronous delivery-authorization preflight. The topic is
+    re-declared as a managed resource (an idempotent in-place PUT that
+    leaves the immutable source/topicType unchanged) with the UAMI
+    identity, mirroring the new-topic path's managedIdentities assignment.
+    """
+    reuse_topic = _slice_module(
+        bicep_text,
+        "resource existingEventGridTopic ",
+        "resource existingQueueMessageSenderRole ",
+    )
+    assert "existing = if (useExistingEventGridTopic)" not in reuse_topic, (
+        "The reuse-path Event Grid topic must be a MANAGED resource, not an "
+        "`existing` reference: an `existing` topic cannot carry the UAMI "
+        "identity that deliveryWithResourceIdentity requires, so the reuse "
+        "subscription would fail Event Grid's delivery preflight."
+    )
+    assert "type: 'UserAssigned'" in reuse_topic, (
+        "The reuse-path Event Grid topic must assign a user-assigned "
+        "identity so Event Grid can deliver blob events as v2's UAMI."
+    )
+    assert (
+        "resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', identityName)"
+        in reuse_topic
+    ), (
+        "The reuse-path Event Grid topic must attach the workload UAMI via a "
+        "compile-time-resolvable resource id built from identityName "
+        "(the same UAMI the reuse subscription's deliveryWithResourceIdentity "
+        "points at). A module runtime output cannot be used as the identity "
+        "dictionary key (BCP120)."
+    )
+
+
 # ---------------------------------------------------------------------------
 # ADR-0018 (+ Amendment 2): Monitoring Metrics Publisher RBAC for UAMI on AppI.
 #

@@ -2335,8 +2335,37 @@ resource blobCreatedSubscription 'Microsoft.EventGrid/systemTopics/eventSubscrip
 // Queue Data Message Sender on the storage account -- EG's synchronous
 // preflight validates delivery authorization at account scope, not
 // queue scope; see existingQueueMessageSenderRole below).
-resource existingEventGridTopic 'Microsoft.EventGrid/systemTopics@2024-12-15-preview' existing = if (useExistingEventGridTopic) {
+//
+// MANAGED resource (an idempotent in-place PUT on v1's topic), NOT an
+// `existing` read-only reference. deliveryWithResourceIdentity on the
+// subscription below can only deliver as the UAMI if the UAMI is
+// assigned to the TOPIC -- and an `existing` reference cannot carry an
+// identity block, so a reuse deployment would fail EG's delivery
+// preflight. Azure permits only one system topic per storage source, so
+// we cannot create a second topic; instead we re-declare v1's topic with
+// its immutable source/topicType unchanged (source == effectiveStorageResourceId,
+// the reused storage) plus the UAMI identity. ARM updates the topic in
+// place, adding the identity -- mirroring the new-topic path's
+// managedIdentities assignment. The `parent` relationship on the
+// subscription orders this identity update before the delivery-authorization
+// preflight runs.
+resource existingEventGridTopic 'Microsoft.EventGrid/systemTopics@2024-12-15-preview' = if (useExistingEventGridTopic) {
   name: existingEventGridTopicName
+  location: location
+  tags: allTags
+  identity: {
+    type: 'UserAssigned'
+    userAssignedIdentities: {
+      // The identity dictionary key on a raw systemTopics resource must be a
+      // compile-time-resolvable resource id, so it is built from the UAMI name
+      // (identityName) rather than the module's runtime resourceId output.
+      '${resourceId('Microsoft.ManagedIdentity/userAssignedIdentities', identityName)}': {}
+    }
+  }
+  properties: {
+    source: effectiveStorageResourceId
+    topicType: 'Microsoft.Storage.StorageAccounts'
+  }
 }
 
 // Message Sender grant scoped to the storage account. EG's MI preflight
