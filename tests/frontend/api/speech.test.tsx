@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 4 (S1 / SPEECH-MVP)
+ * Phase: 4
  *
  * Vitest suite for the `getSpeechConfig()` REST client. Mocks global
  * `fetch` with a JSON body so the unit test runs offline.

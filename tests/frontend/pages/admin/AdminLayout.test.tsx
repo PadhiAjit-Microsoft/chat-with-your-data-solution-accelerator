@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 5 (Admin + Frontend Merge)
+ * Phase: 5
  *
  * Tests for <AdminLayout>: the shared admin chrome. Verifies the
  * secondary nav renders a link per admin page, the active link is

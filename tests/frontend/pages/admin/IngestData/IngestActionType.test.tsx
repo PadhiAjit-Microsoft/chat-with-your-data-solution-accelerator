@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 7 (Testing + Documentation)
+ * Phase: 7
  *
  * Vitest assertions for the `IngestActionType` enum that
  * discriminates the IngestData page reducer's action union. Tests

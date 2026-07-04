@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 5 (frontend — user identity)
+ * Phase: 5
  *
  * Vitest suite for the `AppShell` auth bootstrap. Drives the whole shell
  * through a URL-routed `fetch` mock (no module stubs) so the real

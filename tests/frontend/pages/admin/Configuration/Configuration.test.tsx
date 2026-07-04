@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 7 (Testing + Documentation)
+ * Phase: 7
  *
  * Vitest suite for the admin Configuration page. Mocks
  * `src/api/admin.tsx` so each scenario (loading / loaded / dirty /
@@ -260,7 +260,7 @@ describe("Configuration -- initial load", () => {
       expect(screen.getByTestId("config-form")).toBeInTheDocument();
     });
     // The human-readable label shows, but the raw config key never leaks
-    // into the UI (BUG-0005).
+    // into the UI.
     const orchestratorField = screen.getByTestId(
       "config-field-orchestrator_name",
     );

@@ -1,4 +1,4 @@
-"""Tests for `shared.tools.text_processing` (task #20b).
+"""Tests for `shared.tools.text_processing`.
 
 Pillar: Stable Core
 Phase: 3
@@ -17,9 +17,7 @@ from backend.core.types import ChatMessage
 
 def _make_llm(reply_text: str = "ok") -> AsyncMock:
     llm = AsyncMock()
-    llm.chat = AsyncMock(
-        return_value=ChatMessage(role="assistant", content=reply_text)
-    )
+    llm.chat = AsyncMock(return_value=ChatMessage(role="assistant", content=reply_text))
     return llm
 
 
@@ -105,7 +103,4 @@ async def test_process_honors_custom_system_prompt() -> None:
         llm=llm, system_prompt="You are a strict legal editor."
     )
     await helper.process("hi", "Rewrite formally")
-    assert (
-        llm.chat.await_args.args[0][0].content
-        == "You are a strict legal editor."
-    )
+    assert llm.chat.await_args.args[0][0].content == "You are a strict legal editor."

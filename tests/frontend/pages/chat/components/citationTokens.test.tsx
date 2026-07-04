@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 6 (visual polish)
+ * Phase: 6
  *
  * Unit tests for the shared citation-token collapse helper consumed by
  * both the answer body (`parseAnswer`) and the reasoning panel

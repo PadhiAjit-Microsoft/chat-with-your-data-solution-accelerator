@@ -1,28 +1,23 @@
-"""Pillar: Stable Core / Phase: Cleanup audit batch 2 (CU-009a) — Bicep regression tests.
+"""Pillar: Stable Core / Phase: 1. Bicep regression tests.
 
-The full Bicep contract is validated by `az bicep build` (run as the
-last step of CU-009a); these grep-style guards catch *symbol-level*
-regressions fast (no Bicep CLI required) so a stray rename, copy-paste
-revert, or AI-generated "helpful" re-add can't silently re-introduce
-the env-only agent-id path.
+The full Bicep contract is validated by `az bicep build`; these
+grep-style guards catch *symbol-level* regressions fast (no Bicep CLI
+required) so a stray rename, copy-paste revert, or AI-generated
+"helpful" re-add can't silently re-introduce the env-only agent-id path.
 
-CU-009a (2026-05-05) reversed CU-001e: per ADR 0008
-(lazy-foundry-agent-bootstrap), the Foundry agent id is no longer an
-operator-supplied env value. Agent identity is resolved lazily on
-first request and persisted in the chat-history DB. Both the
+Per ADR 0008 (lazy-foundry-agent-bootstrap), the Foundry agent id is no
+longer an operator-supplied env value. Agent identity is resolved lazily
+on first request and persisted in the chat-history DB. Both the
 `azureAiAgentId` Bicep parameter and the `AZURE_AI_AGENT_ID`
 container-app env binding **must remain absent**; restoring either
-re-creates the dead-config drift CU-008..CU-012 was opened to remove.
+re-creates the dead-config drift.
 """
 
 from pathlib import Path
 
 import pytest
 
-
-_BICEP = (
-    Path(__file__).resolve().parents[2] / "infra" / "main.bicep"
-)
+_BICEP = Path(__file__).resolve().parents[2] / "infra" / "main.bicep"
 
 
 @pytest.fixture(scope="module")
@@ -36,9 +31,9 @@ def test_bicep_does_not_declare_azure_ai_agent_id_param(bicep_text: str) -> None
     Per ADR 0008 (lazy-foundry-agent-bootstrap), agent identity is
     resolved lazily on first request and persisted in the chat-history
     DB. Re-adding this parameter would re-introduce the dead-config
-    path CU-009a was opened to remove. If you genuinely need to pin a
+    path ADR 0008 removed. If you genuinely need to pin a
     specific agent post-deployment, use the registry-backed
-    `agents` provider in `src/backend/core/agents/` (CU-010a) -- not env.
+    `agents` provider in `src/backend/core/agents/`, not env.
     """
     assert "azureAiAgentId" not in bicep_text, (
         "azureAiAgentId Bicep param must remain absent (CU-009a reversal of "
@@ -50,11 +45,11 @@ def test_bicep_does_not_declare_azure_ai_agent_id_param(bicep_text: str) -> None
 def test_backend_container_env_does_not_expose_agent_id(bicep_text: str) -> None:
     """The backend Container App must NOT expose `AZURE_AI_AGENT_ID`.
 
-    CU-009a (2026-05-05) removed this env binding. The runtime resolves
-    CWYD + RAI agent ids lazily on first request and caches them in the
-    chat-history DB. A literal `AZURE_AI_AGENT_ID` in the container-app
-    env collection would let operators set a value that the runtime
-    silently ignores -- exactly the dead-config drift this CU removes.
+    Per ADR 0008, the runtime resolves CWYD + RAI agent ids lazily on
+    first request and caches them in the chat-history DB. A literal
+    `AZURE_AI_AGENT_ID` in the container-app env collection would let
+    operators set a value that the runtime silently ignores, exactly the
+    dead-config drift this guard removes.
     """
     assert "'AZURE_AI_AGENT_ID'" not in bicep_text, (
         "AZURE_AI_AGENT_ID env binding must remain absent (CU-009a reversal "
@@ -68,9 +63,9 @@ def test_backend_container_env_does_not_expose_agent_id(bicep_text: str) -> None
 
 
 # ---------------------------------------------------------------------------
-# Phase 4 hardening (#32d): backend ACA + Function App env-binding drift guard.
+# Backend ACA + Function App env-binding drift guard.
 #
-# The Phase 4 outputs (`AZURE_COSMOS_ENDPOINT`, `AZURE_POSTGRES_ENDPOINT`,
+# The database + search outputs (`AZURE_COSMOS_ENDPOINT`, `AZURE_POSTGRES_ENDPOINT`,
 # `AZURE_AI_SEARCH_ENDPOINT`, `AZURE_INDEX_STORE`,
 # `AZURE_POSTGRES_ADMIN_PRINCIPAL_NAME`) are emitted at the module-output
 # layer (lines ~1606-1661) but were NEVER bound onto the running container
@@ -107,7 +102,7 @@ def backend_aca_slice(bicep_text: str) -> str:
         bicep_text,
         "module backendContainerApp ",
         # The frontend App Service + appServicePlan were replaced by the
-        # frontend Container App (Phase 1), which is the next module after
+        # frontend Container App, which is the next module after
         # the backend Container App.
         "module frontendContainerApp ",
     )
@@ -118,7 +113,7 @@ def function_app_slice(bicep_text: str) -> str:
     """Bicep source spanning the raw `functionContainerApp` resource.
 
     The Flex Consumption `functionApp`/`functionPlan` AVM modules were
-    replaced (Phase 2) by a raw
+    replaced by a raw
     `Microsoft.App/containerApps@... kind: 'functionapp'` resource
     (`functionContainerApp`). The slice runs from that resource to the
     next resource declaration (`storageAccountExisting`), so it covers
@@ -155,12 +150,12 @@ _BACKEND_REQUIRED_ENVS = (
 def test_backend_aca_env_block_binds_required_phase4_settings(
     backend_aca_slice: str, env_name: str
 ) -> None:
-    """Backend ACA `env:` array must bind every Phase 4 setting `AppSettings` reads.
+    """Backend ACA `env:` array must bind every setting `AppSettings` reads.
 
     Without these bindings, `DatabaseSettings._enforce_mode_consistency`
     raises at lifespan startup. Hard Rule #8 (every phase ends green --
     `azd up` must succeed) is the binding constraint. The output values
-    themselves already exist (Phase 4 task #34); this guard pins the
+    themselves already exist; this guard pins the
     container-app side of the wire so the two halves of the contract
     can't drift.
     """
@@ -178,7 +173,7 @@ def test_backend_aca_env_drops_require_admin_auth_keeps_environment(
 ) -> None:
     """Backend ACA env drops `AZURE_REQUIRE_ADMIN_AUTH`, keeps `AZURE_ENVIRONMENT`.
 
-    BUG-0090 collapsed admin auth to a single `get_user_id` (header
+    Admin auth collapsed to a single `get_user_id` (header
     present + valid GUID -> use, else default GUID; never raises) and
     deleted the Easy-Auth role gate + the `require_admin_auth` setting.
     The `AZURE_REQUIRE_ADMIN_AUTH` binding is now dead config; it must
@@ -200,7 +195,7 @@ def test_backend_aca_env_drops_require_admin_auth_keeps_environment(
     )
 
 
-# Function app runs the indexing pipeline (Phase 6). It writes vectors to
+# Function app runs the indexing pipeline. It writes vectors to
 # AzureSearch (cosmosdb mode) OR pgvector (postgresql mode), so it needs
 # the same routing flags + the active-mode endpoint(s). `AZURE_COSMOS_ENDPOINT`
 # is also bound because `DatabaseSettings._enforce_mode_consistency`
@@ -223,7 +218,7 @@ _FUNCTION_REQUIRED_ENVS = (
 def test_function_app_settings_bind_required_phase4_settings(
     function_app_slice: str, env_name: str
 ) -> None:
-    """Function App `appSettings` must bind every Phase 4 setting the indexing pipeline reads.
+    """Function App `appSettings` must bind every setting the indexing pipeline reads.
 
     Same rationale as the backend test -- the function host writes
     vectors to AzureSearch (cosmosdb mode) or pgvector (postgresql
@@ -243,10 +238,10 @@ def test_function_container_app_stays_warm_for_queue_consumers(
     """The function Container App must keep `minReplicas: 1` (warm).
 
     The Flex Consumption plan (with its `alwaysReady` set) was replaced
-    (Phase 2) by a raw `functionContainerApp` (`kind: 'functionapp'`) on
+    by a raw `functionContainerApp` (`kind: 'functionapp'`) on
     the shared Container Apps Environment. The queue consumers --
     `batch_push` on `doc-processing` and `blob_event` on `blob-events` --
-    carry the same scale-from-zero loss BUG-0053 fixed: the first
+    carry the same scale-from-zero loss: the first
     BlobCreated event after the app idles to zero would be dropped before
     a host instance spins up to drain the queue. `minReplicas: 1` on the
     container app `scale` block is the Container Apps equivalent of the
@@ -265,9 +260,9 @@ def test_function_container_app_stays_warm_for_queue_consumers(
 def test_bicep_uses_container_apps_not_flex_or_appservice(bicep_text: str) -> None:
     """The frontend App Service + Flex Function App were replaced by Container Apps.
 
-    Phase 1 replaced the frontend App Service (+ `appServicePlan`) with the
-    `frontendContainerApp` module; Phase 2 replaced the Flex Consumption
-    `functionApp`/`functionPlan` with the raw `functionContainerApp`
+    The frontend App Service (+ `appServicePlan`) was replaced with the
+    `frontendContainerApp` module; the Flex Consumption
+    `functionApp`/`functionPlan` was replaced with the raw `functionContainerApp`
     (`kind: 'functionapp'`). Re-adding either removed module would revert to
     a hosting model that cannot run the ACR-built container images.
     """
@@ -303,7 +298,7 @@ def test_blob_event_subscription_targets_blob_events_queue(bicep_text: str) -> N
     """The Event Grid blob subscription must deliver to the `blob-events`
     queue (via `blobEventsQueueName`), never raw `doc-processing`.
 
-    This is the exact regression that defined BUG-0054: if the
+    This is the exact double-ingest regression: if the
     subscription destination is repointed to `doc-processing`, the
     backend admin upload AND the Event Grid fan-out both enqueue the
     same document, double-ingesting every uploaded blob. The
@@ -426,9 +421,7 @@ def test_application_insights_grants_metrics_publisher_to_uami(
         f"'{_MONITORING_METRICS_PUBLISHER_ROLE_NAME}' (AVM resolves the "
         "built-in role name) per ADR-0018."
     )
-    assert (
-        "userAssignedIdentity.outputs.principalId" in application_insights_slice
-    ), (
+    assert "userAssignedIdentity.outputs.principalId" in application_insights_slice, (
         "applicationInsights roleAssignments must use "
         "`userAssignedIdentity.outputs.principalId` so the workload UAMI "
         "(not the system MI, not a fixed principal) is the grantee."
@@ -438,7 +431,7 @@ def test_application_insights_grants_metrics_publisher_to_uami(
 def test_application_insights_enables_local_auth(
     application_insights_slice: str,
 ) -> None:
-    """The AppI module must enable local auth so ikey ingestion works (BUG-0055)."""
+    """The AppI module must enable local auth so ikey ingestion works."""
     assert "disableLocalAuth: false" in application_insights_slice, (
         "applicationInsights AVM module must set `disableLocalAuth: false` so "
         "the connection-string-only telemetry exporter ingests via "
@@ -462,7 +455,7 @@ def test_application_insights_enables_local_auth(
 # string); the drift-guard fires on the static Bicep source text and so is
 # flag-agnostic.
 #
-# The two workloads bind DIFFERENT env-var names on purpose (BUG-0055):
+# The two workloads bind DIFFERENT env-var names on purpose:
 #   - Backend ACA is a plain container with no host-level App Insights
 #     agent. Its Python lifespan calls `configure_azure_monitor` with the
 #     connection string read from the AZURE_-prefixed typed setting
@@ -482,7 +475,7 @@ def test_application_insights_enables_local_auth(
 def test_appinsights_connection_string_bound_to_workload(
     slice_fixture: str, expected_env_name: str, request: pytest.FixtureRequest
 ) -> None:
-    """Backend wires the typed name; function wires the standard name (ADR-0018, BUG-0055)."""
+    """Backend wires the typed name; function wires the standard name (ADR-0018)."""
     module_slice: str = request.getfixturevalue(slice_fixture)
     assert f"'{expected_env_name}'" in module_slice, (
         f"{expected_env_name} missing from {slice_fixture}. "
@@ -500,7 +493,7 @@ def test_appinsights_connection_string_bound_to_workload(
 
 
 # ---------------------------------------------------------------------------
-# Phase 8 (agent_framework default + Foundry IQ Knowledge Base): KB wiring.
+# agent_framework default + Foundry IQ Knowledge Base: KB wiring.
 #
 # The agent_framework orchestrator grounds on a Foundry IQ knowledge base
 # resolved by name through the Project-Search connection. main.bicep must
@@ -528,7 +521,7 @@ def test_backend_aca_env_block_binds_knowledge_base_settings(
 
     `SearchSettings` (env_prefix AZURE_AI_SEARCH_) reads these to resolve
     and query the Foundry IQ knowledge base for the agent_framework
-    orchestrator. The api-version is operator-tunable (Phase 8 / ADR 0021),
+    orchestrator. The api-version is operator-tunable (ADR 0021),
     so it must reach the container as an env var, not a baked-in URL.
     """
     assert f"'{env_name}'" in backend_aca_slice, (
@@ -695,9 +688,7 @@ def test_storage_account_grants_deployer_seed_roles(
     `deployerPrincipalId`, so the slice must reference that principal at
     least twice -- once per role -- alongside both role GUIDs.
     """
-    assert (
-        storage_account_slice.count("principalId: deployerPrincipalId") >= 2
-    ), (
+    assert storage_account_slice.count("principalId: deployerPrincipalId") >= 2, (
         "storageAccount roleAssignments must grant `deployerPrincipalId` at "
         "least twice (Storage Blob Data Contributor + Storage Queue Data "
         "Message Sender) so the seed hook can upload blobs and enqueue "
@@ -786,7 +777,7 @@ def test_bicep_exports_search_index_name(bicep_text: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# BUG-0054 Phase 2: search-system-MI -> OpenAI role-assignment idempotency.
+# Search-system-MI -> OpenAI role-assignment idempotency.
 #
 # `searchOpenAiUserOnFoundry` and `searchOpenAiUserOnReusedOpenAi` grant the
 # AI Search service's system-assigned managed identity the Cognitive
@@ -817,7 +808,7 @@ def test_search_openai_role_assignments_use_idempotent_name(bicep_text: str) -> 
     The deterministic `guid(scope.id, 'srch-${solutionSuffix}',
     roleDefinitionId)` shape ties the assignment name to the full scope
     resource id and the real Search service name, replacing the hand-coded
-    `'search-system-mi'` static salt (BUG-0054 Phase 2). The Search system
+    `'search-system-mi'` static salt. The Search system
     MI principalId cannot appear in the name (it is a deploy-time output;
     BCP120), so the start-time Search service name is the stand-in --
     mirroring the `existingOpenAiUamiRole` `guid(scope.id, uami.name, role)`

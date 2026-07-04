@@ -3,7 +3,7 @@
 Pillar: Stable Core
 Phase: 4
 
-CU-006 (cleanup_audit) freezes two invariants:
+The factory contract freezes two invariants:
 
 1. The registry keys self-registered by concrete clients
    (`cosmosdb`, `postgresql`) MUST equal the values of
@@ -51,5 +51,7 @@ def test_create_returns_base_client_subclass(key: str) -> None:
     """
     settings = MagicMock(name="AppSettings")
     credential = MagicMock(name="AsyncTokenCredential")
-    client = databases_registry.registry.get(key)(settings=settings, credential=credential)
+    client = databases_registry.registry.get(key)(
+        settings=settings, credential=credential
+    )
     assert isinstance(client, BaseDatabaseClient)

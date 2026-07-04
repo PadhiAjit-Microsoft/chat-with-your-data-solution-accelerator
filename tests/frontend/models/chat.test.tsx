@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 7 (Testing + Documentation)
+ * Phase: 7
  *
  * Vitest type-shape assertions for the `Citation` model. Type-only
  * checks would silently pass if the interface drifted; this suite

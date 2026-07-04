@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 7 (Testing + Documentation)
+ * Phase: 7
  *
  * Enum-contract tests for the frontend theme discriminator.
  */

@@ -1,4 +1,4 @@
-"""Tests for the Cosmos DB chat-history client (Phase 4 task #27).
+"""Tests for the Cosmos DB chat-history client.
 
 Pillar: Stable Core
 Phase: 4
@@ -29,7 +29,6 @@ from backend.core.providers.databases.cosmosdb import (
 )
 from backend.core.settings import AppSettings, DatabaseSettings
 from backend.core.types import AdminAuditEntry, ChatMessage, RuntimeConfig
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -99,7 +98,7 @@ def test_cosmosdb_registers_under_expected_key() -> None:
 
 
 # ---------------------------------------------------------------------------
-# CosmosItemType discriminator (#35c-1 adds CONFIG; AGENT shipped in CU-010b)
+# CosmosItemType discriminator
 # ---------------------------------------------------------------------------
 
 
@@ -108,10 +107,9 @@ def test_cosmos_item_type_membership_is_frozen() -> None:
     every persisted item has one, and every read-back path filters
     on it. A new value is a deliberate cross-cutting decision (new
     persistence model in the shared chat-history container), so
-    membership is locked here. #35c-1 adds `CONFIG` for the
-    runtime-config row added in this turn; CU-010b1 added `AGENT`
-    for the agent-id registry. #35f-1 adds `ADMIN_AUDIT` for the
-    append-only admin-audit log."""
+    membership is locked here. `CONFIG` is for the runtime-config
+    row; `AGENT` is for the agent-id registry; `ADMIN_AUDIT` is for
+    the append-only admin-audit log."""
     assert {member.value for member in CosmosItemType} == {
         "conversation",
         "message",
@@ -135,12 +133,12 @@ def test_cosmos_item_type_config_serializes_as_bare_string() -> None:
 
 def test_cosmos_system_partition_membership_is_frozen() -> None:
     """The `_system` synthetic partition is part of the wire
-    contract: every non-user-scoped row (agents CU-010b1, runtime
-    config #35c-2) is pinned to it, and `BUILTIN_AGENTS` cardinality
+    contract: every non-user-scoped row (agents, runtime
+    config) is pinned to it, and `BUILTIN_AGENTS` cardinality
     + the runtime-config singleton both live in this one partition.
     A new member is a deliberate cross-cutting decision (a second
     non-user-scoped surface), so membership is locked here -- the
-    Hard Rule #11 sweep that introduced this enum (#35c-2-followup)
+    Hard Rule #11 sweep that introduced this enum
     relied on it staying a closed set."""
     assert {member.value for member in CosmosSystemPartition} == {"_system"}
 
@@ -163,8 +161,8 @@ def test_cosmos_fixed_item_id_membership_is_frozen() -> None:
     rows use the agent `name` as their id and so are deliberately
     NOT in this enum -- adding a member here is a deliberate new
     singleton row, not a generic id container. Locked at one
-    member (`RUNTIME_CONFIG`) by #35c-2-followup; CU-010b1 added no
-    member because agent ids are caller-supplied."""
+    member (`RUNTIME_CONFIG`); no member was added for agents
+    because agent ids are caller-supplied."""
     assert {member.value for member in CosmosFixedItemId} == {"runtime"}
 
 
@@ -172,7 +170,7 @@ def test_cosmos_fixed_item_id_runtime_config_serializes_as_bare_string() -> None
     """`StrEnum` member compares equal to its raw string value, so
     `item=CosmosFixedItemId.RUNTIME_CONFIG` reaches the Cosmos
     SDK as the bare string `"runtime"` -- the wire shape stays
-    exactly the documented singleton id (#35c-2)."""
+    exactly the documented singleton id."""
     assert CosmosFixedItemId.RUNTIME_CONFIG == "runtime"
     assert CosmosFixedItemId.RUNTIME_CONFIG.value == "runtime"
     assert str(CosmosFixedItemId.RUNTIME_CONFIG) == "runtime"
@@ -281,9 +279,7 @@ async def test_rename_conversation_bumps_updated_at_and_title() -> None:
 
 @pytest.mark.asyncio
 async def test_delete_conversation_purges_messages_then_parent() -> None:
-    client, container = _make_client(
-        container_items=[{"id": "m1"}, {"id": "m2"}]
-    )
+    client, container = _make_client(container_items=[{"id": "m1"}, {"id": "m2"}])
 
     await client.delete_conversation("c1", "u1")
 
@@ -515,7 +511,7 @@ async def test_get_container_raises_without_endpoint() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Agent registry (CU-010b1 -- get_agent_id)
+# Agent registry (get_agent_id)
 # ---------------------------------------------------------------------------
 
 
@@ -580,7 +576,7 @@ async def test_get_agent_id_returns_none_when_agent_id_field_missing() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Agent registry (CU-010b2 -- upsert_agent_id)
+# Agent registry (upsert_agent_id)
 # ---------------------------------------------------------------------------
 
 
@@ -599,7 +595,7 @@ async def test_upsert_agent_id_writes_canonical_shape() -> None:
     assert body["id"] == "cwyd"
     assert body["userId"] == "_system"
     # `StrEnum` member compares equal to its string value; the wire
-    # serialization is just `"agent"` (validates the new Hard Rule
+    # serialization is just `"agent"` (validates the Hard Rule
     # #11 sub-rule end-to-end).
     assert body["type"] == CosmosItemType.AGENT
     assert body["type"] == "agent"
@@ -610,7 +606,7 @@ async def test_upsert_agent_id_writes_canonical_shape() -> None:
 @pytest.mark.asyncio
 async def test_upsert_agent_id_uses_upsert_not_create() -> None:
     """Must use `upsert_item` (atomic CREATE-or-REPLACE) rather than
-    `create_item` -- otherwise the lazy resolver in CU-010c would
+    `create_item` -- otherwise the lazy resolver would
     raise CosmosResourceExistsError on its second-and-later writes
     (e.g. when Foundry 404s a stale id and we rewrite it).
     """
@@ -627,7 +623,7 @@ async def test_upsert_agent_id_is_idempotent_on_repeat_call() -> None:
     (the fake `upsert_item` echoes the body, mirroring the SDK's
     REPLACE-on-conflict semantics). New `agent_id` for an existing
     `name` must overwrite the prior `agentId` value -- this is the
-    rewrite path the CU-010c resolver depends on.
+    rewrite path the resolver depends on.
     """
     client, container = _make_client()
     await client.upsert_agent_id("cwyd", "asst_old")
@@ -638,7 +634,7 @@ async def test_upsert_agent_id_is_idempotent_on_repeat_call() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Runtime config (#35c-2 -- get_runtime_config)
+# Runtime config (get_runtime_config)
 # ---------------------------------------------------------------------------
 
 
@@ -658,7 +654,7 @@ async def test_get_runtime_config_returns_none_when_row_missing() -> None:
 async def test_get_runtime_config_point_read_uses_system_partition() -> None:
     """The runtime-config row is not user-scoped, so the point-read
     must target the synthetic `_system` partition (mirrors the
-    AGENT row precedent in CU-010b1). Reading from a per-user
+    AGENT row precedent). Reading from a per-user
     partition would silently miss the row and force the resolver
     to over-provision RU on a cross-partition fan-out scan."""
     client, container = _make_client()
@@ -705,7 +701,7 @@ async def test_get_runtime_config_rejects_wrong_type_discriminator() -> None:
     """Defensive type check: if a future refactor accidentally writes
     a non-config item under the same id, refuse to deserialize its
     `payload` rather than mis-resolving as a `RuntimeConfig`. Same
-    invariant `get_agent_id` enforces (CU-010b1)."""
+    invariant `get_agent_id` enforces."""
     client, container = _make_client()
     container.read_item = AsyncMock(
         return_value={
@@ -719,10 +715,12 @@ async def test_get_runtime_config_rejects_wrong_type_discriminator() -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_runtime_config_returns_empty_runtime_config_for_empty_payload() -> None:
+async def test_get_runtime_config_returns_empty_runtime_config_for_empty_payload() -> (
+    None
+):
     """Boundary: a persisted row with an empty payload (every
     override cleared) must rehydrate as a `RuntimeConfig()` with
-    every field `None` -- the merge in #35c-7 then falls through
+    every field `None` -- the merge then falls through
     to env defaults across the board. Asserting this guards the
     'cleared all overrides' UX path against silently returning
     None (cold start) instead."""
@@ -740,7 +738,7 @@ async def test_get_runtime_config_returns_empty_runtime_config_for_empty_payload
 
 
 # ---------------------------------------------------------------------------
-# Runtime config (#35c-3 -- upsert_runtime_config)
+# Runtime config (upsert_runtime_config)
 # ---------------------------------------------------------------------------
 
 
@@ -799,7 +797,7 @@ async def test_upsert_runtime_config_is_idempotent_on_repeat_call() -> None:
     """Two writes with overlapping fields must not raise (the fake
     `upsert_item` echoes the body, mirroring the SDK's
     REPLACE-on-conflict semantics). The second call's payload must
-    win -- this is the rewrite path the PATCH route in #35c-4
+    win -- this is the rewrite path the PATCH route
     relies on so an operator can change `openai_temperature` from
     0.5 to 0.9 without first clearing the row.
     """
@@ -814,7 +812,9 @@ async def test_upsert_runtime_config_is_idempotent_on_repeat_call() -> None:
 
 
 @pytest.mark.asyncio
-async def test_upsert_runtime_config_serializes_empty_payload_for_cleared_overrides() -> None:
+async def test_upsert_runtime_config_serializes_empty_payload_for_cleared_overrides() -> (
+    None
+):
     """Boundary: a `RuntimeConfig()` with every field `None`
     serializes to a JSON object whose keys are all `null` (NOT an
     empty `{}`) because Pydantic v2's default `model_dump`
@@ -831,7 +831,7 @@ async def test_upsert_runtime_config_serializes_empty_payload_for_cleared_overri
 
 
 # ---------------------------------------------------------------------------
-# Failure-path coverage (Phase C2b — provider try/except sweep)
+# Failure-path coverage (provider try/except sweep)
 # ---------------------------------------------------------------------------
 #
 # Per v2/docs/exception_handling_policy.md (Provider-entry-points row),
@@ -843,7 +843,7 @@ async def test_upsert_runtime_config_serializes_empty_payload_for_cleared_overri
 #
 # The two exceptions to the "log + re-raise" rule are:
 # - `delete_conversation` per-message NotFound (idempotent skip,
-#   `logger.debug`, swallow) -- covered by C2a.
+#   `logger.debug`, swallow).
 # - `add_message` parent updatedAt bump (best-effort, `logger.warning`,
 #   swallow) -- covered below.
 #
@@ -856,7 +856,9 @@ async def test_upsert_runtime_config_serializes_empty_payload_for_cleared_overri
 _LOGGER_NAME = "backend.core.providers.databases.cosmosdb"
 
 
-def _http_error(status_code: int = 429, message: str = "throttled") -> CosmosHttpResponseError:
+def _http_error(
+    status_code: int = 429, message: str = "throttled"
+) -> CosmosHttpResponseError:
     """Construct a `CosmosHttpResponseError` without a real `azure.core`
     HTTP response object. The SDK constructor accepts `status_code` +
     `message` directly, which exercises the same code path the real
@@ -865,9 +867,7 @@ def _http_error(status_code: int = 429, message: str = "throttled") -> CosmosHtt
     return CosmosHttpResponseError(status_code=status_code, message=message)
 
 
-def _find_error_record(
-    caplog: pytest.LogCaptureFixture, operation: str
-) -> Any:
+def _find_error_record(caplog: pytest.LogCaptureFixture, operation: str) -> Any:
     """Return the single ERROR record for `operation`, failing the test
     with a useful message if zero or multiple matches surface. Keeping
     this lookup explicit (vs `caplog.records[0]`) protects against
@@ -985,9 +985,7 @@ async def test_add_message_swallows_and_warns_on_parent_bump_http_error(
         }
     )
     # First create_item succeeds; replace_item (parent bump) raises.
-    container.replace_item = AsyncMock(
-        side_effect=_http_error(429, "throttled")
-    )
+    container.replace_item = AsyncMock(side_effect=_http_error(429, "throttled"))
 
     with caplog.at_level("WARNING", logger=_LOGGER_NAME):
         result = await client.add_message(
@@ -1088,10 +1086,10 @@ async def test_set_feedback_logs_and_reraises_on_http_error(
 
 
 # ---------------------------------------------------------------------------
-# Admin audit (#35f-1 -- write_admin_audit)
+# Admin audit (write_admin_audit)
 #
-# Append-only audit row written after every successful PATCH /api/admin/config
-# (#35f-3, T+8). Pinned to the synthetic `_system` partition so admin-audit
+# Append-only audit row written after every successful PATCH /api/admin/config.
+# Pinned to the synthetic `_system` partition so admin-audit
 # queries are single-partition (no cross-user fan-out). Cardinality is
 # bounded by `# of admin PATCH operations` -- single-tenant CWYD deployments
 # realistically peak at ~hundreds/year, well under the 20 GB partition cap.
@@ -1103,7 +1101,7 @@ def test_cosmos_item_type_admin_audit_serializes_as_bare_string() -> None:
     the wire shape stays exactly `"admin_audit"` -- existing
     consumers reading `body["type"] == "admin_audit"` keep working
     without coupling to the enum import (mirrors the
-    `CosmosItemType.CONFIG` precedent locked in #35c-1)."""
+    `CosmosItemType.CONFIG` precedent)."""
     assert CosmosItemType.ADMIN_AUDIT == "admin_audit"
     assert CosmosItemType.ADMIN_AUDIT.value == "admin_audit"
     assert str(CosmosItemType.ADMIN_AUDIT) == "admin_audit"
@@ -1196,7 +1194,7 @@ async def test_write_admin_audit_logs_and_reraises_on_sdk_error(
     every SDK call wrapped in try/except logs structured context
     and re-raises -- the audit row reaching the DB or not is a
     correctness-critical signal the route layer must observe (the
-    PATCH route in #35f-3 will let the audit-write failure bubble
+    PATCH route will let the audit-write failure bubble
     up rather than silently dropping the audit row).
     """
     client, container = _make_client()

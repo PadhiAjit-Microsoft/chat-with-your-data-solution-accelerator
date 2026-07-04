@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 4 (S1 / SPEECH-MVP)
+ * Phase: 4
  *
  * Vitest suite for `useSpeechRecognition`. We mock both the
  * `microsoft-cognitiveservices-speech-sdk` module and the

@@ -1,4 +1,4 @@
-"""Tests for the LLM provider domain (Phase 2 task #12).
+"""Tests for the LLM provider domain.
 
 Pillar: Stable Core
 Phase: 2
@@ -18,7 +18,6 @@ from backend.core.providers.llm.base import BaseLLMProvider
 from backend.core.providers.llm.foundry_iq import FoundryIQ
 from backend.core.settings import AppSettings
 from backend.core.types import ChatChunk, ChatMessage, EmbeddingResult
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -57,7 +56,9 @@ def fake_credential() -> MagicMock:
 def _build_openai_chat_response(content: str) -> Any:
     return SimpleNamespace(
         choices=[
-            SimpleNamespace(message=SimpleNamespace(content=content), finish_reason="stop")
+            SimpleNamespace(
+                message=SimpleNamespace(content=content), finish_reason="stop"
+            )
         ]
     )
 
@@ -83,9 +84,7 @@ def _build_openai_chat_stream(deltas: list[str]):
 
 
 def _build_openai_embedding_response(vectors: list[list[float]]) -> Any:
-    return SimpleNamespace(
-        data=[SimpleNamespace(embedding=v) for v in vectors]
-    )
+    return SimpleNamespace(data=[SimpleNamespace(embedding=v) for v in vectors])
 
 
 def _build_fake_project_client(openai_client: Any) -> MagicMock:
@@ -117,13 +116,9 @@ def test_create_returns_foundry_iq(
     assert isinstance(provider, BaseLLMProvider)
 
 
-def test_unknown_key_raises(
-    settings: AppSettings, fake_credential: MagicMock
-) -> None:
+def test_unknown_key_raises(settings: AppSettings, fake_credential: MagicMock) -> None:
     with pytest.raises(KeyError):
-        llm_registry.registry.get("vllm")(
-            settings=settings, credential=fake_credential
-        )
+        llm_registry.registry.get("vllm")(settings=settings, credential=fake_credential)
 
 
 # ---------------------------------------------------------------------------
@@ -252,7 +247,9 @@ async def test_embed_returns_vectors(
 ) -> None:
     openai = MagicMock()
     openai.embeddings.create = AsyncMock(
-        return_value=_build_openai_embedding_response([[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]])
+        return_value=_build_openai_embedding_response(
+            [[0.1, 0.2, 0.3], [0.4, 0.5, 0.6]]
+        )
     )
     project = _build_fake_project_client(openai)
     provider = FoundryIQ(settings, fake_credential, project_client=project)
@@ -276,7 +273,7 @@ async def test_embed_returns_vectors(
 
 
 # ---------------------------------------------------------------------------
-# reason() -- Responses API streaming (task #25; refactored 2026-05-08)
+# reason() -- Responses API streaming
 # ---------------------------------------------------------------------------
 
 
@@ -503,7 +500,7 @@ async def test_aclose_does_not_close_injected_client(
 
 
 # ---------------------------------------------------------------------------
-# complete() -- ABC-level auto-routing (CU-004a)
+# complete() -- ABC-level auto-routing
 # ---------------------------------------------------------------------------
 
 
@@ -657,6 +654,7 @@ async def test_complete_propagates_reason_error_events(
 ) -> None:
     """reason() emits its own error event mid-stream -> complete()
     propagates it unchanged (does NOT wrap with complete_chat_failed)."""
+
     async def _boom():
         yield SimpleNamespace(
             type="response.reasoning_summary_text.delta",
@@ -1067,7 +1065,9 @@ async def test_aclose_swallows_and_warns_on_close_failure(
     must fire so the failure is visible in App Insights.
     """
     project = MagicMock(name="AIProjectClient")
-    project.close = AsyncMock(side_effect=ServiceRequestError(message="socket already closed"))
+    project.close = AsyncMock(
+        side_effect=ServiceRequestError(message="socket already closed")
+    )
     provider = FoundryIQ(settings, fake_credential)
     # Force production-ownership so aclose() actually calls close().
     provider._project_client = project  # type: ignore[attr-defined]

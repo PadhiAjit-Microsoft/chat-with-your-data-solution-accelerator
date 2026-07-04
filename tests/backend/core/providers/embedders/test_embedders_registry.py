@@ -1,4 +1,4 @@
-"""Tests for the embedders provider domain (Phase 6 task #41, U8e).
+"""Tests for the embedders provider domain.
 
 Pillar: Stable Core
 Phase: 6

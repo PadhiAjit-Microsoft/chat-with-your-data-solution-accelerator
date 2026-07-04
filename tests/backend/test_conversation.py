@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 3 (task #22a) — tests for the conversation router."""
+"""Pillar: Stable Core / Phase: 3, tests for the conversation router."""
 
 import ast
 import inspect
@@ -201,8 +201,12 @@ class _RecordingDatabaseClient:
 @pytest.fixture
 def app_with_fakes(monkeypatch: pytest.MonkeyPatch):
     """Build the app, register fakes in the orchestrator registry, and DI-override settings + llm + agents."""
-    monkeypatch.setitem(orchestrators_registry.registry._items, "fake", _FakeOrchestrator)
-    monkeypatch.setitem(orchestrators_registry.registry._items, "boom", _BoomOrchestrator)
+    monkeypatch.setitem(
+        orchestrators_registry.registry._items, "fake", _FakeOrchestrator
+    )
+    monkeypatch.setitem(
+        orchestrators_registry.registry._items, "boom", _BoomOrchestrator
+    )
 
     app = create_app()
     app.dependency_overrides[get_app_settings] = lambda: _fake_settings()
@@ -213,7 +217,7 @@ def app_with_fakes(monkeypatch: pytest.MonkeyPatch):
     # for orchestrators that don't use it (langgraph swallows the
     # kwarg via `**_extras` -- Hard Rule #4: no name dispatch).
     app.dependency_overrides[get_agents_provider] = lambda: _FakeAgentsProvider()
-    # Same reason: CU-010d wires `db: DatabaseClientDep` into the
+    # Same reason: the chat route wires `db: DatabaseClientDep` into the
     # handler. Even orchestrators that never trigger the resolver
     # (anything other than `agent_framework`) need the DI to resolve
     # so FastAPI can satisfy the signature.
@@ -225,12 +229,16 @@ def app_with_fakes(monkeypatch: pytest.MonkeyPatch):
     # with a per-test sentinel that individual tests can replace when
     # they want to assert the credential was forwarded.
     app.state.test_credential_sentinel = object()
-    app.dependency_overrides[get_credential] = lambda: app.state.test_credential_sentinel
+    app.dependency_overrides[get_credential] = (
+        lambda: app.state.test_credential_sentinel
+    )
     return app
 
 
 def _client(app) -> httpx.AsyncClient:
-    return httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test")
+    return httpx.AsyncClient(
+        transport=httpx.ASGITransport(app=app), base_url="http://test"
+    )
 
 
 def _spy_orchestrator_dispatch(
@@ -258,7 +266,9 @@ def _spy_orchestrator_dispatch(
 # ---------------------------------------------------------------------------
 
 
-async def test_json_mode_concatenates_answer_and_dedupes_citations(app_with_fakes) -> None:
+async def test_json_mode_concatenates_answer_and_dedupes_citations(
+    app_with_fakes,
+) -> None:
     _FakeOrchestrator.scripted = [
         OrchestratorEvent(channel="reasoning", content="thinking"),
         OrchestratorEvent(channel="answer", content="Hello, "),
@@ -318,7 +328,9 @@ async def test_sse_mode_emits_one_frame_per_event(app_with_fakes) -> None:
     assert json.loads(data_line[len("data: ") :]) == {"content": "ok", "metadata": {}}
 
 
-async def test_sse_mode_surfaces_orchestrator_exception_as_error_event(app_with_fakes) -> None:
+async def test_sse_mode_surfaces_orchestrator_exception_as_error_event(
+    app_with_fakes,
+) -> None:
     # Use the boom orchestrator instead of the scripted fake. The
     # effective-config resolver reads the full settings shape, so the
     # stand-in is built via `_fake_settings(...)`; only the
@@ -351,7 +363,7 @@ async def test_empty_messages_returns_422(app_with_fakes) -> None:
 async def test_router_forwards_search_provider_to_orchestrator(
     app_with_fakes,
 ) -> None:
-    """Phase 3.5 Q6c: chat route must pass the DI'd search provider into
+    """The chat route must pass the DI'd search provider into
     orchestrator construction so production langgraph runs in retrieval mode."""
     sentinel_search = object()
     app_with_fakes.dependency_overrides[get_search_provider] = lambda: sentinel_search
@@ -552,10 +564,7 @@ async def test_router_forwards_effective_system_prompt_to_orchestrator(
         )
 
     assert resp.status_code == 200
-    assert (
-        _FakeOrchestrator.last_kwargs.get("system_prompt")
-        == CWYD_AGENT.instructions
-    )
+    assert _FakeOrchestrator.last_kwargs.get("system_prompt") == CWYD_AGENT.instructions
 
 
 @pytest.mark.asyncio
@@ -675,9 +684,7 @@ async def test_router_dispatches_both_orchestrator_kinds_with_same_kwargs(
             lambda n=name: _fake_settings(n)
         )
 
-        _FakeOrchestrator.scripted = [
-            OrchestratorEvent(channel="answer", content=name)
-        ]
+        _FakeOrchestrator.scripted = [OrchestratorEvent(channel="answer", content=name)]
         _FakeOrchestrator.last_kwargs = {}
 
         async with _client(app_with_fakes) as client:
@@ -773,9 +780,9 @@ async def test_router_forwards_agents_and_db_uniformly_and_never_bootstraps(
     assert resp.status_code == 200
     assert _FakeOrchestrator.last_kwargs.get("agents") is fake_provider
     assert _FakeOrchestrator.last_kwargs.get("db") is db_sentinel
-    assert fake_provider.resolver_calls == [], (
-        "router must never call get_or_create_agent (bootstrap removed)"
-    )
+    assert (
+        fake_provider.resolver_calls == []
+    ), "router must never call get_or_create_agent (bootstrap removed)"
 
 
 # ---------------------------------------------------------------------------
@@ -902,9 +909,9 @@ async def test_router_forwards_none_content_safety_when_dep_returns_none(
 
     assert resp.status_code == 200
     assert len(calls) == 1
-    assert "content_safety" in calls[0]["kwargs"], (
-        "router must pass `content_safety` kwarg explicitly to run_chat"
-    )
+    assert (
+        "content_safety" in calls[0]["kwargs"]
+    ), "router must pass `content_safety` kwarg explicitly to run_chat"
     assert calls[0]["kwargs"]["content_safety"] is None
 
 
@@ -961,9 +968,9 @@ async def test_router_forwards_none_post_prompt_when_dep_returns_none(
 
     assert resp.status_code == 200
     assert len(calls) == 1
-    assert "post_prompt" in calls[0]["kwargs"], (
-        "router must pass `post_prompt` kwarg explicitly to run_chat"
-    )
+    assert (
+        "post_prompt" in calls[0]["kwargs"]
+    ), "router must pass `post_prompt` kwarg explicitly to run_chat"
     assert calls[0]["kwargs"]["post_prompt"] is None
 
 
@@ -1095,9 +1102,7 @@ async def test_sse_mode_emits_terminal_conversation_frame_and_persists(
     assert frames[-1].startswith("event: conversation\n")
     data_line = [ln for ln in frames[-1].splitlines() if ln.startswith("data: ")][0]
     assert json.loads(data_line[len("data: ") :]) == {"conversation_id": "conv-new"}
-    assert recorder.created == [
-        ("00000000-0000-0000-0000-000000000000", "hello")
-    ]
+    assert recorder.created == [("00000000-0000-0000-0000-000000000000", "hello")]
 
 
 async def test_persisted_turn_is_keyed_by_easy_auth_principal_header(

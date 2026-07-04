@@ -1,4 +1,4 @@
-"""Tests for the PostgreSQL chat-history client (Phase 4 task #28).
+"""Tests for the PostgreSQL chat-history client.
 
 Pillar: Stable Core
 Phase: 4
@@ -29,7 +29,6 @@ from backend.core.providers.databases.postgres import (
 )
 from backend.core.settings import AppSettings, DatabaseSettings
 from backend.core.types import AdminAuditEntry, ChatMessage, RuntimeConfig
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -79,9 +78,7 @@ def _make_client(pool: MagicMock | None = None) -> PostgresClient:
         postgres_endpoint="postgresql://x.postgres.database.azure.com:5432/cwyd?sslmode=require",
         postgres_admin_principal_name="id-cwyd001",
     )
-    return PostgresClient(
-        settings=settings, credential=AsyncMock(), pool=pool
-    )
+    return PostgresClient(settings=settings, credential=AsyncMock(), pool=pool)
 
 
 def _conv_row(
@@ -170,7 +167,7 @@ async def test_aclose_closes_pool() -> None:
 
 @pytest.mark.asyncio
 async def test_ensure_pool_returns_pool_and_runs_schema() -> None:
-    """Public counterpart of `_ensure_pool`, used by pgvector DI (task #30)."""
+    """Public counterpart of `_ensure_pool`, used by pgvector DI."""
     pool, conn = _make_pool()
     client = _make_client(pool=pool)
     client._schema_ready = False  # type: ignore[attr-defined]
@@ -200,7 +197,7 @@ async def test_first_use_runs_schema_then_skips_on_subsequent_calls() -> None:
 async def test_concurrent_ensure_pool_creates_pool_only_once(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """H3 hardening (#32c): TOCTOU race in `_ensure_pool` is closed.
+    """TOCTOU race in `_ensure_pool` is closed.
 
     Two coroutines hitting `_ensure_pool` simultaneously must NOT both
     call `asyncpg.create_pool` -- the second one must observe the
@@ -359,7 +356,9 @@ async def test_add_message_inserts_in_transaction_and_bumps_parent() -> None:
     insert_sql = conn.fetchrow.await_args.args[0]
     assert insert_sql.startswith("INSERT INTO messages")
     # Parent bump ran on the same conn.
-    update_calls = [c for c in conn.execute.await_args_list if "UPDATE conversations" in c.args[0]]
+    update_calls = [
+        c for c in conn.execute.await_args_list if "UPDATE conversations" in c.args[0]
+    ]
     assert len(update_calls) == 1
 
 
@@ -487,7 +486,7 @@ async def test_ensure_pool_raises_without_admin_principal() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Agent registry (CU-010b1 -- get_agent_id)
+# Agent registry (get_agent_id)
 # ---------------------------------------------------------------------------
 
 
@@ -528,21 +527,21 @@ async def test_get_agent_id_uses_parameterized_sql() -> None:
 async def test_schema_sql_creates_agents_table() -> None:
     """The lazy bootstrap (`_SCHEMA_SQL`) must include the agents
     table -- otherwise the very first `get_agent_id` against a fresh
-    deployment raises `UndefinedTable`. CU-010b1 keeps schema
-    bootstrap lazy (no post_provision change required)."""
+    deployment raises `UndefinedTable`. Schema
+    bootstrap stays lazy (no post_provision change required)."""
     assert "CREATE TABLE IF NOT EXISTS agents" in _SCHEMA_SQL
     assert "name        TEXT PRIMARY KEY" in _SCHEMA_SQL
     assert "agent_id    TEXT NOT NULL" in _SCHEMA_SQL
 
 
 # ---------------------------------------------------------------------------
-# Agent registry (CU-010b2 -- upsert_agent_id)
+# Agent registry (upsert_agent_id)
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
 async def test_upsert_agent_id_emits_upsert_sql_with_on_conflict() -> None:
-    """Single-round-trip atomic CREATE-or-REPLACE -- the CU-010c lazy
+    """Single-round-trip atomic CREATE-or-REPLACE -- the lazy
     resolver depends on this so a stale Foundry id can be rewritten
     without first deleting the old row. Asserts the canonical
     `INSERT ... ON CONFLICT (name) DO UPDATE` shape and that the
@@ -580,7 +579,7 @@ async def test_upsert_agent_id_is_idempotent_on_repeat_call() -> None:
     """Two writes with the same key must not raise (the ON CONFLICT
     branch fires); a subsequent write with a new agent_id must be
     forwarded through to the SQL bind args so the UPDATE path picks
-    it up. Validates the rewrite path the CU-010c resolver relies on."""
+    it up. Validates the rewrite path the resolver relies on."""
     pool, _ = _make_pool()
     client = _make_client(pool=pool)
     await client.upsert_agent_id("cwyd", "asst_old")
@@ -591,7 +590,7 @@ async def test_upsert_agent_id_is_idempotent_on_repeat_call() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Runtime config (#35c-2 -- get_runtime_config)
+# Runtime config (get_runtime_config)
 # ---------------------------------------------------------------------------
 
 
@@ -625,9 +624,7 @@ async def test_get_runtime_config_round_trips_persisted_payload() -> None:
         updated_by="alice@example.com",
     )
     pool, _ = _make_pool()
-    pool.fetchrow = AsyncMock(
-        return_value={"payload": persisted.model_dump_json()}
-    )
+    pool.fetchrow = AsyncMock(return_value={"payload": persisted.model_dump_json()})
     client = _make_client(pool=pool)
     rebuilt = await client.get_runtime_config()
     assert rebuilt == persisted
@@ -653,10 +650,12 @@ async def test_get_runtime_config_uses_singleton_id_filter() -> None:
 
 
 @pytest.mark.asyncio
-async def test_get_runtime_config_returns_empty_runtime_config_for_empty_payload() -> None:
+async def test_get_runtime_config_returns_empty_runtime_config_for_empty_payload() -> (
+    None
+):
     """Boundary: a persisted row with an empty payload (every
     override cleared) must rehydrate as a `RuntimeConfig()` with
-    every field `None` -- the merge in #35c-7 then falls through
+    every field `None` -- the merge then falls through
     to env defaults across the board. Asserting this guards the
     'cleared all overrides' UX path against silently returning
     None (cold start) instead."""
@@ -668,15 +667,15 @@ async def test_get_runtime_config_returns_empty_runtime_config_for_empty_payload
 
 
 # ---------------------------------------------------------------------------
-# Runtime config (#35c-3 -- upsert_runtime_config)
+# Runtime config (upsert_runtime_config)
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.asyncio
 async def test_upsert_runtime_config_emits_canonical_upsert_sql() -> None:
     """Single-round-trip atomic CREATE-or-REPLACE keyed on the
-    singleton `id = 1`. `EXCLUDED.payload` lets the PATCH route in
-    #35c-4 rewrite the row without first reading + deleting it.
+    singleton `id = 1`. `EXCLUDED.payload` lets the PATCH route
+    rewrite the row without first reading + deleting it.
     `updated_at = NOW()` is bumped on every write so an audit can
     distinguish "first written" from "most recently overridden".
     """
@@ -706,9 +705,7 @@ async def test_upsert_runtime_config_uses_parameterized_jsonb_binding() -> None:
     $1 placeholder + bound argument pattern."""
     pool, _ = _make_pool()
     client = _make_client(pool=pool)
-    payload = RuntimeConfig(
-        log_level="'); DROP TABLE runtime_config;--"
-    )
+    payload = RuntimeConfig(log_level="'); DROP TABLE runtime_config;--")
     await client.upsert_runtime_config(payload)
     sql, *args = pool.execute.await_args.args
     assert "$1" in sql
@@ -722,7 +719,7 @@ async def test_upsert_runtime_config_is_idempotent_on_repeat_call() -> None:
     ON CONFLICT branch fires); a subsequent write with a new
     payload must be forwarded through to the SQL bind args so
     the UPDATE path picks it up. Validates the rewrite path the
-    PATCH route in #35c-4 relies on."""
+    PATCH route relies on."""
     pool, _ = _make_pool()
     client = _make_client(pool=pool)
     first = RuntimeConfig(openai_temperature=0.5)
@@ -739,7 +736,7 @@ async def test_schema_sql_creates_runtime_config_table() -> None:
     """Lazy bootstrap (`_SCHEMA_SQL`) must include the
     runtime_config table -- otherwise the very first
     `get_runtime_config` against a fresh deployment raises
-    `UndefinedTable`. #35c keeps schema bootstrap lazy (no
+    `UndefinedTable`. Schema bootstrap stays lazy (no
     post_provision change required)."""
     assert "CREATE TABLE IF NOT EXISTS runtime_config" in _SCHEMA_SQL
     assert "id          INTEGER PRIMARY KEY DEFAULT 1" in _SCHEMA_SQL
@@ -748,9 +745,9 @@ async def test_schema_sql_creates_runtime_config_table() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Admin audit (#35f-2 -- write_admin_audit; postgres impl)
+# Admin audit (write_admin_audit; postgres impl)
 #
-# Append-only audit log mirroring the cosmos impl in #35f-1. The table is
+# Append-only audit log mirroring the cosmos impl. The table is
 # bootstrapped lazily via `_SCHEMA_SQL` (no separate post_provision step)
 # and the row id is generated by the writer (uuid4) -- not by a SQL
 # default -- so the same id schema works across cosmos + postgres.
@@ -772,7 +769,7 @@ async def test_schema_sql_creates_runtime_config_table() -> None:
 async def test_schema_sql_creates_admin_audit_table() -> None:
     """Lazy bootstrap (`_SCHEMA_SQL`) must include the admin_audit
     table -- otherwise the very first PATCH against a fresh
-    deployment raises `UndefinedTable`. #35f keeps schema bootstrap
+    deployment raises `UndefinedTable`. Schema bootstrap stays
     lazy (no post_provision change required). The `(created_at DESC)`
     index makes forensic queries ("show me the last N admin
     changes") cheap without a full table scan."""
@@ -795,7 +792,7 @@ async def test_write_admin_audit_emits_canonical_insert_sql() -> None:
     intentionally absent from the column list -- the DB default
     (`NOW()`) fills it in so the writer never trusts an app-side
     clock. The id is a writer-generated UUID4 (matching the cosmos
-    impl in #35f-1) so the same id schema works across providers."""
+    impl) so the same id schema works across providers."""
     pool, _ = _make_pool()
     client = _make_client(pool=pool)
     after = RuntimeConfig(openai_temperature=0.5)
@@ -812,7 +809,7 @@ async def test_write_admin_audit_emits_canonical_insert_sql() -> None:
     assert "created_at" not in sql  # DB default fills this in
     assert len(args) == 5
     # id is a stringified UUID4 -- mirrors the cosmos `str(uuid.uuid4())`
-    # call in #35f-1 so a single forensic query joining cosmos + postgres
+    # call so a single forensic query joining cosmos + postgres
     # exports works without provider-specific casting.
     assert isinstance(args[0], str)
     uuid.UUID(args[0])  # raises ValueError if not a valid UUID
@@ -959,12 +956,10 @@ def _pg_error(message: str = "boom") -> asyncpg.PostgresError:
     return asyncpg.PostgresError(message)
 
 
-def _find_error_record(
-    caplog: pytest.LogCaptureFixture, operation: str
-) -> Any:
+def _find_error_record(caplog: pytest.LogCaptureFixture, operation: str) -> Any:
     """Return the single ERROR record for `operation`, failing the test
     with a useful message if zero or multiple matches surface. Same
-    helper shape as the cosmosdb tests (C2b) for consistency.
+    helper shape as the cosmosdb tests for consistency.
     """
     matches = [
         r
@@ -1007,7 +1002,9 @@ async def test_create_pool_logs_and_reraises_on_postgres_error(
     record = _find_error_record(caplog, "create_pool")
     assert record.provider == "postgres"
     # Endpoint logged for triage; raw DSN string never logged in full.
-    assert record.endpoint.endswith("postgres.database.azure.com:5432/cwyd?sslmode=require")
+    assert record.endpoint.endswith(
+        "postgres.database.azure.com:5432/cwyd?sslmode=require"
+    )
 
 
 @pytest.mark.asyncio
@@ -1046,7 +1043,7 @@ async def test_create_pool_uses_bounded_connect_timeout_and_fails_fast(
 ) -> None:
     """`asyncpg.create_pool` is handed a bounded `timeout=` so an
     unreachable server fails fast during lifespan startup instead of
-    hanging the pool build forever (BUG-0082). A timing-out connect
+    hanging the pool build forever. A timing-out connect
     surfaces as `TimeoutError` (an `OSError` subclass in py3.11), so the
     existing lifespan catch logs loud + re-raises promptly.
     """
@@ -1212,9 +1209,7 @@ async def test_add_message_preserves_fk_to_keyerror_translation(
     # No add_message ERROR record should have been emitted: the FK
     # branch translates to KeyError before the outer except sees it.
     assert not [
-        r
-        for r in caplog.records
-        if getattr(r, "operation", None) == "add_message"
+        r for r in caplog.records if getattr(r, "operation", None) == "add_message"
     ]
 
 

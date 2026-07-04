@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 5 (FE bridge — dev_plan §4 task #24, FE half)
+ * Phase: 5
  *
  * Vitest suite for `fetchConversation()` — the seam that loads one
  * persisted conversation from `GET /api/history/conversations/{id}` and

@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 6 (visual polish)
+ * Phase: 6
  *
  * Vitest coverage for <MarkdownContent>. Asserts the markdown surface
  * the chat transcript depends on (bold, lists, headings, inline code,

@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 3 (#22b) + Cleanup audit batch 2 (CU-011b)
+"""Pillar: Stable Core / Phase: 3
 
 Tests for src/backend/core/pipelines/chat.py.
 """
@@ -51,8 +51,12 @@ class _FakePostPrompt:
         self._result = result
         self.calls: list[dict[str, Any]] = []
 
-    async def validate(self, *, question: str, answer: str, sources, **_: Any) -> ValidationResult:
-        self.calls.append({"question": question, "answer": answer, "sources": list(sources)})
+    async def validate(
+        self, *, question: str, answer: str, sources, **_: Any
+    ) -> ValidationResult:
+        self.calls.append(
+            {"question": question, "answer": answer, "sources": list(sources)}
+        )
         return self._result
 
 
@@ -105,7 +109,9 @@ async def test_content_safety_block_short_circuits_orchestrator() -> None:
     guard = _FakeContentSafety(
         ContentSafetyVerdict(flagged=True, triggered=["Hate"], categories={"Hate": 6})
     )
-    orch = _ScriptedOrchestrator([OrchestratorEvent(channel="answer", content="should not appear")])
+    orch = _ScriptedOrchestrator(
+        [OrchestratorEvent(channel="answer", content="should not appear")]
+    )
 
     out = await _drain(
         run_chat(
@@ -224,10 +230,10 @@ async def test_latest_user_message_is_screened_not_assistant() -> None:
 # leaked once a guard short-circuits the request.
 
 
-async def test_retrieval_hint_emits_leading_reasoning_frame_before_orchestrator() -> None:
-    orch = _ScriptedOrchestrator(
-        [OrchestratorEvent(channel="answer", content="ok")]
-    )
+async def test_retrieval_hint_emits_leading_reasoning_frame_before_orchestrator() -> (
+    None
+):
+    orch = _ScriptedOrchestrator([OrchestratorEvent(channel="answer", content="ok")])
 
     out = await _drain(
         run_chat(
@@ -272,9 +278,7 @@ async def test_retrieval_hint_precedes_orchestrator_native_reasoning() -> None:
 
 
 async def test_no_retrieval_hint_emits_no_leading_reasoning_frame() -> None:
-    orch = _ScriptedOrchestrator(
-        [OrchestratorEvent(channel="answer", content="ok")]
-    )
+    orch = _ScriptedOrchestrator([OrchestratorEvent(channel="answer", content="ok")])
 
     out = await _drain(
         run_chat(
@@ -329,7 +333,7 @@ async def test_retrieval_hint_not_emitted_when_rai_blocks() -> None:
 
 
 # ---------------------------------------------------------------------------
-# CU-011b: rai_check pre-orchestrator gate
+# rai_check pre-orchestrator gate
 # ---------------------------------------------------------------------------
 #
 # Mirrors the content_safety gate suite -- same five shapes (pass /
@@ -460,9 +464,7 @@ async def test_malformed_citation_metadata_is_logged_and_pipeline_keeps_streamin
         OrchestratorEvent(channel="answer", content="world!"),
     ]
     orch = _ScriptedOrchestrator(events)
-    validator = _FakePostPrompt(
-        ValidationResult(grounded=True, answer="Hello, world!")
-    )
+    validator = _FakePostPrompt(ValidationResult(grounded=True, answer="Hello, world!"))
 
     with caplog.at_level("DEBUG", logger=_CHAT_LOGGER_NAME):
         out = await _drain(
@@ -485,8 +487,7 @@ async def test_malformed_citation_metadata_is_logged_and_pipeline_keeps_streamin
     debug_records = [
         r
         for r in caplog.records
-        if r.levelname == "DEBUG"
-        and getattr(r, "operation", None) == "citation_parse"
+        if r.levelname == "DEBUG" and getattr(r, "operation", None) == "citation_parse"
     ]
     assert len(debug_records) == 1, (
         f"expected exactly 1 DEBUG citation_parse record, got "
@@ -531,9 +532,9 @@ async def test_content_safety_short_circuits_before_rai_check() -> None:
     assert len(out) == 1
     assert out[0].metadata["code"] == "content_safety"
     assert guard.calls == ["bad input"]
-    assert rai.calls == [], (
-        "rai_check must not be invoked once content_safety has already blocked"
-    )
+    assert (
+        rai.calls == []
+    ), "rai_check must not be invoked once content_safety has already blocked"
 
 
 async def test_rai_check_runs_after_content_safety_when_first_guard_passes() -> None:

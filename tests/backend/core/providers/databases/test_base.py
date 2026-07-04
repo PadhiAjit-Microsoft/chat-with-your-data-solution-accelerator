@@ -1,4 +1,4 @@
-"""Tests for the databases domain skeleton (Phase 4 task #27).
+"""Tests for the databases domain skeleton.
 
 Pillar: Stable Core
 Phase: 4
@@ -20,11 +20,9 @@ from backend.core.types import (
     RuntimeConfig,
 )
 
-
 # ---------------------------------------------------------------------------
 # Minimal concrete subclass for shape tests. NOT registered (so the public
-# registry stays empty until task #27 lands the cosmosdb client and #28
-# lands postgres).
+# registry stays empty until the concrete clients register themselves).
 # ---------------------------------------------------------------------------
 
 
@@ -37,9 +35,7 @@ class _StubDatabaseClient(BaseDatabaseClient):
     ) -> Conversation | None:
         return None
 
-    async def create_conversation(
-        self, user_id: str, title: str
-    ) -> Conversation:
+    async def create_conversation(self, user_id: str, title: str) -> Conversation:
         return Conversation(id="c1", user_id=user_id, title=title)
 
     async def rename_conversation(
@@ -47,9 +43,7 @@ class _StubDatabaseClient(BaseDatabaseClient):
     ) -> Conversation:
         return Conversation(id=conversation_id, user_id=user_id, title=title)
 
-    async def delete_conversation(
-        self, conversation_id: str, user_id: str
-    ) -> None:
+    async def delete_conversation(self, conversation_id: str, user_id: str) -> None:
         return None
 
     async def list_messages(
@@ -70,9 +64,7 @@ class _StubDatabaseClient(BaseDatabaseClient):
             content=message.content,
         )
 
-    async def set_feedback(
-        self, message_id: str, user_id: str, feedback: str
-    ) -> None:
+    async def set_feedback(self, message_id: str, user_id: str, feedback: str) -> None:
         return None
 
     async def get_agent_id(self, name: str) -> str | None:
@@ -92,14 +84,14 @@ class _StubDatabaseClient(BaseDatabaseClient):
 
 
 # ---------------------------------------------------------------------------
-# Registry shape (task #27 deliverable -- ABC + registry, no concrete clients
-# yet; cosmosdb registers later in task #27, postgres in task #28).
+# Registry shape: ABC + registry; concrete clients (cosmosdb, postgres)
+# self-register on import.
 # ---------------------------------------------------------------------------
 
 
 def test_registry_domain_and_initially_empty() -> None:
     assert databases_registry.registry.domain == "databases"
-    # `cosmosdb` self-registers in task #27; `postgres` lands in task #28.
+    # `cosmosdb` and `postgres` self-register on import.
     assert "cosmosdb" in databases_registry.registry.keys()
 
 
@@ -171,15 +163,15 @@ async def test_stub_aclose_is_noop_by_default() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Agent registry contract (CU-010b1 -- get_agent_id)
+# Agent registry contract (get_agent_id)
 # ---------------------------------------------------------------------------
 
 
 def test_subclass_missing_get_agent_id_remains_abstract() -> None:
-    """`get_agent_id` is part of the ABC contract (CU-010b). A subclass
+    """`get_agent_id` is part of the ABC contract. A subclass
     that implements every chat-history method but omits the agent
     registry method must still fail to instantiate, otherwise the
-    lazy resolver in CU-010c could call into a NotImplementedError at
+    lazy resolver could call into a NotImplementedError at
     runtime.
     """
 
@@ -194,9 +186,7 @@ def test_subclass_missing_get_agent_id_remains_abstract() -> None:
         ) -> Conversation | None:
             return None
 
-        async def create_conversation(
-            self, user_id: str, title: str
-        ) -> Conversation:
+        async def create_conversation(self, user_id: str, title: str) -> Conversation:
             return Conversation(id="c1", user_id=user_id, title=title)
 
         async def rename_conversation(
@@ -204,9 +194,7 @@ def test_subclass_missing_get_agent_id_remains_abstract() -> None:
         ) -> Conversation:
             return Conversation(id=conversation_id, user_id=user_id, title=title)
 
-        async def delete_conversation(
-            self, conversation_id: str, user_id: str
-        ) -> None:
+        async def delete_conversation(self, conversation_id: str, user_id: str) -> None:
             return None
 
         async def list_messages(
@@ -252,15 +240,15 @@ async def test_stub_get_agent_id_returns_none_for_missing_name() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Agent registry contract (CU-010b2 -- upsert_agent_id)
+# Agent registry contract (upsert_agent_id)
 # ---------------------------------------------------------------------------
 
 
 def test_subclass_missing_upsert_agent_id_remains_abstract() -> None:
-    """`upsert_agent_id` is part of the ABC contract (CU-010b2). A
+    """`upsert_agent_id` is part of the ABC contract. A
     subclass that implements `get_agent_id` (and every chat-history
     method) but omits the writer must still fail to instantiate --
-    otherwise the lazy resolver in CU-010c could read a stale id,
+    otherwise the lazy resolver could read a stale id,
     fail to persist a fresh one, and silently re-create on every
     request."""
 
@@ -273,9 +261,7 @@ def test_subclass_missing_upsert_agent_id_remains_abstract() -> None:
         ) -> Conversation | None:
             return None
 
-        async def create_conversation(
-            self, user_id: str, title: str
-        ) -> Conversation:
+        async def create_conversation(self, user_id: str, title: str) -> Conversation:
             return Conversation(id="c1", user_id=user_id, title=title)
 
         async def rename_conversation(
@@ -283,9 +269,7 @@ def test_subclass_missing_upsert_agent_id_remains_abstract() -> None:
         ) -> Conversation:
             return Conversation(id=conversation_id, user_id=user_id, title=title)
 
-        async def delete_conversation(
-            self, conversation_id: str, user_id: str
-        ) -> None:
+        async def delete_conversation(self, conversation_id: str, user_id: str) -> None:
             return None
 
         async def list_messages(
@@ -334,15 +318,15 @@ async def test_stub_upsert_agent_id_returns_none_and_does_not_raise() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Runtime config contract (#35c-2 -- get_runtime_config)
+# Runtime config contract (get_runtime_config)
 # ---------------------------------------------------------------------------
 
 
 def test_subclass_missing_get_runtime_config_remains_abstract() -> None:
-    """`get_runtime_config` is part of the ABC contract (#35c-2). A
+    """`get_runtime_config` is part of the ABC contract. A
     subclass that implements every prior method (chat-history +
     agent registry) but omits the runtime-config reader must still
-    fail to instantiate -- otherwise the PATCH route in #35c-7 would
+    fail to instantiate -- otherwise the PATCH route would
     end up calling NotImplementedError at request time and the admin
     UI would surface a 500 instead of a clean 'not configured' state.
     """
@@ -356,9 +340,7 @@ def test_subclass_missing_get_runtime_config_remains_abstract() -> None:
         ) -> Conversation | None:
             return None
 
-        async def create_conversation(
-            self, user_id: str, title: str
-        ) -> Conversation:
+        async def create_conversation(self, user_id: str, title: str) -> Conversation:
             return Conversation(id="c1", user_id=user_id, title=title)
 
         async def rename_conversation(
@@ -366,9 +348,7 @@ def test_subclass_missing_get_runtime_config_remains_abstract() -> None:
         ) -> Conversation:
             return Conversation(id=conversation_id, user_id=user_id, title=title)
 
-        async def delete_conversation(
-            self, conversation_id: str, user_id: str
-        ) -> None:
+        async def delete_conversation(self, conversation_id: str, user_id: str) -> None:
             return None
 
         async def list_messages(
@@ -425,15 +405,15 @@ async def test_stub_get_runtime_config_returns_none_for_cold_start() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Runtime config contract (#35c-3 -- upsert_runtime_config)
+# Runtime config contract (upsert_runtime_config)
 # ---------------------------------------------------------------------------
 
 
 def test_subclass_missing_upsert_runtime_config_remains_abstract() -> None:
-    """`upsert_runtime_config` is part of the ABC contract (#35c-3).
+    """`upsert_runtime_config` is part of the ABC contract.
     A subclass that implements `get_runtime_config` (and every prior
     method) but omits the writer must still fail to instantiate --
-    otherwise the PATCH route in #35c-4 could read a stale config,
+    otherwise the PATCH route could read a stale config,
     fail to persist the merged update, and silently drop every
     operator override."""
 
@@ -446,9 +426,7 @@ def test_subclass_missing_upsert_runtime_config_remains_abstract() -> None:
         ) -> Conversation | None:
             return None
 
-        async def create_conversation(
-            self, user_id: str, title: str
-        ) -> Conversation:
+        async def create_conversation(self, user_id: str, title: str) -> Conversation:
             return Conversation(id="c1", user_id=user_id, title=title)
 
         async def rename_conversation(
@@ -456,9 +434,7 @@ def test_subclass_missing_upsert_runtime_config_remains_abstract() -> None:
         ) -> Conversation:
             return Conversation(id=conversation_id, user_id=user_id, title=title)
 
-        async def delete_conversation(
-            self, conversation_id: str, user_id: str
-        ) -> None:
+        async def delete_conversation(self, conversation_id: str, user_id: str) -> None:
             return None
 
         async def list_messages(
@@ -513,17 +489,18 @@ async def test_stub_upsert_runtime_config_returns_none_and_does_not_raise() -> N
 
 
 # ---------------------------------------------------------------------------
-# Admin audit contract (#35f-1 -- write_admin_audit)
+# Admin audit contract (write_admin_audit)
 # ---------------------------------------------------------------------------
 
 
 def test_subclass_missing_write_admin_audit_remains_abstract() -> None:
-    """`write_admin_audit` is part of the ABC contract (#35f). A
+    """`write_admin_audit` is part of the ABC contract. A
     subclass that implements every prior method but omits the audit
     writer must still fail to instantiate -- otherwise the PATCH
-    route in #35f-3 could silently drop the audit row, defeating
+    route could silently drop the audit row, defeating
     the "who flipped temperature to 0.7?" forensic question that
     motivated the audit log."""
+
     class _MissingWriteAdminAudit(BaseDatabaseClient):
         async def list_conversations(self, user_id: str) -> Sequence[Conversation]:
             return []
@@ -533,9 +510,7 @@ def test_subclass_missing_write_admin_audit_remains_abstract() -> None:
         ) -> Conversation | None:
             return None
 
-        async def create_conversation(
-            self, user_id: str, title: str
-        ) -> Conversation:
+        async def create_conversation(self, user_id: str, title: str) -> Conversation:
             return Conversation(id="c1", user_id=user_id, title=title)
 
         async def rename_conversation(
@@ -543,9 +518,7 @@ def test_subclass_missing_write_admin_audit_remains_abstract() -> None:
         ) -> Conversation:
             return Conversation(id=conversation_id, user_id=user_id, title=title)
 
-        async def delete_conversation(
-            self, conversation_id: str, user_id: str
-        ) -> None:
+        async def delete_conversation(self, conversation_id: str, user_id: str) -> None:
             return None
 
         async def list_messages(

@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 5 (frontend — user identity)
+ * Phase: 5
  *
  * Vitest suite for the `useAuth` shell state machine. Drives the hook
  * through its `resolve(...)` action and asserts both the React state

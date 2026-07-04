@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 5 (Admin + Frontend Merge)
+ * Phase: 5
  *
  * App-level navigation tests: the header's gated admin entry must
  * appear only on a successful `getAdminStatus()` probe, the App must

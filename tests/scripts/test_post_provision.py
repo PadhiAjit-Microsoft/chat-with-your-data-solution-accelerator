@@ -1,6 +1,6 @@
 """
 Pillar: Stable Core
-Phase: 3 (Conversation + RAG, task #26)
+Phase: 3
 Purpose: Validate post_provision.py search-index bootstrap and CLI flags.
 """
 
@@ -546,10 +546,10 @@ def test_ensure_search_index_rejects_bad_dimensions(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# Agent registry bootstrap (CU-010b3 -- no-op closure)
+# Agent registry bootstrap (no-op closure)
 # ---------------------------------------------------------------------------
 #
-# CU-010b3 deliberately makes NO change to post_provision.py. The agent
+# post_provision.py deliberately makes NO change here. The agent
 # registry is bootstrapped lazily by the per-backend client:
 #   * Cosmos: reuses the chat-history container; agent rows just use
 #     `userId="_system"` + `type=CosmosItemType.AGENT` (no DDL needed).
@@ -582,7 +582,7 @@ def test_post_provision_does_not_reference_agent_partition() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Public network access re-assert (BUG-0093 / MACAE parity)
+# Public network access re-assert (MACAE parity)
 # ---------------------------------------------------------------------------
 
 

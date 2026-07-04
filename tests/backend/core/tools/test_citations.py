@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 3 (#23) — tests for backend/core/tools/citations.py."""
+"""Pillar: Stable Core / Phase: 3, tests for backend/core/tools/citations.py."""
 
 from collections.abc import Awaitable, Callable
 
@@ -18,8 +18,12 @@ from backend.core.tools.citations import (
 from backend.core.types import Citation, SearchResult
 
 
-def _hit(id_: str, content: str = "body", title: str = "", url: str = "") -> SearchResult:
-    return SearchResult(id=id_, content=content, title=title, url=url, metadata={"k": "v"})
+def _hit(
+    id_: str, content: str = "body", title: str = "", url: str = ""
+) -> SearchResult:
+    return SearchResult(
+        id=id_, content=content, title=title, url=url, metadata={"k": "v"}
+    )
 
 
 def test_doc_marker_is_one_indexed() -> None:
@@ -171,7 +175,13 @@ def test_citations_from_annotations_dedupes_by_id_and_merges_regions() -> None:
 
 def test_citations_from_annotations_preserves_tool_name() -> None:
     citations = citations_from_annotations(
-        [{"type": "citation", "file_id": "doc-1", "tool_name": "knowledge_base_retrieve"}]
+        [
+            {
+                "type": "citation",
+                "file_id": "doc-1",
+                "tool_name": "knowledge_base_retrieve",
+            }
+        ]
     )
     assert citations[0].metadata["tool_name"] == "knowledge_base_retrieve"
 
@@ -262,8 +272,16 @@ def test_normalize_kb_citations_rewrites_every_repeat_of_a_marker() -> None:
     first = answer.index(_MARKER_A)
     second = answer.index(_MARKER_A, first + 1)
     regions = [
-        {"type": "text_span", "start_index": first, "end_index": first + len(_MARKER_A)},
-        {"type": "text_span", "start_index": second, "end_index": second + len(_MARKER_A)},
+        {
+            "type": "text_span",
+            "start_index": first,
+            "end_index": first + len(_MARKER_A),
+        },
+        {
+            "type": "text_span",
+            "start_index": second,
+            "end_index": second + len(_MARKER_A),
+        },
     ]
     citations = [_kb_citation("mcp://searchindex/aaa", regions)]
     normalized, result = normalize_kb_citations(answer, citations)
@@ -375,7 +393,9 @@ _KB_SCHEME = "mcp://searchindex/"
 def _kb_keyed_citation(key: str, *, doc_id: str = "[doc1]") -> Citation:
     """A normalized agent_framework KB citation before friendly-field recovery."""
     raw = f"{_KB_SCHEME}{key}"
-    return Citation(id=doc_id, title=raw, url=raw, snippet="", metadata={"source_id": raw})
+    return Citation(
+        id=doc_id, title=raw, url=raw, snippet="", metadata={"source_id": raw}
+    )
 
 
 def _doc_fetcher(
@@ -407,7 +427,9 @@ async def test_enrich_kb_citations_backfills_friendly_fields() -> None:
 
 async def test_enrich_kb_citations_strips_scheme_before_lookup() -> None:
     calls: list[str] = []
-    await enrich_kb_citations([_kb_keyed_citation("abc123")], _doc_fetcher({}, calls=calls))
+    await enrich_kb_citations(
+        [_kb_keyed_citation("abc123")], _doc_fetcher({}, calls=calls)
+    )
     assert calls == ["abc123"]  # the bare key, not the mcp:// id
 
 

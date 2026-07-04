@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 5 (FE bridge — dev_plan §4 task #24, FE half)
+ * Phase: 5
  *
  * Vitest suite for the SSE client utility `streamChat()`. The util is
  * the only piece that talks to `POST /api/conversation` over

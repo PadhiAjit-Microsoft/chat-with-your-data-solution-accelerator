@@ -1,5 +1,5 @@
 /**
- * Pillar: Scenario Pack / Phase: 4 (task #32) -- HistoryPanel tests.
+ * Pillar: Scenario Pack / Phase: 4
  */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {

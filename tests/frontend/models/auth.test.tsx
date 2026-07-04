@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 5 (frontend — user identity)
+ * Phase: 5
  *
  * Vitest shape + enum assertions for the auth model. Runtime `expect`
  * checks confirm the `AuthPhase` closed set and the interface field

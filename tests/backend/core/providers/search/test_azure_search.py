@@ -1,4 +1,4 @@
-"""Tests for the search domain (Phase 3 task #21).
+"""Tests for the search domain.
 
 Pillar: Stable Core
 Phase: 3
@@ -21,7 +21,6 @@ from backend.core.providers.search.azure_search import AzureSearch
 from backend.core.providers.search.base import BaseSearch, SourceListing
 from backend.core.settings import AppSettings, get_settings
 from backend.core.types import SearchDocument, SearchResult
-
 
 # ---------------------------------------------------------------------------
 # Fakes
@@ -350,13 +349,9 @@ async def test_search_logs_and_reraises_on_azure_error(
     """
     settings = _settings_for_search(monkeypatch)
     client = MagicMock()
-    client.search = AsyncMock(
-        side_effect=HttpResponseError(message="429 throttled")
-    )
+    client.search = AsyncMock(side_effect=HttpResponseError(message="429 throttled"))
     client.close = AsyncMock()
-    handler = AzureSearch(
-        settings=settings, credential=MagicMock(), client=client
-    )
+    handler = AzureSearch(settings=settings, credential=MagicMock(), client=client)
 
     with caplog.at_level("ERROR", logger=_AZURE_SEARCH_LOGGER_NAME):
         with pytest.raises(AzureError):
@@ -422,9 +417,7 @@ async def test_delete_by_source_collects_ids_then_deletes(
     )
     client.delete_documents = AsyncMock(return_value=[])
     client.close = AsyncMock()
-    handler = AzureSearch(
-        settings=settings, credential=MagicMock(), client=client
-    )
+    handler = AzureSearch(settings=settings, credential=MagicMock(), client=client)
 
     deleted = await handler.delete_by_source("sample.pdf")
 
@@ -463,9 +456,7 @@ async def test_delete_by_source_returns_zero_when_no_matches(
     )
     client.delete_documents = AsyncMock()
     client.close = AsyncMock()
-    handler = AzureSearch(
-        settings=settings, credential=MagicMock(), client=client
-    )
+    handler = AzureSearch(settings=settings, credential=MagicMock(), client=client)
 
     deleted = await handler.delete_by_source("nope.pdf")
 
@@ -495,9 +486,7 @@ async def test_delete_by_source_matches_title_client_side_only(
     )
     client.delete_documents = AsyncMock(return_value=[])
     client.close = AsyncMock()
-    handler = AzureSearch(
-        settings=settings, credential=MagicMock(), client=client
-    )
+    handler = AzureSearch(settings=settings, credential=MagicMock(), client=client)
 
     deleted = await handler.delete_by_source("o'reilly.pdf")
 
@@ -517,14 +506,10 @@ async def test_delete_by_source_logs_and_reraises_on_azure_error(
 ) -> None:
     settings = _settings_for_search(monkeypatch)
     client = MagicMock()
-    client.search = AsyncMock(
-        side_effect=HttpResponseError(message="500 server error")
-    )
+    client.search = AsyncMock(side_effect=HttpResponseError(message="500 server error"))
     client.delete_documents = AsyncMock()
     client.close = AsyncMock()
-    handler = AzureSearch(
-        settings=settings, credential=MagicMock(), client=client
-    )
+    handler = AzureSearch(settings=settings, credential=MagicMock(), client=client)
 
     with caplog.at_level("ERROR", logger=_AZURE_SEARCH_LOGGER_NAME):
         with pytest.raises(AzureError):
@@ -553,9 +538,7 @@ async def test_merge_or_upload_documents_calls_sdk_with_keyword_payload(
         return_value=[{"key": "a", "succeeded": True}]
     )
     client.close = AsyncMock()
-    handler = AzureSearch(
-        settings=settings, credential=MagicMock(), client=client
-    )
+    handler = AzureSearch(settings=settings, credential=MagicMock(), client=client)
     docs = [
         SearchDocument(id="a", content="hello", content_vector=[0.1, 0.2]),
         SearchDocument(id="b", content="world", content_vector=[0.3, 0.4]),
@@ -577,9 +560,7 @@ async def test_merge_or_upload_documents_returns_empty_without_sdk_call(
     client = MagicMock()
     client.merge_or_upload_documents = AsyncMock()
     client.close = AsyncMock()
-    handler = AzureSearch(
-        settings=settings, credential=MagicMock(), client=client
-    )
+    handler = AzureSearch(settings=settings, credential=MagicMock(), client=client)
 
     result = await handler.merge_or_upload_documents(documents=[])
 
@@ -598,9 +579,7 @@ async def test_merge_or_upload_documents_logs_and_reraises_on_azure_error(
         side_effect=ServiceRequestError(message="search unavailable")
     )
     client.close = AsyncMock()
-    handler = AzureSearch(
-        settings=settings, credential=MagicMock(), client=client
-    )
+    handler = AzureSearch(settings=settings, credential=MagicMock(), client=client)
     docs = [SearchDocument(id="a", content="hello")]
 
     with caplog.at_level("ERROR", logger=_AZURE_SEARCH_LOGGER_NAME):
@@ -631,9 +610,7 @@ async def test_list_sources_aggregates_distinct_sources_from_paged_titles(
         + [{"title": "beta.pdf"}] * 3
     )
     client = _make_client(docs)
-    handler = AzureSearch(
-        settings=settings, credential=MagicMock(), client=client
-    )
+    handler = AzureSearch(settings=settings, credential=MagicMock(), client=client)
 
     listings = await handler.list_sources()
 
@@ -650,9 +627,7 @@ async def test_list_sources_pages_titles_without_faceting(
 ) -> None:
     settings = _settings_for_search(monkeypatch)
     client = _make_client([])
-    handler = AzureSearch(
-        settings=settings, credential=MagicMock(), client=client
-    )
+    handler = AzureSearch(settings=settings, credential=MagicMock(), client=client)
 
     await handler.list_sources()
 
@@ -670,18 +645,14 @@ async def test_list_sources_skips_blank_titles_and_returns_empty_when_no_docs(
     settings = _settings_for_search(monkeypatch)
     # Empty index -> no sources.
     client = _make_client([])
-    handler = AzureSearch(
-        settings=settings, credential=MagicMock(), client=client
-    )
+    handler = AzureSearch(settings=settings, credential=MagicMock(), client=client)
     assert await handler.list_sources() == []
 
     # Docs with missing / blank titles are skipped; only real sources count.
     client = _make_client(
         [{"title": ""}, {}, {"title": "gamma.pdf"}, {"title": "gamma.pdf"}]
     )
-    handler = AzureSearch(
-        settings=settings, credential=MagicMock(), client=client
-    )
+    handler = AzureSearch(settings=settings, credential=MagicMock(), client=client)
     assert await handler.list_sources() == [
         SourceListing(source="gamma.pdf", chunk_count=2, last_modified=None),
     ]
@@ -694,13 +665,9 @@ async def test_list_sources_logs_and_reraises_on_azure_error(
 ) -> None:
     settings = _settings_for_search(monkeypatch)
     client = MagicMock()
-    client.search = AsyncMock(
-        side_effect=HttpResponseError(message="500 server error")
-    )
+    client.search = AsyncMock(side_effect=HttpResponseError(message="500 server error"))
     client.close = AsyncMock()
-    handler = AzureSearch(
-        settings=settings, credential=MagicMock(), client=client
-    )
+    handler = AzureSearch(settings=settings, credential=MagicMock(), client=client)
 
     with caplog.at_level("ERROR", logger=_AZURE_SEARCH_LOGGER_NAME):
         with pytest.raises(AzureError):

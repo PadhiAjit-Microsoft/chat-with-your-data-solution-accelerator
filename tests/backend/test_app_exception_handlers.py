@@ -28,7 +28,6 @@ from pydantic import BaseModel
 from backend.exception_handlers import install_exception_handlers
 from backend.services.admin import ConfigResolutionError
 
-
 _APP_LOGGER_NAME = "backend.exception_handlers"
 
 
@@ -260,6 +259,7 @@ def test_request_validation_error_pass_through_returns_422() -> None:
     Demonstrates the framework default still wins for
     `RequestValidationError`.
     """
+
     class _Body(BaseModel):
         name: str
 
@@ -307,7 +307,7 @@ def test_cosmos_specific_handler_wins_over_generic_azure_handler(
     assert response.status_code == 503
     assert response.json() == {"detail": "Database temporarily unavailable."}
     # Negative assertion: the generic AzureError detail string
-    # must not appear -- proves dispatch landed on the specific one.
+    # must not appear -- only the matched handler's payload is returned.
     assert "Azure dependency" not in response.text
 
 

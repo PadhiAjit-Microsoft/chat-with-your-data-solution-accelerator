@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 5 (Admin + Frontend Merge)
+ * Phase: 5
  *
  * Vitest suite for the admin REST client. Mocks global `fetch` with
  * JSON bodies so unit tests run offline.
@@ -118,8 +118,8 @@ const RUNTIME_CONFIG_FIXTURE: RuntimeConfig = {
 
 // The effective endpoint envelopes the override-resolved config. Here the
 // operator has pinned the orchestrator to agent_framework, so `values`
-// carries that instead of the langgraph env default -- the exact BUG-0004
-// scenario (save agent_framework -> reload must keep agent_framework).
+// carries that instead of the langgraph env default: save
+// agent_framework -> reload must keep agent_framework.
 const EFFECTIVE_CONFIG_FIXTURE = {
   values: { ...ADMIN_CONFIG_FIXTURE, orchestrator_name: "agent_framework" },
   sources: {

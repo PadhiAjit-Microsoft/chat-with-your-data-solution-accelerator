@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 3.5 (debt #Q6a) + Phase 5 (#39, #35e) — DI provider tests."""
+"""Pillar: Stable Core / Phase: 3.5 + Phase 5, DI provider tests."""
 
 from types import SimpleNamespace
 from typing import Any
@@ -53,7 +53,7 @@ def test_get_database_client_returns_state_instance_when_set() -> None:
 
 
 # ---------------------------------------------------------------------------
-# CU-001c: agents provider DI seam (Phase 4 -- agent_framework wiring)
+# agents provider DI seam (agent_framework wiring)
 # ---------------------------------------------------------------------------
 
 
@@ -76,7 +76,7 @@ def test_get_agents_provider_returns_state_instance_when_set() -> None:
 
 
 # ---------------------------------------------------------------------------
-# #35e(a): get_runtime_overrides DI seam (live-reload runtime overrides)
+# get_runtime_overrides DI seam (live-reload runtime overrides)
 #
 # Lifespan loads the persisted RuntimeConfig from the DB once at
 # startup and stashes the result on `app.state.runtime_overrides`
@@ -144,9 +144,7 @@ def _settings_with_threshold(threshold: int) -> Any:
     would force every test to set the full COSMOS_ENV fixture even though
     only ``content_safety.severity_threshold`` is consumed here.
     """
-    return SimpleNamespace(
-        content_safety=SimpleNamespace(severity_threshold=threshold)
-    )
+    return SimpleNamespace(content_safety=SimpleNamespace(severity_threshold=threshold))
 
 
 def test_get_content_safety_guard_returns_none_when_attr_missing() -> None:
@@ -188,9 +186,7 @@ def test_get_content_safety_guard_builds_with_client_and_threshold(
     result = get_content_safety_guard(request, settings)  # type: ignore[arg-type]
 
     assert result is fake_guard
-    ctor_spy.assert_called_once_with(
-        client=fake_client, severity_threshold=6
-    )
+    ctor_spy.assert_called_once_with(client=fake_client, severity_threshold=6)
 
 
 def test_get_content_safety_guard_threads_default_threshold(
@@ -301,7 +297,9 @@ def test_get_content_safety_guard_returns_guard_when_override_enabled_none_and_c
     assert result is fake_guard
 
 
-def test_get_content_safety_guard_returns_none_when_override_false_and_no_client() -> None:
+def test_get_content_safety_guard_returns_none_when_override_false_and_no_client() -> (
+    None
+):
     """Override = False + no lifespan client -> None (vacuously).
 
     Belt-and-braces: the 'no client' rule already wins on its own, but

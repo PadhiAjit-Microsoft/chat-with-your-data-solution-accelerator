@@ -1,4 +1,4 @@
-"""Tests for the parsers provider domain (Phase 6 task #41, U8c).
+"""Tests for the parsers provider domain.
 
 Pillar: Stable Core
 Phase: 6
@@ -19,7 +19,9 @@ class _FakeParser(BaseParser):
     """Minimal concrete BaseParser used to exercise the registry."""
 
     async def parse(self, content: bytes, *, source: str) -> list[Chunk]:
-        return [Chunk(id=f"{source}__0", content=content.decode(), source=source, index=0)]
+        return [
+            Chunk(id=f"{source}__0", content=content.decode(), source=source, index=0)
+        ]
 
 
 @pytest.fixture
@@ -27,7 +29,7 @@ def isolated_registry(monkeypatch: pytest.MonkeyPatch) -> Registry[type[BasePars
     """Swap the module-level `parsers_registry.registry` for an empty one.
 
     Tests register fake parsers without polluting the global registry
-    that real provider concretes (added in U8d) will populate.
+    that real provider concretes will populate.
     """
     fresh: Registry[type[BaseParser]] = Registry("parsers")
     monkeypatch.setattr(parsers_registry, "registry", fresh)
@@ -105,7 +107,9 @@ async def test_concrete_parser_returns_chunks() -> None:
 
     chunks = await parser.parse(b"hello", source="greeting.txt")
 
-    assert chunks == [Chunk(id="greeting.txt__0", content="hello", source="greeting.txt", index=0)]
+    assert chunks == [
+        Chunk(id="greeting.txt__0", content="hello", source="greeting.txt", index=0)
+    ]
 
 
 # ---------------------------------------------------------------------------

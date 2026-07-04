@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 6 (frontend polish, pulled forward for boss demo)
+ * Phase: 6
  *
  * Tests for the history-toggle wiring at the App level: the AppHeader
  * history button must drive ChatPage's `data-history-open` attribute,

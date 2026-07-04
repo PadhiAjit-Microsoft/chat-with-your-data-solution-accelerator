@@ -1,8 +1,7 @@
-"""Tests for the content safety guardrail (Phase 3 task #20a)
-+ the RAI agent classifier (Cleanup audit batch 2 / CU-011a).
+"""Tests for the content safety guardrail and the RAI agent classifier.
 
 Pillar: Stable Core
-Phase: 3 + Cleanup audit batch 2
+Phase: 3
 """
 
 from types import SimpleNamespace
@@ -271,9 +270,7 @@ async def test_rai_check_empty_input_skips_foundry_roundtrip() -> None:
     assert await rai_check("", provider, db) is True
     assert await rai_check("   \n\t  ", provider, db) is True
 
-    assert provider.build_calls == [], (
-        "empty input must not trigger build_agent"
-    )
+    assert provider.build_calls == [], "empty input must not trigger build_agent"
     assert agent.run_calls == []
     assert agent.entered is False
 
@@ -292,9 +289,9 @@ async def test_rai_check_builds_rai_agent_with_db_by_identity() -> None:
 
     assert len(provider.build_calls) == 1
     call = provider.build_calls[0]
-    assert call["definition"] is RAI_AGENT, (
-        "rai_check must pass the RAI_AGENT singleton, not a fresh definition"
-    )
+    assert (
+        call["definition"] is RAI_AGENT
+    ), "rai_check must pass the RAI_AGENT singleton, not a fresh definition"
     assert call["db"] is db, "rai_check must forward the db client by identity"
 
 
@@ -302,8 +299,8 @@ async def test_rai_check_builds_rai_agent_with_db_by_identity() -> None:
 async def test_rai_check_honors_explicit_agent_argument() -> None:
     """The `agent` keyword selects the classifier definition. The admin
     prompt-save gate passes `PROMPT_REVIEW_AGENT` (a system-prompt
-    reviewer) instead of the default user-message `RAI_AGENT`
-    (BUG-0084); `rai_check` must build exactly the agent it is given.
+    reviewer) instead of the default user-message `RAI_AGENT`;
+    `rai_check` must build exactly the agent it is given.
     """
     agent = _FakeRaiAgent(response_text="TRUE")
     provider = _FakeRaiAgentsProvider(agent)

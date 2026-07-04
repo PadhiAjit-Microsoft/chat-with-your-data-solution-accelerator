@@ -1,4 +1,4 @@
-"""Tests for `shared.settings` (Phase 2 task #10).
+"""Tests for `shared.settings`.
 
 Pillar: Stable Core
 Phase: 2
@@ -24,7 +24,6 @@ from backend.core.settings import (
     SpeechSettings,
     get_settings,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -338,9 +337,9 @@ def test_orchestrator_can_be_set_to_agent_framework(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Selecting `agent_framework` no longer requires any agent-id env
-    var. CU-009b (2026-05-05) removed the `OrchestratorSettings.agent_id`
-    field per ADR 0008 -- the orchestrator resolves the Foundry agent
-    lazily on first request via the registry-backed `agents` provider.
+    var. The `OrchestratorSettings.agent_id` field was removed per
+    ADR 0008 -- the orchestrator resolves the Foundry agent lazily on
+    first request via the registry-backed `agents` provider.
     Settings-load must succeed cleanly.
     """
     _set(monkeypatch, COSMOS_ENV)
@@ -352,18 +351,18 @@ def test_orchestrator_can_be_set_to_agent_framework(
 
 
 # ---------------------------------------------------------------------------
-# CU-009b: agent_id removal (reversal of CU-001a)
+# agent_id removal
 # ---------------------------------------------------------------------------
 
 
 def test_orchestrator_settings_no_agent_id_field() -> None:
     """`OrchestratorSettings` must NOT declare an `agent_id` field.
 
-    CU-009b (2026-05-05) reversed CU-001a per ADR 0008
-    (lazy-foundry-agent-bootstrap). Restoring the field here would
-    re-introduce the dead-config drift the cleanup audit batch was
-    opened to remove. Pin specific Foundry agents through the
-    registry-backed `agents` provider (CU-010a), not via settings.
+    The field was reversed per ADR 0008
+    (lazy-foundry-agent-bootstrap). Restoring it here would
+    re-introduce the dead-config drift ADR 0008 removed. Pin
+    specific Foundry agents through the registry-backed `agents`
+    provider, not via settings.
     """
     assert "agent_id" not in OrchestratorSettings.model_fields, (
         "OrchestratorSettings.agent_id must remain absent (CU-009b reversal "
@@ -377,9 +376,9 @@ def test_agent_framework_loads_without_any_agent_id_env_var(
 ) -> None:
     """Settings-load under `agent_framework` must succeed even when both
     legacy env aliases are explicitly cleared. The previous
-    cross-field validator (`_require_agent_id_for_agent_framework`,
-    CU-001a) is gone; the runtime resolver in
-    `agents.get_or_create_agent` (CU-010c) replaces it.
+    cross-field validator (`_require_agent_id_for_agent_framework`)
+    is gone; the runtime resolver in
+    `agents.get_or_create_agent` replaces it.
     """
     _set(monkeypatch, COSMOS_ENV)
     monkeypatch.setenv("CWYD_ORCHESTRATOR_NAME", "agent_framework")
@@ -451,7 +450,10 @@ def test_get_settings_cache_clear_picks_up_new_env(
 def test_no_secret_fields_anywhere() -> None:
     """No setting field name may suggest a secret/credential is stored."""
     forbidden_substrings = ("key_vault", "secret", "password", "api_key")
-    for model in (AppSettings, *AppSettings.model_fields["identity"].annotation.__mro__):
+    for model in (
+        AppSettings,
+        *AppSettings.model_fields["identity"].annotation.__mro__,
+    ):
         if not hasattr(model, "model_fields"):
             continue
         for field_name in model.model_fields:
@@ -599,9 +601,7 @@ def test_content_safety_settings_reads_env_prefix(
     monkeypatch.setenv(_ContentSafetyEnvVar.ENABLED, "true")
     monkeypatch.setenv(_ContentSafetyEnvVar.SEVERITY_THRESHOLD, "6")
     settings = AppSettings()
-    assert settings.content_safety.endpoint.endswith(
-        ".cognitiveservices.azure.com/"
-    )
+    assert settings.content_safety.endpoint.endswith(".cognitiveservices.azure.com/")
     assert settings.content_safety.enabled is True
     assert settings.content_safety.severity_threshold == 6
 
@@ -729,7 +729,7 @@ def test_document_intelligence_settings_in_app_settings_exports() -> None:
 
 
 # ---------------------------------------------------------------------------
-# NetworkSettings.cors_origins (CU-002a)
+# NetworkSettings.cors_origins
 # ---------------------------------------------------------------------------
 
 
@@ -779,7 +779,7 @@ def test_cors_origins_empty_string_yields_empty_list(
 
 
 # ---------------------------------------------------------------------------
-# .env.sample consistency (CU-007 -> CU-008a relocation)
+# .env.sample consistency
 # ---------------------------------------------------------------------------
 
 
@@ -810,7 +810,7 @@ def _expected_env_var_names() -> set[str]:
 # does not consume them as typed fields today. Each entry must have a
 # documented reason -- bare aliases are not allowed.
 #
-# Post-CU-002b + CU-001a, the only legitimate exemptions are:
+# The only legitimate exemptions are:
 #   - frontend-only env vars (Vite reads them, AppSettings does not);
 #   - alias-only fields whose primary env var name does not derive from
 #     `<env_prefix><field_name>` (the round-trip helper only walks the
@@ -819,15 +819,15 @@ def _expected_env_var_names() -> set[str]:
 _ENV_EXAMPLE_EXEMPTIONS: dict[str, str] = {
     # Frontend build-time variable read by Vite, not by AppSettings.
     "VITE_BACKEND_URL": "frontend (vite)",
-    # Consumed by NetworkSettings.cors_origins via validation_alias
-    # (CU-002a). The round-trip helper only walks env_prefix+field_name
+    # Consumed by NetworkSettings.cors_origins via validation_alias.
+    # The round-trip helper only walks env_prefix+field_name
     # so alias-based fields stay listed here as documented exemptions.
     "BACKEND_CORS_ORIGINS": (
         "NetworkSettings.cors_origins via validation_alias (CU-002a)"
     ),
-    # CU-009b (2026-05-05) removed the previous AZURE_AI_AGENT_ID
-    # exemption: the OrchestratorSettings.agent_id field that consumed
-    # it via validation_alias was deleted per ADR 0008. Do not re-add
+    # The previous AZURE_AI_AGENT_ID
+    # exemption was removed: the OrchestratorSettings.agent_id field that
+    # consumed it via validation_alias was deleted per ADR 0008. Do not re-add
     # an exemption for an env var no settings field reads -- that's
     # exactly the dead-config drift this test guards against.
 }
@@ -837,19 +837,13 @@ def test_env_sample_keys_round_trip_through_appsettings() -> None:
     """Every non-comment key in .env.sample must be consumed by
     AppSettings (or be an explicitly documented exemption).
 
-    Guards against the v1->v2 alias drift that CU-007 cleaned up. New
-    keys added to the sample without a matching AppSettings field will
-    fail this test loudly so the operator's `.env` does not silently
-    do nothing. Path moved from docker/.env.dev.example to .env.sample
-    in CU-008a (single source of truth at v2/ root). Test file moved from
-    tests/shared/test_settings.py to tests/backend/core/test_settings.py
-    in REFACTOR-B (Phase 5.5, 2026-05-06); parents index bumped 2 -> 3 to
-    keep resolving .env.sample.
+    Guards against the v1->v2 alias drift. New keys added to the
+    sample without a matching AppSettings field will fail this test
+    loudly so the operator's `.env` does not silently do nothing.
+    `.env.sample` is the single source of truth at the v2/ root,
+    resolved via `parents[3]`.
     """
-    example = (
-        Path(__file__).resolve().parents[3]
-        / ".env.sample"
-    )
+    example = Path(__file__).resolve().parents[3] / ".env.sample"
     assert example.exists(), f"missing sample file: {example}"
 
     declared: set[str] = set()
@@ -905,9 +899,7 @@ def test_environment_enum_is_strenum_subclass() -> None:
         ("PRODUCTION", "production"),
     ],
 )
-def test_environment_enum_member_values(
-    member_name: str, expected_value: str
-) -> None:
+def test_environment_enum_member_values(member_name: str, expected_value: str) -> None:
     """Each member carries the lowercase string value used on the wire."""
     member = getattr(_settings_module.Environment, member_name)
     assert member.value == expected_value

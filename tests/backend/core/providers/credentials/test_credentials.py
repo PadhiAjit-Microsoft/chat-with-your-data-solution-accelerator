@@ -1,4 +1,4 @@
-"""Tests for the credentials provider domain (Phase 2 task #11).
+"""Tests for the credentials provider domain.
 
 Pillar: Stable Core
 Phase: 2
@@ -13,9 +13,10 @@ from azure.identity.aio import AzureCliCredential, DefaultAzureCredential
 from backend.core.providers.credentials import registry as credentials_registry
 from backend.core.providers.credentials.base import BaseCredentialProvider
 from backend.core.providers.credentials.cli import CliCredentialProvider
-from backend.core.providers.credentials.managed_identity import ManagedIdentityCredentialProvider
+from backend.core.providers.credentials.managed_identity import (
+    ManagedIdentityCredentialProvider,
+)
 from backend.core.settings import AppSettings
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -37,9 +38,7 @@ COSMOS_ENV: dict[str, str] = {
 def settings_with_uami(monkeypatch: pytest.MonkeyPatch) -> AppSettings:
     for key, value in COSMOS_ENV.items():
         monkeypatch.setenv(key, value)
-    monkeypatch.setenv(
-        "AZURE_UAMI_CLIENT_ID", "00000000-0000-0000-0000-000000000002"
-    )
+    monkeypatch.setenv("AZURE_UAMI_CLIENT_ID", "00000000-0000-0000-0000-000000000002")
     return AppSettings()
 
 
@@ -61,12 +60,17 @@ def test_registry_contains_both_providers() -> None:
 
 
 def test_registry_is_case_insensitive() -> None:
-    assert credentials_registry.registry.get("MANAGED_IDENTITY") is ManagedIdentityCredentialProvider
+    assert (
+        credentials_registry.registry.get("MANAGED_IDENTITY")
+        is ManagedIdentityCredentialProvider
+    )
     assert credentials_registry.registry.get("Cli") is CliCredentialProvider
 
 
 def test_create_returns_provider_instances(settings_with_uami: AppSettings) -> None:
-    mi = credentials_registry.registry.get("managed_identity")(settings=settings_with_uami)
+    mi = credentials_registry.registry.get("managed_identity")(
+        settings=settings_with_uami
+    )
     cli = credentials_registry.registry.get("cli")(settings=settings_with_uami)
     assert isinstance(mi, ManagedIdentityCredentialProvider)
     assert isinstance(cli, CliCredentialProvider)
@@ -75,7 +79,9 @@ def test_create_returns_provider_instances(settings_with_uami: AppSettings) -> N
 
 def test_unknown_key_raises(settings_with_uami: AppSettings) -> None:
     with pytest.raises(KeyError):
-        credentials_registry.registry.get("workload_identity")(settings=settings_with_uami)
+        credentials_registry.registry.get("workload_identity")(
+            settings=settings_with_uami
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -84,7 +90,10 @@ def test_unknown_key_raises(settings_with_uami: AppSettings) -> None:
 
 
 def test_select_default_prefers_managed_identity_when_uami_set() -> None:
-    assert credentials_registry.select_default("00000000-0000-0000-0000-000000000002") == "managed_identity"
+    assert (
+        credentials_registry.select_default("00000000-0000-0000-0000-000000000002")
+        == "managed_identity"
+    )
 
 
 def test_select_default_falls_back_to_cli_when_uami_missing() -> None:
@@ -101,7 +110,9 @@ def test_select_default_falls_back_to_cli_when_uami_missing() -> None:
 async def test_managed_identity_returns_default_azure_credential(
     settings_with_uami: AppSettings,
 ) -> None:
-    provider = credentials_registry.registry.get("managed_identity")(settings=settings_with_uami)
+    provider = credentials_registry.registry.get("managed_identity")(
+        settings=settings_with_uami
+    )
     cred = await provider.get_credential()
     try:
         assert isinstance(cred, DefaultAzureCredential)
@@ -127,7 +138,9 @@ async def test_cli_returns_azure_cli_credential(
 
 
 def test_provider_stores_settings_reference(settings_with_uami: AppSettings) -> None:
-    provider = credentials_registry.registry.get("managed_identity")(settings=settings_with_uami)
+    provider = credentials_registry.registry.get("managed_identity")(
+        settings=settings_with_uami
+    )
     # _settings is a private attribute but verifying the constructor
     # contract guards against future regressions where a provider
     # forgets to call super().__init__().

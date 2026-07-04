@@ -1,4 +1,4 @@
-"""Tests for the pgvector search provider (Phase 4 task #30).
+"""Tests for the pgvector search provider.
 
 Pillar: Stable Core
 Phase: 4
@@ -142,9 +142,7 @@ async def test_search_accepts_and_ignores_use_semantic_search() -> None:
 @pytest.mark.asyncio
 async def test_search_appends_filter_expression_in_vector_mode() -> None:
     pool = _make_pool([])
-    provider = PgVector(
-        settings=_make_settings(), credential=AsyncMock(), pool=pool
-    )
+    provider = PgVector(settings=_make_settings(), credential=AsyncMock(), pool=pool)
     await provider.search(
         "q",
         vector=[0.0, 0.0],
@@ -157,9 +155,7 @@ async def test_search_appends_filter_expression_in_vector_mode() -> None:
 @pytest.mark.asyncio
 async def test_search_appends_filter_expression_in_fts_mode() -> None:
     pool = _make_pool([])
-    provider = PgVector(
-        settings=_make_settings(), credential=AsyncMock(), pool=pool
-    )
+    provider = PgVector(settings=_make_settings(), credential=AsyncMock(), pool=pool)
     await provider.search("q", filter_expression="title = 'a'")
     sql = pool.fetch.await_args.args[0]
     assert "AND (title = 'a')" in sql
@@ -170,9 +166,7 @@ async def test_search_handles_null_string_fields_gracefully() -> None:
     pool = _make_pool(
         [{"id": "x", "content": None, "title": None, "url": None, "score": None}]
     )
-    provider = PgVector(
-        settings=_make_settings(), credential=AsyncMock(), pool=pool
-    )
+    provider = PgVector(settings=_make_settings(), credential=AsyncMock(), pool=pool)
     hits = await provider.search("q", vector=[0.0])
     assert hits[0].content == ""
     assert hits[0].title == ""
@@ -185,9 +179,7 @@ async def test_aclose_does_not_close_injected_pool() -> None:
     # Pool ownership stays with PostgresClient. Closing it here would
     # kill chat-history I/O.
     pool = _make_pool([])
-    provider = PgVector(
-        settings=_make_settings(), credential=AsyncMock(), pool=pool
-    )
+    provider = PgVector(settings=_make_settings(), credential=AsyncMock(), pool=pool)
     await provider.aclose()
     pool.close.assert_not_called()
 
@@ -238,12 +230,8 @@ async def test_search_logs_and_reraises_on_postgres_error(
     to a sanitized HTTPException. Mirrors the `azure_search` contract.
     """
     pool = MagicMock()
-    pool.fetch = AsyncMock(
-        side_effect=asyncpg.PostgresError("connection terminated")
-    )
-    provider = PgVector(
-        settings=_make_settings(), credential=AsyncMock(), pool=pool
-    )
+    pool.fetch = AsyncMock(side_effect=asyncpg.PostgresError("connection terminated"))
+    provider = PgVector(settings=_make_settings(), credential=AsyncMock(), pool=pool)
 
     with caplog.at_level("ERROR", logger=_PGVECTOR_LOGGER_NAME):
         with pytest.raises(asyncpg.PostgresError):
@@ -271,9 +259,7 @@ async def test_search_logs_and_reraises_on_postgres_error(
 @pytest.mark.asyncio
 async def test_delete_by_source_emits_parameterized_delete_with_title_filter() -> None:
     pool = _make_pool([{"id": "chunk-1"}, {"id": "chunk-2"}])
-    provider = PgVector(
-        settings=_make_settings(), credential=AsyncMock(), pool=pool
-    )
+    provider = PgVector(settings=_make_settings(), credential=AsyncMock(), pool=pool)
 
     deleted = await provider.delete_by_source("sample.pdf")
 
@@ -288,9 +274,7 @@ async def test_delete_by_source_emits_parameterized_delete_with_title_filter() -
 @pytest.mark.asyncio
 async def test_delete_by_source_returns_zero_when_no_rows_match() -> None:
     pool = _make_pool([])
-    provider = PgVector(
-        settings=_make_settings(), credential=AsyncMock(), pool=pool
-    )
+    provider = PgVector(settings=_make_settings(), credential=AsyncMock(), pool=pool)
 
     deleted = await provider.delete_by_source("nope.pdf")
 
@@ -318,12 +302,8 @@ async def test_delete_by_source_logs_and_reraises_on_postgres_error(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     pool = MagicMock()
-    pool.fetch = AsyncMock(
-        side_effect=asyncpg.PostgresError("connection terminated")
-    )
-    provider = PgVector(
-        settings=_make_settings(), credential=AsyncMock(), pool=pool
-    )
+    pool.fetch = AsyncMock(side_effect=asyncpg.PostgresError("connection terminated"))
+    provider = PgVector(settings=_make_settings(), credential=AsyncMock(), pool=pool)
 
     with caplog.at_level("ERROR", logger=_PGVECTOR_LOGGER_NAME):
         with pytest.raises(asyncpg.PostgresError):
@@ -362,9 +342,7 @@ async def test_list_sources_emits_group_by_title_with_count_aggregate() -> None:
             {"source": "gamma.pdf", "chunk_count": 1, "last_modified": None},
         ]
     )
-    provider = PgVector(
-        settings=_make_settings(), credential=AsyncMock(), pool=pool
-    )
+    provider = PgVector(settings=_make_settings(), credential=AsyncMock(), pool=pool)
 
     listings = await provider.list_sources()
 
@@ -391,9 +369,7 @@ async def test_list_sources_emits_group_by_title_with_count_aggregate() -> None:
 @pytest.mark.asyncio
 async def test_list_sources_returns_empty_when_no_rows() -> None:
     pool = _make_pool([])
-    provider = PgVector(
-        settings=_make_settings(), credential=AsyncMock(), pool=pool
-    )
+    provider = PgVector(settings=_make_settings(), credential=AsyncMock(), pool=pool)
 
     assert await provider.list_sources() == []
 
@@ -419,12 +395,8 @@ async def test_list_sources_logs_and_reraises_on_postgres_error(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     pool = MagicMock()
-    pool.fetch = AsyncMock(
-        side_effect=asyncpg.PostgresError("connection terminated")
-    )
-    provider = PgVector(
-        settings=_make_settings(), credential=AsyncMock(), pool=pool
-    )
+    pool.fetch = AsyncMock(side_effect=asyncpg.PostgresError("connection terminated"))
+    provider = PgVector(settings=_make_settings(), credential=AsyncMock(), pool=pool)
 
     with caplog.at_level("ERROR", logger=_PGVECTOR_LOGGER_NAME):
         with pytest.raises(asyncpg.PostgresError):
@@ -452,9 +424,7 @@ async def test_list_sources_logs_and_reraises_on_postgres_error(
 @pytest.mark.asyncio
 async def test_merge_or_upload_documents_returns_empty_without_pool_call() -> None:
     pool = _make_pool([])
-    provider = PgVector(
-        settings=_make_settings(), credential=AsyncMock(), pool=pool
-    )
+    provider = PgVector(settings=_make_settings(), credential=AsyncMock(), pool=pool)
 
     result = await provider.merge_or_upload_documents(documents=[])
 
@@ -468,9 +438,7 @@ async def test_merge_or_upload_documents_emits_upsert_with_returning_id() -> Non
     # forwards them) so the test verifies the RETURNING shape is
     # preserved through the boundary.
     pool = _make_pool([{"id": "a"}, {"id": "b"}])
-    provider = PgVector(
-        settings=_make_settings(), credential=AsyncMock(), pool=pool
-    )
+    provider = PgVector(settings=_make_settings(), credential=AsyncMock(), pool=pool)
     docs = [
         SearchDocument(id="a", content="hello", title="t1", content_vector=[0.1, 0.2]),
         SearchDocument(id="b", content="world", title="t2", content_vector=[0.3, 0.4]),
@@ -491,8 +459,14 @@ async def test_merge_or_upload_documents_emits_upsert_with_returning_id() -> Non
     assert "last_modified = now()" in sql
     assert "RETURNING id" in sql
     assert params == [
-        "a", "hello", "t1", "[0.1,0.2]",
-        "b", "world", "t2", "[0.3,0.4]",
+        "a",
+        "hello",
+        "t1",
+        "[0.1,0.2]",
+        "b",
+        "world",
+        "t2",
+        "[0.3,0.4]",
     ]
 
 
@@ -518,12 +492,8 @@ async def test_merge_or_upload_documents_logs_and_reraises_on_postgres_error(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     pool = MagicMock()
-    pool.fetch = AsyncMock(
-        side_effect=asyncpg.PostgresError("connection terminated")
-    )
-    provider = PgVector(
-        settings=_make_settings(), credential=AsyncMock(), pool=pool
-    )
+    pool.fetch = AsyncMock(side_effect=asyncpg.PostgresError("connection terminated"))
+    provider = PgVector(settings=_make_settings(), credential=AsyncMock(), pool=pool)
     docs = [SearchDocument(id="a", content="hello", content_vector=[0.1])]
 
     with caplog.at_level("ERROR", logger=_PGVECTOR_LOGGER_NAME):
@@ -553,9 +523,7 @@ async def test_merge_or_upload_documents_logs_and_reraises_on_postgres_error(
 @pytest.mark.asyncio
 async def test_ensure_schema_runs_extension_table_and_index_ddl_in_one_call() -> None:
     pool = _make_pool()
-    provider = PgVector(
-        settings=_make_settings(), credential=AsyncMock(), pool=pool
-    )
+    provider = PgVector(settings=_make_settings(), credential=AsyncMock(), pool=pool)
 
     await provider.ensure_schema()
 
@@ -612,9 +580,7 @@ async def test_ensure_schema_interpolates_custom_table_name() -> None:
 @pytest.mark.asyncio
 async def test_ensure_schema_is_idempotent_across_repeat_calls() -> None:
     pool = _make_pool()
-    provider = PgVector(
-        settings=_make_settings(), credential=AsyncMock(), pool=pool
-    )
+    provider = PgVector(settings=_make_settings(), credential=AsyncMock(), pool=pool)
 
     await provider.ensure_schema()
     await provider.ensure_schema()
@@ -628,9 +594,7 @@ async def test_ensure_schema_is_idempotent_across_repeat_calls() -> None:
 @pytest.mark.asyncio
 async def test_ensure_schema_concurrent_callers_run_ddl_once() -> None:
     pool = _make_pool()
-    provider = PgVector(
-        settings=_make_settings(), credential=AsyncMock(), pool=pool
-    )
+    provider = PgVector(settings=_make_settings(), credential=AsyncMock(), pool=pool)
 
     # Three concurrent first-use callers. The asyncio.Lock + the
     # double-checked `_schema_ready` flag must ensure only one of

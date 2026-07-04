@@ -1,11 +1,11 @@
-"""Pillar: Stable Core / Phase: 6 — tests for src/functions/batch_start/blueprint.py.
+"""Pillar: Stable Core / Phase: 6, tests for src/functions/batch_start/blueprint.py.
 
-Post-U7g the blueprint composes ``functions/core/`` helpers (resolve
+The blueprint composes ``functions/core/`` helpers (resolve
 endpoints, storage_clients ctx manager, json_response, the
-``map_function_exceptions`` decorator). Exception ladder logging now
+``map_function_exceptions`` decorator). Exception ladder logging
 originates from the decorator's logger
 ``functions.core.exception_mapping``; ``_resolve_endpoints`` /
-``_json_response`` no longer live here (covered by
+``_json_response`` do not live here (covered by
 tests/functions/core/test_storage_endpoints.py and
 tests/functions/core/test_http.py respectively).
 """

@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 6 (visual polish)
+ * Phase: 6
  *
  * Unit tests for `formatReasoning` — the single shared formatter both
  * orchestrators' reasoning feeds flow through. The langgraph delta

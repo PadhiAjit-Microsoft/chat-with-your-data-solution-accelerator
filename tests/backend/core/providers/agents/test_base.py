@@ -1,7 +1,7 @@
-"""Tests for `BaseAgentsProvider.get_or_create_agent` (CU-010c).
+"""Tests for `BaseAgentsProvider.get_or_create_agent`.
 
 Pillar: Stable Core
-Phase: Cleanup audit batch 2 (CU-010c)
+Phase: 4
 
 The lazy resolver is implemented on the base class (provider-agnostic
 algorithm using `self.get_client()` for SDK calls). These tests
@@ -52,7 +52,6 @@ from backend.core.types import (
     MessageRecord,
     RuntimeConfig,
 )
-
 
 _AGENTS_BASE_LOGGER_NAME = "backend.core.providers.agents.base"
 
@@ -121,9 +120,7 @@ class _StubDB(BaseDatabaseClient):
     ) -> Conversation | None:
         return None
 
-    async def create_conversation(
-        self, user_id: str, title: str
-    ) -> Conversation:
+    async def create_conversation(self, user_id: str, title: str) -> Conversation:
         return Conversation(id="c1", user_id=user_id, title=title)
 
     async def rename_conversation(
@@ -131,9 +128,7 @@ class _StubDB(BaseDatabaseClient):
     ) -> Conversation:
         return Conversation(id=conversation_id, user_id=user_id, title=title)
 
-    async def delete_conversation(
-        self, conversation_id: str, user_id: str
-    ) -> None:
+    async def delete_conversation(self, conversation_id: str, user_id: str) -> None:
         return None
 
     async def list_messages(
@@ -154,9 +149,7 @@ class _StubDB(BaseDatabaseClient):
             content=message.content,
         )
 
-    async def set_feedback(
-        self, message_id: str, user_id: str, feedback: str
-    ) -> None:
+    async def set_feedback(self, message_id: str, user_id: str, feedback: str) -> None:
         return None
 
     async def get_agent_id(self, name: str) -> str | None:
@@ -216,9 +209,7 @@ async def test_cache_hit_skips_db_and_foundry() -> None:
     no Foundry round-trip. Validates the cache short-circuit at the
     very top of `get_or_create_agent`."""
     client = _make_client()
-    provider = _StubAgentsProvider(
-        _make_settings(), MagicMock(), client=client
-    )
+    provider = _StubAgentsProvider(_make_settings(), MagicMock(), client=client)
     provider._agent_cache["cwyd"] = "cwyd"
     db = _StubDB()
     out = await provider.get_or_create_agent(_definition(), db)
@@ -239,9 +230,7 @@ async def test_db_hit_validates_with_foundry_and_caches() -> None:
     we validate it via `client.agents.get` (cheap) and cache the result.
     No `create_version` call."""
     client = _make_client()
-    provider = _StubAgentsProvider(
-        _make_settings(), MagicMock(), client=client
-    )
+    provider = _StubAgentsProvider(_make_settings(), MagicMock(), client=client)
     db = _StubDB(seed={"cwyd": "cwyd"})
     out = await provider.get_or_create_agent(_definition(), db)
     assert out == "cwyd"
@@ -266,9 +255,7 @@ async def test_db_hit_with_foundry_404_falls_through_to_recreate() -> None:
     request finds a valid id."""
     client = _make_client()
     client.agents.get = AsyncMock(side_effect=ResourceNotFoundError("gone"))
-    provider = _StubAgentsProvider(
-        _make_settings(), MagicMock(), client=client
-    )
+    provider = _StubAgentsProvider(_make_settings(), MagicMock(), client=client)
     db = _StubDB(seed={"cwyd": "cwyd"})
     out = await provider.get_or_create_agent(_definition(), db)
     assert out == "cwyd"
@@ -334,18 +321,12 @@ async def test_concurrent_first_requests_create_exactly_once() -> None:
 
     client = _make_client()
     client.agents.create_version = AsyncMock(side_effect=_slow_create_version)
-    provider = _StubAgentsProvider(
-        _make_settings(), MagicMock(), client=client
-    )
+    provider = _StubAgentsProvider(_make_settings(), MagicMock(), client=client)
     db = _StubDB()
     definition = _definition()
 
-    task_a = asyncio.create_task(
-        provider.get_or_create_agent(definition, db)
-    )
-    task_b = asyncio.create_task(
-        provider.get_or_create_agent(definition, db)
-    )
+    task_a = asyncio.create_task(provider.get_or_create_agent(definition, db))
+    task_b = asyncio.create_task(provider.get_or_create_agent(definition, db))
     # Let both tasks enter `get_or_create_agent` and queue on the lock.
     await asyncio.sleep(0)
     create_event.set()
@@ -373,9 +354,7 @@ async def test_create_version_409_race_rereads_and_reuses() -> None:
     conflict = HttpResponseError(message="already exists")
     conflict.status_code = 409
     client.agents.create_version = AsyncMock(side_effect=conflict)
-    provider = _StubAgentsProvider(
-        _make_settings(), MagicMock(), client=client
-    )
+    provider = _StubAgentsProvider(_make_settings(), MagicMock(), client=client)
     db = _StubDB()
     out = await provider.get_or_create_agent(_definition(), db)
     assert out == "cwyd"
@@ -398,12 +377,8 @@ async def test_create_version_409_reread_failure_logs_and_reraises(
     conflict = HttpResponseError(message="already exists")
     conflict.status_code = 409
     client.agents.create_version = AsyncMock(side_effect=conflict)
-    client.agents.get = AsyncMock(
-        side_effect=ServiceRequestError("transport drop")
-    )
-    provider = _StubAgentsProvider(
-        _make_settings(), MagicMock(), client=client
-    )
+    client.agents.get = AsyncMock(side_effect=ServiceRequestError("transport drop"))
+    provider = _StubAgentsProvider(_make_settings(), MagicMock(), client=client)
     db = _StubDB()
     with caplog.at_level(logging.ERROR, logger=_AGENTS_BASE_LOGGER_NAME):
         with pytest.raises(ServiceRequestError):
@@ -470,12 +445,8 @@ async def test_get_agent_azure_error_logs_and_reraises(
     re-raises so the lifespan / router layer translates it.
     """
     client = _make_client()
-    client.agents.get = AsyncMock(
-        side_effect=ServiceRequestError("transport drop")
-    )
-    provider = _StubAgentsProvider(
-        _make_settings(), MagicMock(), client=client
-    )
+    client.agents.get = AsyncMock(side_effect=ServiceRequestError("transport drop"))
+    provider = _StubAgentsProvider(_make_settings(), MagicMock(), client=client)
     db = _StubDB(seed={"cwyd": "cwyd"})
 
     with caplog.at_level(logging.ERROR, logger=_AGENTS_BASE_LOGGER_NAME):
@@ -502,9 +473,7 @@ async def test_get_agent_resource_not_found_does_not_log_error(
     """
     client = _make_client()
     client.agents.get = AsyncMock(side_effect=ResourceNotFoundError("gone"))
-    provider = _StubAgentsProvider(
-        _make_settings(), MagicMock(), client=client
-    )
+    provider = _StubAgentsProvider(_make_settings(), MagicMock(), client=client)
     db = _StubDB(seed={"cwyd": "cwyd"})
 
     with caplog.at_level(logging.ERROR, logger=_AGENTS_BASE_LOGGER_NAME):
@@ -512,7 +481,8 @@ async def test_get_agent_resource_not_found_does_not_log_error(
 
     assert out == "cwyd"
     error_records = [
-        r for r in caplog.records
+        r
+        for r in caplog.records
         if r.name == _AGENTS_BASE_LOGGER_NAME and r.levelno == logging.ERROR
     ]
     assert error_records == []
@@ -570,9 +540,7 @@ async def test_create_agent_azure_error_releases_per_key_lock(
 
     client = _make_client()
     client.agents.create_version = AsyncMock(side_effect=_flaky_create_version)
-    provider = _StubAgentsProvider(
-        _make_settings(), MagicMock(), client=client
-    )
+    provider = _StubAgentsProvider(_make_settings(), MagicMock(), client=client)
     db = _StubDB()
 
     with caplog.at_level(logging.ERROR, logger=_AGENTS_BASE_LOGGER_NAME):
@@ -605,9 +573,7 @@ def _runtime_config(cwyd_instructions: str | None) -> RuntimeConfig:
 
 
 def test_resolve_definition_returns_original_when_getter_is_none() -> None:
-    provider = _StubAgentsProvider(
-        _make_settings(), MagicMock(), client=_make_client()
-    )
+    provider = _StubAgentsProvider(_make_settings(), MagicMock(), client=_make_client())
     definition = _definition()
     assert provider._resolve_definition(definition) is definition
 
@@ -689,7 +655,7 @@ def test_resolve_definition_matches_shared_seam_for_override() -> None:
 
 
 def test_resolve_definition_wraps_override_with_non_overridable_guardrail() -> None:
-    """BUG-0011 regression: an operator override cannot supersede the
+    """Regression: an operator override cannot supersede the
     fixed safety / out-of-domain / citation guardrail. Even an override
     that tries to discard the rules resolves to instructions that still
     carry the guardrail, appended once, last."""

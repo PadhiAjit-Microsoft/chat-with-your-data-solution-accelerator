@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 7 (Testing + Documentation)
+ * Phase: 7
  *
  * Vitest coverage for `<CitationDetailPanel>` — the right-side source
  * detail column. Verifies it stays unmounted with no active citation,

@@ -1,4 +1,4 @@
-"""Tests for the search write-side helper (Phase 6 task #41, U8g).
+"""Tests for the search write-side helper.
 
 Pillar: Stable Core
 Phase: 6
@@ -21,7 +21,9 @@ from backend.core.types import SearchDocument
 @pytest.mark.asyncio
 async def test_push_documents_calls_merge_or_upload_with_payload() -> None:
     client = MagicMock()
-    client.merge_or_upload_documents = AsyncMock(return_value=[{"key": "a", "succeeded": True}])
+    client.merge_or_upload_documents = AsyncMock(
+        return_value=[{"key": "a", "succeeded": True}]
+    )
     docs = [
         SearchDocument(id="a", content="hello", content_vector=[0.1, 0.2]),
         SearchDocument(id="b", content="world", content_vector=[0.3, 0.4]),
@@ -91,7 +93,9 @@ async def test_search_writer_adapter_delegates_to_wrapped_client_with_kwarg() ->
     adapter = SearchWriterAdapter(sdk_like_client)
     result = await adapter.merge_or_upload_documents(documents=payload)
 
-    sdk_like_client.merge_or_upload_documents.assert_awaited_once_with(documents=payload)
+    sdk_like_client.merge_or_upload_documents.assert_awaited_once_with(
+        documents=payload
+    )
     assert result == [{"key": "x", "succeeded": True}]
 
 
@@ -105,7 +109,9 @@ async def test_push_documents_works_with_search_writer_adapter() -> None:
     :meth:`SearchDocument.model_dump`.
     """
     sdk_like_client = MagicMock()
-    sdk_like_client.merge_or_upload_documents = AsyncMock(return_value=[{"succeeded": True}])
+    sdk_like_client.merge_or_upload_documents = AsyncMock(
+        return_value=[{"succeeded": True}]
+    )
     adapter = SearchWriterAdapter(sdk_like_client)
     docs = [SearchDocument(id="a", content="hello", content_vector=[0.1, 0.2])]
 

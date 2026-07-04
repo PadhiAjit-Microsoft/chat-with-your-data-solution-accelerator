@@ -28,7 +28,6 @@ from backend.services.ingestion import (
 from functions.batch_start.models import BatchStartRequest
 from functions.core.contracts import BatchPushQueueMessage
 
-
 # ---------------------------------------------------------------------------
 # _blob_name_for_url -- deterministic, flat, parseable blob filename
 # ---------------------------------------------------------------------------
@@ -51,9 +50,7 @@ from functions.core.contracts import BatchPushQueueMessage
         ("https://example.com/page.aspx", "example.com_page.html"),
     ],
 )
-def test_blob_name_for_url_returns_flat_parseable_name(
-    url: str, expected: str
-) -> None:
+def test_blob_name_for_url_returns_flat_parseable_name(url: str, expected: str) -> None:
     assert _blob_name_for_url(url) == expected
 
 
@@ -342,7 +339,7 @@ async def test_reprocess_all_delegates_to_batch_start_handler(
     assert captured["kwargs"]["credential"] is credential
 
     # Handler invoked with a BatchStartRequest for the documents container
-    # and the open (container, queue) clients -- proves we share the
+    # and the open (container, queue) clients -- the backend reuses the
     # Functions-tier orchestration verbatim.
     fake_handler.assert_awaited_once()
     args, _ = fake_handler.call_args
@@ -371,9 +368,7 @@ async def test_reprocess_all_returns_none_job_id_for_empty_container(
         ingestion_module, "batch_start_handler", AsyncMock(return_value=[])
     )
 
-    response = await reprocess_all(
-        settings=_settings_stub(), credential=MagicMock()
-    )
+    response = await reprocess_all(settings=_settings_stub(), credential=MagicMock())
     assert response.ingestion_job_id is None
     assert response.enqueued_count == 0
 
@@ -393,9 +388,7 @@ async def test_reprocess_all_propagates_azure_error_from_handler(
         AsyncMock(side_effect=AzureError("storage down")),
     )
     with pytest.raises(AzureError, match="storage down"):
-        await reprocess_all(
-            settings=_settings_stub(), credential=MagicMock()
-        )
+        await reprocess_all(settings=_settings_stub(), credential=MagicMock())
 
 
 # ---------------------------------------------------------------------------
@@ -422,9 +415,7 @@ def _upload_settings(
 def test_validate_upload_accepts_local_parser_without_ai_services() -> None:
     # A txt file parses locally, so it passes even with no AI Services
     # endpoint configured.
-    validate_upload(
-        "notes.txt", 10, settings=_upload_settings(services_endpoint="")
-    )
+    validate_upload("notes.txt", 10, settings=_upload_settings(services_endpoint=""))
 
 
 def test_validate_upload_accepts_di_file_when_ai_services_configured() -> None:
@@ -487,6 +478,4 @@ def test_validate_upload_rejects_oversized_content() -> None:
 
 def test_validate_upload_accepts_content_at_the_limit() -> None:
     # Exactly the cap is allowed; only strictly-over is rejected.
-    validate_upload(
-        "big.txt", MAX_UPLOAD_SIZE_BYTES, settings=_upload_settings()
-    )
+    validate_upload("big.txt", MAX_UPLOAD_SIZE_BYTES, settings=_upload_settings())

@@ -9,7 +9,7 @@ import type {
   StreamEvent,
 } from "@/models/chat";
 
-// `MessageInput` calls `streamChat` on submit (dev_plan #24, C2b).
+// `MessageInput` calls `streamChat` on submit.
 // Stub the module so the integration assertions stay focused on the
 // shell wiring rather than the SSE wire format (covered in the unit
 // tests for `streamChat` + `MessageInput`).
@@ -83,7 +83,7 @@ async function openCitationDetail() {
   fireEvent.click(screen.getByRole("button", { name: /Benefit Options/i }));
 }
 
-// HistoryPanel (dev_plan #32) calls /api/history on mount. Stub fetch
+// HistoryPanel calls /api/history on mount. Stub fetch
 // so the panel resolves to "no conversations" and the existing
 // chat-shell assertions stay focused on the input/list wiring.
 beforeEach(() => {

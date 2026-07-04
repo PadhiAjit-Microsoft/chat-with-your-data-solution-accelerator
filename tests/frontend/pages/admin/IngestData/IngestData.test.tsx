@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 5 (Admin + Frontend Merge)
+ * Phase: 5
  *
  * Vitest suite for the admin Ingest Data page. Mocks
  * `src/api/admin.tsx` so each section's wire interaction is asserted

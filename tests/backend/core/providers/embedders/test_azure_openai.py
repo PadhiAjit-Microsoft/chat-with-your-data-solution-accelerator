@@ -1,4 +1,4 @@
-"""Tests for AzureOpenAIEmbedder (Phase 6 task #41, U8f).
+"""Tests for AzureOpenAIEmbedder.
 
 Pillar: Stable Core
 Phase: 6
@@ -14,7 +14,6 @@ from backend.core.providers.embedders import registry as embedders_registry
 from backend.core.providers.embedders.azure_openai import AzureOpenAIEmbedder
 from backend.core.settings import AppSettings
 from backend.core.types import Chunk, EmbeddingResult
-
 
 COSMOS_ENV: dict[str, str] = {
     "AZURE_SOLUTION_SUFFIX": "cwyd001",
@@ -125,8 +124,7 @@ async def test_embed_batches_inputs_over_the_array_cap(
         llm_provider=llm_provider,
     )
     chunks = [
-        Chunk(id=f"a__{i}", content=f"chunk-{i}", source="a", index=i)
-        for i in range(5)
+        Chunk(id=f"a__{i}", content=f"chunk-{i}", source="a", index=i) for i in range(5)
     ]
 
     results = await embedder.embed(chunks)
@@ -214,7 +212,9 @@ async def test_aclose_closes_owned_llm_provider(
 ) -> None:
     owned_provider = SimpleNamespace(
         embed=AsyncMock(
-            return_value=EmbeddingResult(vectors=[[0.1, 0.2]], model="text-embedding-3-small")
+            return_value=EmbeddingResult(
+                vectors=[[0.1, 0.2]], model="text-embedding-3-small"
+            )
         ),
         aclose=AsyncMock(),
     )

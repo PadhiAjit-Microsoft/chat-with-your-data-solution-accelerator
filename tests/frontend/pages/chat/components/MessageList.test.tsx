@@ -439,9 +439,9 @@ describe("MessageList", () => {
   });
 
   it("renders the reasoning panel and citation panel inside the same row as the avatar", () => {
-    // Avatar-beside-Thinking layout (BUG-0012 refinement). For an
-    // assistant message the avatar and the content column — the reasoning
-    // <details>, the answer bubble, and the <CitationPanel> — share one
+    // Avatar-beside-Thinking layout. For an
+    // assistant message the avatar and the content column, the reasoning
+    // <details>, the answer bubble, and the <CitationPanel>, share one
     // .row, so the avatar sits on the SAME horizontal line as the
     // "Thinking" panel instead of stacked above it. jsdom does not
     // evaluate the stylesheet (vitest css:false), so the executable

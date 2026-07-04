@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 4 (frontend polish — reference-architecture re-skin)
+ * Phase: 4
  *
  * Tests for the Coral shell layout primitives. Verifies:
  *   1. Children render inside a `<CoralShellColumn>`.

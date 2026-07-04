@@ -1,4 +1,4 @@
-"""Tests for the `agents` provider domain (CU-001b).
+"""Tests for the `agents` provider domain.
 
 Pillar: Stable Core
 Phase: 4
@@ -24,7 +24,6 @@ from backend.core.agents.definitions import CWYD_AGENT
 from backend.core.providers.agents import registry as agents_registry
 from backend.core.providers.agents.base import BaseAgentsProvider
 from backend.core.providers.agents.foundry import FoundryAgentsProvider
-
 
 _FOUNDRY_AGENTS_LOGGER_NAME = "backend.core.providers.agents.foundry"
 
@@ -112,9 +111,7 @@ def test_get_client_constructs_from_settings(
     monkeypatch.setattr(
         "backend.core.providers.agents.foundry.AIProjectClient", _fake_ctor
     )
-    provider = FoundryAgentsProvider(
-        settings=fake_settings, credential=fake_credential
-    )
+    provider = FoundryAgentsProvider(settings=fake_settings, credential=fake_credential)
     client = provider.get_client()
     assert client is not None
     assert (
@@ -142,9 +139,7 @@ def test_get_client_is_lazy_and_cached(
     monkeypatch.setattr(
         "backend.core.providers.agents.foundry.AIProjectClient", _fake_ctor
     )
-    provider = FoundryAgentsProvider(
-        settings=fake_settings, credential=fake_credential
-    )
+    provider = FoundryAgentsProvider(settings=fake_settings, credential=fake_credential)
     assert call_count["n"] == 0  # lazy
     first = provider.get_client()
     second = provider.get_client()
@@ -160,9 +155,7 @@ def test_get_client_raises_without_project_endpoint(
     `AIProjectClient` against `None` and 500 on the first request.
     """
     fake_settings.foundry.project_endpoint = ""
-    provider = FoundryAgentsProvider(
-        settings=fake_settings, credential=fake_credential
-    )
+    provider = FoundryAgentsProvider(settings=fake_settings, credential=fake_credential)
     with pytest.raises(RuntimeError, match="AZURE_AI_PROJECT_ENDPOINT"):
         provider.get_client()
 
@@ -182,9 +175,7 @@ async def test_aclose_closes_constructed_client(
         "backend.core.providers.agents.foundry.AIProjectClient",
         lambda *, endpoint, credential: constructed,
     )
-    provider = FoundryAgentsProvider(
-        settings=fake_settings, credential=fake_credential
-    )
+    provider = FoundryAgentsProvider(settings=fake_settings, credential=fake_credential)
     provider.get_client()  # trigger construction
     await provider.aclose()
     constructed.close.assert_awaited_once()
@@ -238,14 +229,10 @@ async def test_aclose_swallows_azure_error_and_warns(
         "backend.core.providers.agents.foundry.AIProjectClient",
         lambda *, endpoint, credential: failing,
     )
-    provider = FoundryAgentsProvider(
-        settings=fake_settings, credential=fake_credential
-    )
+    provider = FoundryAgentsProvider(settings=fake_settings, credential=fake_credential)
     provider.get_client()  # trigger construction
 
-    with caplog.at_level(
-        logging.WARNING, logger=_FOUNDRY_AGENTS_LOGGER_NAME
-    ):
+    with caplog.at_level(logging.WARNING, logger=_FOUNDRY_AGENTS_LOGGER_NAME):
         await provider.aclose()
 
     failing.close.assert_awaited_once()
@@ -289,14 +276,10 @@ async def test_aclose_swallows_os_error_and_warns(
         "backend.core.providers.agents.foundry.AIProjectClient",
         lambda *, endpoint, credential: failing,
     )
-    provider = FoundryAgentsProvider(
-        settings=fake_settings, credential=fake_credential
-    )
+    provider = FoundryAgentsProvider(settings=fake_settings, credential=fake_credential)
     provider.get_client()
 
-    with caplog.at_level(
-        logging.WARNING, logger=_FOUNDRY_AGENTS_LOGGER_NAME
-    ):
+    with caplog.at_level(logging.WARNING, logger=_FOUNDRY_AGENTS_LOGGER_NAME):
         await provider.aclose()
 
     failing.close.assert_awaited_once()
@@ -350,9 +333,7 @@ async def test_build_agent_composes_chat_client_and_agent(
         "backend.core.providers.agents.foundry.FoundryChatClient",
         _fake_chat_client,
     )
-    monkeypatch.setattr(
-        "backend.core.providers.agents.foundry.Agent", _fake_agent
-    )
+    monkeypatch.setattr("backend.core.providers.agents.foundry.Agent", _fake_agent)
 
     db = MagicMock(name="db")
     db.get_agent_id = AsyncMock(return_value="cwyd")
@@ -368,10 +349,7 @@ async def test_build_agent_composes_chat_client_and_agent(
     assert agent is agent_sentinel
     # Chat client bound to the typed project endpoint + the agent's own
     # deployment + the injected async credential -- no other inputs.
-    assert (
-        chat_captured["project_endpoint"]
-        == fake_settings.foundry.project_endpoint
-    )
+    assert chat_captured["project_endpoint"] == fake_settings.foundry.project_endpoint
     assert chat_captured["model"] == "gpt-test-deploy"
     assert chat_captured["credential"] is fake_credential
     # Agent wraps that chat client and carries the resolved identity.
@@ -409,9 +387,7 @@ async def test_build_agent_forwards_extra_tools(
         "backend.core.providers.agents.foundry.FoundryChatClient",
         lambda **kwargs: MagicMock(name="FoundryChatClient-instance"),
     )
-    monkeypatch.setattr(
-        "backend.core.providers.agents.foundry.Agent", _fake_agent
-    )
+    monkeypatch.setattr("backend.core.providers.agents.foundry.Agent", _fake_agent)
 
     db = MagicMock(name="db")
     db.get_agent_id = AsyncMock(return_value="cwyd")

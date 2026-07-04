@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 3.5 (debt #Q6b) — lifespan wires search provider."""
+"""Pillar: Stable Core / Phase: 3.5, lifespan wires search provider."""
 
 from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -9,7 +9,6 @@ from azure.core.exceptions import AzureError
 from backend.app import _init_content_safety_client, create_app
 from backend.core.settings import AppSettings, get_settings
 from backend.core.types import RuntimeConfig
-
 
 COSMOS_ENV: dict[str, str] = {
     "AZURE_SOLUTION_SUFFIX": "cwyd001",
@@ -58,7 +57,7 @@ def _patched_lifespan(monkeypatch: pytest.MonkeyPatch):
 
     fake_db = MagicMock(name="database_client")
     fake_db.aclose = AsyncMock()
-    # #35e(a): lifespan loads persisted RuntimeConfig overrides into
+    # lifespan loads persisted RuntimeConfig overrides into
     # app.state. Stub returns None so the unrelated lifespan tests
     # below see `app.state.runtime_overrides is None` (the cold-start
     # default). Tests that exercise the load path override this stub.
@@ -71,16 +70,13 @@ def _patched_lifespan(monkeypatch: pytest.MonkeyPatch):
     fake_cred_registry.get.return_value = lambda **_kw: fake_cred_provider
 
     monkeypatch.setattr(
-        "backend.app.credentials_registry.select_default", lambda *_a, **_kw: "azure_cli"
+        "backend.app.credentials_registry.select_default",
+        lambda *_a, **_kw: "azure_cli",
     )
-    monkeypatch.setattr(
-        "backend.app.credentials_registry.registry", fake_cred_registry
-    )
+    monkeypatch.setattr("backend.app.credentials_registry.registry", fake_cred_registry)
     fake_llm_registry = MagicMock(name="llm_registry")
     fake_llm_registry.get.return_value = lambda **_kw: fake_llm
-    monkeypatch.setattr(
-        "backend.app.llm_registry.registry", fake_llm_registry
-    )
+    monkeypatch.setattr("backend.app.llm_registry.registry", fake_llm_registry)
     fake_databases_registry = MagicMock(name="databases_registry")
     fake_databases_registry.get.return_value = lambda **_kw: fake_db
     monkeypatch.setattr(
@@ -88,9 +84,7 @@ def _patched_lifespan(monkeypatch: pytest.MonkeyPatch):
     )
     fake_agents_registry = MagicMock(name="agents_registry")
     fake_agents_registry.get.return_value = lambda **_kw: fake_agents
-    monkeypatch.setattr(
-        "backend.app.agents_registry.registry", fake_agents_registry
-    )
+    monkeypatch.setattr("backend.app.agents_registry.registry", fake_agents_registry)
     return fake_credential
 
 
@@ -106,9 +100,7 @@ async def test_lifespan_constructs_search_provider_when_endpoint_set(
     fake_search.ensure_schema = AsyncMock()
     fake_search_registry = MagicMock(name="search_registry")
     fake_search_registry.get.return_value = lambda **_kw: fake_search
-    monkeypatch.setattr(
-        "backend.app.search_registry.registry", fake_search_registry
-    )
+    monkeypatch.setattr("backend.app.search_registry.registry", fake_search_registry)
 
     app = create_app()
     async with app.router.lifespan_context(app):
@@ -225,9 +217,7 @@ async def test_lifespan_dispatches_postgresql_db_type(
     _fake_sr2.get.return_value = lambda **_kw: MagicMock(
         aclose=AsyncMock(), ensure_schema=AsyncMock()
     )
-    monkeypatch.setattr(
-        "backend.app.search_registry.registry", _fake_sr2
-    )
+    monkeypatch.setattr("backend.app.search_registry.registry", _fake_sr2)
 
     app = create_app()
     async with app.router.lifespan_context(app):
@@ -239,7 +229,7 @@ async def test_lifespan_dispatches_postgresql_db_type(
 async def test_lifespan_wires_pgvector_with_postgres_pool(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Phase 4 hardening (B1): pgvector dispatch + pool DI from postgres client.
+    """pgvector dispatch + pool DI from postgres client.
 
     `index_store=pgvector` must (1) register a search provider on app.state
     via `search_registry.registry.get("pgvector")(...)` -- not be silently skipped -- and
@@ -335,9 +325,7 @@ async def test_lifespan_pgvector_does_not_require_search_endpoint(
     fake_search.ensure_schema = AsyncMock()
     fake_search_registry = MagicMock(name="search_registry")
     fake_search_registry.get.return_value = lambda **_kw: fake_search
-    monkeypatch.setattr(
-        "backend.app.search_registry.registry", fake_search_registry
-    )
+    monkeypatch.setattr("backend.app.search_registry.registry", fake_search_registry)
 
     app = create_app()
     async with app.router.lifespan_context(app):
@@ -369,9 +357,7 @@ async def test_lifespan_calls_ensure_schema_once_before_yield(
     fake_search.ensure_schema = AsyncMock(side_effect=_record_ensure_schema)
     fake_search_registry = MagicMock(name="search_registry")
     fake_search_registry.get.return_value = lambda **_kw: fake_search
-    monkeypatch.setattr(
-        "backend.app.search_registry.registry", fake_search_registry
-    )
+    monkeypatch.setattr("backend.app.search_registry.registry", fake_search_registry)
 
     app = create_app()
     async with app.router.lifespan_context(app):
@@ -398,14 +384,10 @@ async def test_lifespan_propagates_ensure_schema_failure(
 
     fake_search = MagicMock(name="search_provider")
     fake_search.aclose = AsyncMock()
-    fake_search.ensure_schema = AsyncMock(
-        side_effect=AzureError("ddl rejected")
-    )
+    fake_search.ensure_schema = AsyncMock(side_effect=AzureError("ddl rejected"))
     fake_search_registry = MagicMock(name="search_registry")
     fake_search_registry.get.return_value = lambda **_kw: fake_search
-    monkeypatch.setattr(
-        "backend.app.search_registry.registry", fake_search_registry
-    )
+    monkeypatch.setattr("backend.app.search_registry.registry", fake_search_registry)
 
     app = create_app()
     with pytest.raises(AzureError):
@@ -425,7 +407,7 @@ async def test_lifespan_configures_app_insights_from_typed_settings(
     The settings field is populated via env var
     `AZURE_APP_INSIGHTS_CONNECTION_STRING` (env_prefix=AZURE_); the
     legacy `APPLICATIONINSIGHTS_CONNECTION_STRING` form is intentionally
-    NOT honored at the lifespan layer post-CU-002b -- the operator must
+    NOT honored at the lifespan layer -- the operator must
     use the typed name.
     """
     env = {
@@ -441,18 +423,14 @@ async def test_lifespan_configures_app_insights_from_typed_settings(
     _fake_sr3.get.return_value = lambda **_kw: MagicMock(
         aclose=AsyncMock(), ensure_schema=AsyncMock()
     )
-    monkeypatch.setattr(
-        "backend.app.search_registry.registry", _fake_sr3
-    )
+    monkeypatch.setattr("backend.app.search_registry.registry", _fake_sr3)
 
     captured: dict[str, str] = {}
 
     def _fake_configure(*, connection_string: str) -> None:
         captured["connection_string"] = connection_string
 
-    monkeypatch.setattr(
-        "backend.app.configure_azure_monitor", _fake_configure
-    )
+    monkeypatch.setattr("backend.app.configure_azure_monitor", _fake_configure)
 
     app = create_app()
     async with app.router.lifespan_context(app):
@@ -466,7 +444,7 @@ async def test_lifespan_skips_app_insights_when_typed_setting_empty(
 ) -> None:
     """When the typed setting is empty, telemetry must stay disabled
     even if the legacy `APPLICATIONINSIGHTS_CONNECTION_STRING` env var
-    is set -- that legacy alias is not read by AppSettings (CU-007).
+    is set -- that legacy alias is not read by AppSettings.
     """
     env = {
         **COSMOS_ENV,
@@ -482,18 +460,14 @@ async def test_lifespan_skips_app_insights_when_typed_setting_empty(
     _fake_sr4.get.return_value = lambda **_kw: MagicMock(
         aclose=AsyncMock(), ensure_schema=AsyncMock()
     )
-    monkeypatch.setattr(
-        "backend.app.search_registry.registry", _fake_sr4
-    )
+    monkeypatch.setattr("backend.app.search_registry.registry", _fake_sr4)
 
     called = {"count": 0}
 
     def _fake_configure(**_kw) -> None:
         called["count"] += 1
 
-    monkeypatch.setattr(
-        "backend.app.configure_azure_monitor", _fake_configure
-    )
+    monkeypatch.setattr("backend.app.configure_azure_monitor", _fake_configure)
 
     app = create_app()
     async with app.router.lifespan_context(app):
@@ -505,7 +479,7 @@ async def test_lifespan_skips_app_insights_when_typed_setting_empty(
 def test_create_app_cors_uses_typed_settings(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """`create_app` reads `NetworkSettings.cors_origins` (CU-002a alias
+    """`create_app` reads `NetworkSettings.cors_origins` (the alias
     on `BACKEND_CORS_ORIGINS`) instead of calling `os.getenv`.
 
     Asserts on the live `CORSMiddleware` config so a regression that
@@ -518,9 +492,7 @@ def test_create_app_cors_uses_typed_settings(
     _apply_env(monkeypatch, env)
 
     app = create_app()
-    cors_layers = [
-        m for m in app.user_middleware if m.cls.__name__ == "CORSMiddleware"
-    ]
+    cors_layers = [m for m in app.user_middleware if m.cls.__name__ == "CORSMiddleware"]
     assert cors_layers, "CORS middleware must be installed"
     cors = cors_layers[0]
     origins = cors.kwargs.get("allow_origins")
@@ -540,15 +512,13 @@ def test_create_app_cors_falls_back_to_wildcard(
     monkeypatch.delenv("BACKEND_CORS_ORIGINS", raising=False)
 
     app = create_app()
-    cors = next(
-        m for m in app.user_middleware if m.cls.__name__ == "CORSMiddleware"
-    )
+    cors = next(m for m in app.user_middleware if m.cls.__name__ == "CORSMiddleware")
     assert cors.kwargs.get("allow_origins") == ["*"]
     assert cors.kwargs.get("allow_credentials") is False
 
 
 # ---------------------------------------------------------------------------
-# CU-001c: lifespan constructs FoundryAgentsProvider via registry
+# lifespan constructs FoundryAgentsProvider via registry
 # ---------------------------------------------------------------------------
 
 
@@ -568,9 +538,7 @@ async def test_lifespan_constructs_agents_provider_via_registry(
     _fake_sr5.get.return_value = lambda **_kw: MagicMock(
         aclose=AsyncMock(), ensure_schema=AsyncMock()
     )
-    monkeypatch.setattr(
-        "backend.app.search_registry.registry", _fake_sr5
-    )
+    monkeypatch.setattr("backend.app.search_registry.registry", _fake_sr5)
 
     captured: dict[str, object] = {}
     fake_agents = MagicMock(name="agents_provider")
@@ -611,17 +579,13 @@ async def test_lifespan_closes_agents_provider_on_shutdown(
     _fake_sr6.get.return_value = lambda **_kw: MagicMock(
         aclose=AsyncMock(), ensure_schema=AsyncMock()
     )
-    monkeypatch.setattr(
-        "backend.app.search_registry.registry", _fake_sr6
-    )
+    monkeypatch.setattr("backend.app.search_registry.registry", _fake_sr6)
 
     fake_agents = MagicMock(name="agents_provider")
     fake_agents.aclose = AsyncMock()
     fake_agents_registry = MagicMock(name="agents_registry")
     fake_agents_registry.get.return_value = lambda **_kw: fake_agents
-    monkeypatch.setattr(
-        "backend.app.agents_registry.registry", fake_agents_registry
-    )
+    monkeypatch.setattr("backend.app.agents_registry.registry", fake_agents_registry)
 
     app = create_app()
     async with app.router.lifespan_context(app):
@@ -631,7 +595,7 @@ async def test_lifespan_closes_agents_provider_on_shutdown(
 
 
 # ---------------------------------------------------------------------------
-# #35e(a): live-reload runtime overrides -- lifespan loads persisted
+# live-reload runtime overrides -- lifespan loads persisted
 # RuntimeConfig from the database and stashes it on app.state, so reads
 # survive container restarts. The PATCH /api/admin/config route handles
 # the post-startup reassignment (covered in test_admin.py).
@@ -652,9 +616,7 @@ async def test_lifespan_loads_persisted_runtime_overrides_into_app_state(
     _fake_sr7.get.return_value = lambda **_kw: MagicMock(
         aclose=AsyncMock(), ensure_schema=AsyncMock()
     )
-    monkeypatch.setattr(
-        "backend.app.search_registry.registry", _fake_sr7
-    )
+    monkeypatch.setattr("backend.app.search_registry.registry", _fake_sr7)
 
     persisted = RuntimeConfig(
         openai_temperature=0.42,
@@ -690,9 +652,7 @@ async def test_lifespan_runtime_overrides_none_when_no_persisted_config(
     _fake_sr8.get.return_value = lambda **_kw: MagicMock(
         aclose=AsyncMock(), ensure_schema=AsyncMock()
     )
-    monkeypatch.setattr(
-        "backend.app.search_registry.registry", _fake_sr8
-    )
+    monkeypatch.setattr("backend.app.search_registry.registry", _fake_sr8)
 
     app = create_app()
     async with app.router.lifespan_context(app):

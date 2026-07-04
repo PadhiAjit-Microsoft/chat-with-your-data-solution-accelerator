@@ -1,4 +1,4 @@
-"""Tests for `TextParser` (Phase 6 task #41, U8d).
+"""Tests for `TextParser`.
 
 Pillar: Stable Core
 Phase: 6
@@ -14,8 +14,10 @@ from backend.core.types import Chunk
 from functions.core.parsers import registry as ingestion_parsers_registry
 from functions.core.parsers.text_parser import TextParser
 
+
 def test_textparser_is_registered_under_txt() -> None:
     assert ingestion_parsers_registry.registry.get("txt") is TextParser
+
 
 def test_textparser_is_registered_under_md_and_json() -> None:
     """Markdown + JSON are UTF-8 text, so they route to the same
@@ -23,12 +25,15 @@ def test_textparser_is_registered_under_md_and_json() -> None:
     assert ingestion_parsers_registry.registry.get("md") is TextParser
     assert ingestion_parsers_registry.registry.get("json") is TextParser
 
+
 def test_textparser_is_a_baseparser_subclass() -> None:
     assert issubclass(TextParser, BaseParser)
+
 
 def test_registry_get_txt_constructs_textparser_instance() -> None:
     parser = ingestion_parsers_registry.registry.get("txt")()
     assert isinstance(parser, TextParser)
+
 
 def test_textparser_zero_arg_construction_still_works() -> None:
     """Defaults to `None` on both `BaseParser.__init__` kwargs so
@@ -38,6 +43,7 @@ def test_textparser_zero_arg_construction_still_works() -> None:
     assert isinstance(parser, TextParser)
     assert parser._settings is None
     assert parser._credential is None
+
 
 def test_textparser_stores_uniform_construction_kwargs() -> None:
     """`BaseParser` accepts and stores `(settings, credential)` so
@@ -49,6 +55,7 @@ def test_textparser_stores_uniform_construction_kwargs() -> None:
     parser = TextParser(settings=settings, credential=credential)
     assert parser._settings is settings
     assert parser._credential is credential
+
 
 @pytest.mark.asyncio
 async def test_single_paragraph_yields_single_chunk() -> None:
@@ -62,6 +69,7 @@ async def test_single_paragraph_yields_single_chunk() -> None:
             index=0,
         ),
     ]
+
 
 @pytest.mark.asyncio
 async def test_blank_line_splits_into_two_chunks_with_sequential_indices() -> None:
@@ -81,6 +89,7 @@ async def test_blank_line_splits_into_two_chunks_with_sequential_indices() -> No
             index=1,
         ),
     ]
+
 
 @pytest.mark.asyncio
 async def test_multiple_blank_lines_and_whitespace_collapse_to_one_split() -> None:

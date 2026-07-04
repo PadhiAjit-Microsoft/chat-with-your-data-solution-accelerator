@@ -1,9 +1,9 @@
-"""Pillar: Stable Core / Phase: 8 (agent_framework default + Foundry IQ Knowledge Base).
+"""Pillar: Stable Core / Phase: 8
 
 Param/output wiring guards for `modules/ai-project-search-connection.bicep`.
 
-The module owns the Foundry Project -> Azure AI Search connection. Phase 8
-makes it knowledge-base-aware: it accepts the KB name, records it on the
+The module owns the Foundry Project -> Azure AI Search connection and is
+knowledge-base-aware: it accepts the KB name, records it on the
 connection metadata, and surfaces it as an output so `main.bicep` can flow
 it to the backend Container App (`AZURE_AI_SEARCH_KNOWLEDGE_BASE_NAME`) and
 the agent_framework orchestrator can resolve the KB by name. These
@@ -14,7 +14,6 @@ template is still validated by `az bicep build`.
 from pathlib import Path
 
 import pytest
-
 
 _MODULE = (
     Path(__file__).resolve().parents[2]

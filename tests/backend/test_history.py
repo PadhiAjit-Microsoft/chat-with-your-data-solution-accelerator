@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 4 (task #31) -- chat history router tests."""
+"""Pillar: Stable Core / Phase: 4, chat history router tests."""
 
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
@@ -16,7 +16,6 @@ from backend.dependencies import (
     get_database_client,
     get_user_id,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -117,18 +116,12 @@ def test_get_user_id_reads_easy_auth_header() -> None:
             )
         ],
     }
-    assert (
-        get_user_id(Request(scope))
-        == "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
-    )
+    assert get_user_id(Request(scope)) == "3f2504e0-4f89-41d3-9a0c-0305e82c3301"
 
 
 def test_get_user_id_falls_back_to_default_guid_when_header_missing() -> None:
     scope: dict[str, Any] = {"type": "http", "headers": []}
-    assert (
-        get_user_id(Request(scope))
-        == "00000000-0000-0000-0000-000000000000"
-    )
+    assert get_user_id(Request(scope)) == "00000000-0000-0000-0000-000000000000"
 
 
 def test_get_user_id_falls_back_to_default_guid_when_not_a_guid() -> None:
@@ -136,10 +129,7 @@ def test_get_user_id_falls_back_to_default_guid_when_not_a_guid() -> None:
         "type": "http",
         "headers": [(b"x-ms-client-principal-id", b"not-a-guid")],
     }
-    assert (
-        get_user_id(Request(scope))
-        == "00000000-0000-0000-0000-000000000000"
-    )
+    assert get_user_id(Request(scope)) == "00000000-0000-0000-0000-000000000000"
 
 
 def test_get_user_id_accepts_all_zeros_default_user() -> None:
@@ -153,10 +143,7 @@ def test_get_user_id_accepts_all_zeros_default_user() -> None:
             )
         ],
     }
-    assert (
-        get_user_id(Request(scope))
-        == "00000000-0000-0000-0000-000000000000"
-    )
+    assert get_user_id(Request(scope)) == "00000000-0000-0000-0000-000000000000"
 
 
 # ---------------------------------------------------------------------------
@@ -194,14 +181,10 @@ async def test_create_conversation_returns_201_and_persists_via_client(
 ) -> None:
     db = app_with_fake_db.state._test_db
     async with _client(app_with_fake_db) as client:
-        resp = await client.post(
-            "/api/history/conversations", json={"title": "new"}
-        )
+        resp = await client.post("/api/history/conversations", json={"title": "new"})
     assert resp.status_code == 201
     assert resp.json()["title"] == "new"
-    db.create_conversation.assert_awaited_once_with(
-        user_id=_TEST_USER_ID, title="new"
-    )
+    db.create_conversation.assert_awaited_once_with(user_id=_TEST_USER_ID, title="new")
 
 
 async def test_get_conversation_returns_conversation_plus_messages(
@@ -238,9 +221,7 @@ async def test_rename_conversation_404_when_keyerror(app_with_fake_db) -> None:
     db = app_with_fake_db.state._test_db
     db.rename_conversation = AsyncMock(side_effect=KeyError("c-1"))
     async with _client(app_with_fake_db) as client:
-        resp = await client.patch(
-            "/api/history/conversations/c-1", json={"title": "r"}
-        )
+        resp = await client.patch("/api/history/conversations/c-1", json={"title": "r"})
     assert resp.status_code == 404
 
 
@@ -261,9 +242,7 @@ async def test_rename_conversation_422_when_title_empty(
 ) -> None:
     db = app_with_fake_db.state._test_db
     async with _client(app_with_fake_db) as client:
-        resp = await client.patch(
-            "/api/history/conversations/c-1", json={"title": ""}
-        )
+        resp = await client.patch("/api/history/conversations/c-1", json={"title": ""})
     assert resp.status_code == 422
     db.rename_conversation.assert_not_awaited()
 
@@ -277,9 +256,7 @@ async def test_rename_conversation_strips_surrounding_whitespace(
             "/api/history/conversations/c-1", json={"title": "  New name  "}
         )
     assert resp.status_code == 200
-    db.rename_conversation.assert_awaited_once_with(
-        "c-1", _TEST_USER_ID, "New name"
-    )
+    db.rename_conversation.assert_awaited_once_with("c-1", _TEST_USER_ID, "New name")
 
 
 async def test_rename_conversation_400_when_title_flagged_by_content_safety(
@@ -287,9 +264,7 @@ async def test_rename_conversation_400_when_title_flagged_by_content_safety(
 ) -> None:
     db = app_with_fake_db.state._test_db
     guard = _FakeGuard(flagged=True)
-    app_with_fake_db.dependency_overrides[get_content_safety_guard] = (
-        lambda: guard
-    )
+    app_with_fake_db.dependency_overrides[get_content_safety_guard] = lambda: guard
     async with _client(app_with_fake_db) as client:
         resp = await client.patch(
             "/api/history/conversations/c-1", json={"title": "bad title"}
@@ -304,18 +279,14 @@ async def test_rename_conversation_screens_clean_title_then_persists(
 ) -> None:
     db = app_with_fake_db.state._test_db
     guard = _FakeGuard(flagged=False)
-    app_with_fake_db.dependency_overrides[get_content_safety_guard] = (
-        lambda: guard
-    )
+    app_with_fake_db.dependency_overrides[get_content_safety_guard] = lambda: guard
     async with _client(app_with_fake_db) as client:
         resp = await client.patch(
             "/api/history/conversations/c-1", json={"title": "Clean title"}
         )
     assert resp.status_code == 200
     assert guard.screened == ["Clean title"]
-    db.rename_conversation.assert_awaited_once_with(
-        "c-1", _TEST_USER_ID, "Clean title"
-    )
+    db.rename_conversation.assert_awaited_once_with("c-1", _TEST_USER_ID, "Clean title")
 
 
 async def test_rename_conversation_skips_screening_when_guard_disabled(
@@ -330,9 +301,7 @@ async def test_rename_conversation_skips_screening_when_guard_disabled(
             "/api/history/conversations/c-1", json={"title": "No guard"}
         )
     assert resp.status_code == 200
-    db.rename_conversation.assert_awaited_once_with(
-        "c-1", _TEST_USER_ID, "No guard"
-    )
+    db.rename_conversation.assert_awaited_once_with("c-1", _TEST_USER_ID, "No guard")
 
 
 async def test_delete_conversation_returns_204_idempotently(
@@ -388,9 +357,7 @@ async def test_set_feedback_returns_204(app_with_fake_db) -> None:
             json={"feedback": "positive"},
         )
     assert resp.status_code == 204
-    db.set_feedback.assert_awaited_once_with(
-        "m-1", _TEST_USER_ID, "positive"
-    )
+    db.set_feedback.assert_awaited_once_with("m-1", _TEST_USER_ID, "positive")
 
 
 async def test_set_feedback_404_when_message_missing(app_with_fake_db) -> None:
@@ -411,9 +378,7 @@ async def test_set_feedback_404_when_message_missing(app_with_fake_db) -> None:
 
 async def test_rename_rejects_empty_title(app_with_fake_db) -> None:
     async with _client(app_with_fake_db) as client:
-        resp = await client.patch(
-            "/api/history/conversations/c-1", json={"title": ""}
-        )
+        resp = await client.patch("/api/history/conversations/c-1", json={"title": ""})
     assert resp.status_code == 422
 
 

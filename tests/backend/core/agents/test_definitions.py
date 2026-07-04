@@ -1,16 +1,16 @@
-"""Tests for shared.agents.definitions (CU-010a).
+"""Tests for shared.agents.definitions.
 
 Pillar: Stable Core
-Phase: Cleanup audit batch 2
+Phase: 3
 
 Validates:
 
 * `AgentDefinition` is frozen and rejects unknown fields.
 * `CWYD_AGENT` and `RAI_AGENT` declare the required scenario data.
 * `RAI_AGENT.instructions` follows the reference-architecture TRUE/FALSE classifier
-  shape (the resolver in CU-011a parses single-token responses).
+  shape (the resolver parses single-token responses).
 * `BUILTIN_AGENTS` is keyed by `definition.name` (the lazy resolver
-  in CU-010c looks up by name).
+  looks up by name).
 """
 
 import pytest
@@ -27,7 +27,6 @@ from backend.core.agents.definitions import (
     compose_cwyd_instructions,
     resolve_cwyd_instructions,
 )
-
 
 # ---------------------------------------------------------------------------
 # AgentDefinition shape
@@ -129,7 +128,7 @@ def test_resolve_cwyd_instructions_none_matches_default() -> None:
     """The shared composition seam returns the built-in default,
     byte-identical to `CWYD_AGENT.instructions`, when no operator
     override is supplied -- so the default path is unchanged and only
-    the override path is affected (BUG-0031)."""
+    the override path is affected."""
     assert resolve_cwyd_instructions(None) == CWYD_AGENT.instructions
 
 
@@ -144,7 +143,7 @@ def test_resolve_cwyd_instructions_blank_override_falls_back_to_default() -> Non
 def test_resolve_cwyd_instructions_override_is_guardrail_wrapped() -> None:
     """A non-empty operator override becomes the persona body wrapped
     by the fixed guardrail: the body leads, the guardrail is appended
-    exactly once and last. This is the invariant BUG-0031 restores on
+    exactly once and last. This is the invariant restored on
     the langgraph path (the override previously reached langgraph
     un-wrapped)."""
     composed = resolve_cwyd_instructions("You are the operator override.")
@@ -205,10 +204,10 @@ def test_cwyd_guardrail_states_non_negotiable_rules() -> None:
 
 def test_cwyd_guardrail_grounds_relevant_but_brief_documents() -> None:
     """The grounding rule directs the model to answer from relevant
-    documents even when they are brief or partial (BUG-0028
-    over-refusal fix), and bases the refusal on relevance rather than a
-    strict "not enough information" reading that made gpt-5.1 refuse
-    in-domain queries on the raw chat-completion path."""
+    documents even when they are brief or partial, and bases the refusal
+    on relevance rather than a strict "not enough information" reading
+    that made gpt-5.1 refuse in-domain queries on the raw
+    chat-completion path."""
     guardrail = CWYD_GUARDRAIL.lower()
     # Positive grounding directive is present (answer when relevant).
     assert "you **must** answer" in CWYD_GUARDRAIL
@@ -219,7 +218,7 @@ def test_cwyd_guardrail_grounds_relevant_but_brief_documents() -> None:
 
 
 def test_cwyd_guardrail_bans_ungrounded_creative_content() -> None:
-    """Softening the grounding rule must not regress the BUG-0011
+    """Softening the grounding rule must not regress the
     grounding guarantee: the guardrail still bans ungrounded creative
     content (a request such as "write me a poem" must not leak)."""
     guardrail = CWYD_GUARDRAIL.lower()
@@ -232,7 +231,7 @@ def test_cwyd_guardrail_bans_ungrounded_creative_content() -> None:
 def test_cwyd_default_body_drops_strict_in_domain_drag() -> None:
     """The v1 prompt-flow in/out-of-domain section ("think twice",
     "only when ... enough information", "you cannot decide") drove the
-    BUG-0028 over-refusal and is replaced by a relevance-based
+    over-refusal and is replaced by a relevance-based
     answer/defer section."""
     body = CWYD_DEFAULT_BODY.lower()
     assert "think twice" not in body
@@ -243,7 +242,7 @@ def test_rai_agent_uses_classifier_pattern() -> None:
     """The reference-architecture-style RAI classifier returns exactly one token
     (`TRUE` or `FALSE`). The instructions must mention both tokens
     and instruct the model to emit one of them, otherwise the parser
-    in CU-011a will mis-classify ambiguous outputs.
+    will mis-classify ambiguous outputs.
     """
     instr = RAI_AGENT.instructions
     assert "TRUE" in instr
@@ -253,7 +252,7 @@ def test_rai_agent_uses_classifier_pattern() -> None:
 
 
 def test_prompt_review_agent_reviews_system_prompts_not_user_messages() -> None:
-    """`PROMPT_REVIEW_AGENT` gates the admin prompt-save path (BUG-0084).
+    """`PROMPT_REVIEW_AGENT` gates the admin prompt-save path.
     It is a separate TRUE/FALSE classifier from `RAI_AGENT`, calibrated
     to review operator-authored SYSTEM PROMPTS -- it must frame the
     input as a system prompt (not a user message) and explicitly permit
@@ -277,7 +276,7 @@ def test_prompt_review_agent_reviews_system_prompts_not_user_messages() -> None:
 
 
 def test_builtin_agents_keyed_by_definition_name() -> None:
-    """The lazy resolver (CU-010c) looks up by `definition.name`. If
+    """The lazy resolver looks up by `definition.name`. If
     the dict key drifts from `.name`, agents would be created in
     Foundry under a key the resolver can never re-find.
     """

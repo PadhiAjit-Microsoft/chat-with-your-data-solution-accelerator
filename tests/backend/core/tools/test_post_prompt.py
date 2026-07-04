@@ -1,4 +1,4 @@
-"""Tests for `shared.tools.post_prompt` (task #20c).
+"""Tests for `shared.tools.post_prompt`.
 
 Pillar: Stable Core
 Phase: 3
@@ -19,9 +19,7 @@ from backend.core.types import ChatMessage, SearchResult
 
 def _make_llm(reply_text: str) -> AsyncMock:
     llm = AsyncMock()
-    llm.chat = AsyncMock(
-        return_value=ChatMessage(role="assistant", content=reply_text)
-    )
+    llm.chat = AsyncMock(return_value=ChatMessage(role="assistant", content=reply_text))
     return llm
 
 
@@ -98,9 +96,7 @@ async def test_validate_short_circuits_on_whitespace_answer() -> None:
 async def test_validate_formats_sources_with_doc_indices() -> None:
     llm = _make_llm("true")
     validator = PostPromptValidator(llm=llm)
-    await validator.validate(
-        "Q?", "A.", [_src(1, "alpha"), _src(2, "beta")]
-    )
+    await validator.validate("Q?", "A.", [_src(1, "alpha"), _src(2, "beta")])
     prompt = llm.chat.await_args.args[0][0].content
     assert "[doc1]: alpha" in prompt
     assert "[doc2]: beta" in prompt
@@ -129,9 +125,7 @@ async def test_validate_uses_default_prompt_template() -> None:
 @pytest.mark.asyncio
 async def test_validate_honors_custom_filter_message() -> None:
     llm = _make_llm("false")
-    validator = PostPromptValidator(
-        llm=llm, filter_message="Refusing this answer."
-    )
+    validator = PostPromptValidator(llm=llm, filter_message="Refusing this answer.")
     result = await validator.validate("Q?", "A.", [_src(1, "x")])
     assert result.answer == "Refusing this answer."
 

@@ -1,4 +1,4 @@
-"""Tests for the orchestrator domain skeleton (Phase 3 task #17).
+"""Tests for the orchestrator domain skeleton.
 
 Pillar: Stable Core
 Phase: 3
@@ -15,10 +15,9 @@ from backend.core.providers.orchestrators.base import OrchestratorBase
 from backend.core.settings import AppSettings
 from backend.core.types import ChatMessage, OrchestratorEvent
 
-
 # ---------------------------------------------------------------------------
 # Minimal concrete subclass for shape tests. NOT registered (so the public
-# registry stays empty until task #18 lands a real provider).
+# registry stays empty until a real provider is registered).
 # ---------------------------------------------------------------------------
 
 
@@ -33,12 +32,12 @@ class _StubOrchestrator(OrchestratorBase):
 
 
 # ---------------------------------------------------------------------------
-# Registry shape (task #17 deliverable)
+# Registry shape
 # ---------------------------------------------------------------------------
 
 
 def test_registry_domain_and_known_providers() -> None:
-    """`langgraph` registered in task #18; `agent_framework` lands in task #19."""
+    """`langgraph` and `agent_framework` are the registered orchestrators."""
     assert orchestrators_registry.registry.domain == "orchestrators"
     assert "langgraph" in orchestrators_registry.registry.keys()
 
@@ -88,7 +87,9 @@ async def test_run_is_an_async_generator_yielding_orchestrator_events() -> None:
     settings = MagicMock(spec=AppSettings)
     llm = MagicMock(spec=BaseLLMProvider)
     orch = _StubOrchestrator(settings=settings, llm=llm)
-    events = [event async for event in orch.run([ChatMessage(role="user", content="hi")])]
+    events = [
+        event async for event in orch.run([ChatMessage(role="user", content="hi")])
+    ]
     assert len(events) == 1
     assert events[0].channel == "answer"
     assert events[0].content == "x"

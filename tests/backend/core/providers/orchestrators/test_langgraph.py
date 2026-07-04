@@ -1,4 +1,4 @@
-"""Tests for the LangGraph orchestrator (Phase 3 task #18).
+"""Tests for the LangGraph orchestrator.
 
 Pillar: Stable Core
 Phase: 3
@@ -13,8 +13,13 @@ from backend.core.providers.orchestrators import registry as orchestrators_regis
 from backend.core.providers.llm.base import BaseLLMProvider
 from backend.core.providers.orchestrators.langgraph import LangGraphOrchestrator
 from backend.core.settings import AppSettings
-from backend.core.types import ChatChunk, ChatMessage, EmbeddingResult, OrchestratorEvent, SearchResult
-
+from backend.core.types import (
+    ChatChunk,
+    ChatMessage,
+    EmbeddingResult,
+    OrchestratorEvent,
+    SearchResult,
+)
 
 # Canned query embedding returned by ``_FakeLLM.embed`` so search-wiring
 # tests can assert the orchestrator forwards the vector to ``search``.
@@ -84,7 +89,7 @@ class _FakeLLM(BaseLLMProvider):
         # ``self._settings``) to mirror the non-reasoning path: record
         # the call and yield a single ``answer`` event with the canned
         # reply. Subclasses can override this to inject reasoning /
-        # error events for the CU-004b streaming tests.
+        # error events for the streaming tests.
         self.calls.append(list(messages))
         self.complete_calls.append(
             {"temperature": temperature, "max_tokens": max_tokens}
@@ -127,7 +132,9 @@ def test_langgraph_is_registered() -> None:
 
 def test_create_returns_langgraph_orchestrator_instance() -> None:
     settings = MagicMock(spec=AppSettings)
-    orch = orchestrators_registry.registry.get("langgraph")(settings=settings, llm=_FakeLLM())
+    orch = orchestrators_registry.registry.get("langgraph")(
+        settings=settings, llm=_FakeLLM()
+    )
     assert isinstance(orch, LangGraphOrchestrator)
 
 
@@ -140,10 +147,7 @@ def test_create_returns_langgraph_orchestrator_instance() -> None:
 async def test_run_yields_single_answer_event_with_assistant_reply() -> None:
     fake = _FakeLLM(reply="grounded answer")
     orch = _make_orchestrator(fake)
-    events = [
-        e
-        async for e in orch.run([ChatMessage(role="user", content="ping")])
-    ]
+    events = [e async for e in orch.run([ChatMessage(role="user", content="ping")])]
     assert len(events) == 1
     assert events[0].channel == "answer"
     assert events[0].content == "grounded answer"
@@ -163,10 +167,7 @@ async def test_run_invokes_llm_with_user_messages() -> None:
 @pytest.mark.asyncio
 async def test_run_emits_error_event_when_no_assistant_reply() -> None:
     orch = _make_orchestrator(_BlankReplyLLM())
-    events = [
-        e
-        async for e in orch.run([ChatMessage(role="user", content="ping")])
-    ]
+    events = [e async for e in orch.run([ChatMessage(role="user", content="ping")])]
     assert len(events) == 1
     assert events[0].channel == "error"
     assert "no assistant reply" in events[0].content.lower()
@@ -174,7 +175,7 @@ async def test_run_emits_error_event_when_no_assistant_reply() -> None:
 
 @pytest.mark.asyncio
 async def test_run_accepts_settings_override_kwarg_without_breaking() -> None:
-    """`settings_override` is reserved for per-request knobs (task #22+)."""
+    """`settings_override` is reserved for per-request knobs."""
     orch = _make_orchestrator()
     events = [
         e
@@ -188,7 +189,7 @@ async def test_run_accepts_settings_override_kwarg_without_breaking() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Citation wiring (audit step 6d / task #23)
+# Citation wiring
 # ---------------------------------------------------------------------------
 
 
@@ -210,9 +211,7 @@ class _FakeSearch:
 async def test_run_without_search_emits_no_citation_events() -> None:
     """Pass-through mode -- preserves the original single-answer contract."""
     orch = _make_orchestrator(_FakeLLM(reply="ungrounded"))
-    events = [
-        e async for e in orch.run([ChatMessage(role="user", content="ping")])
-    ]
+    events = [e async for e in orch.run([ChatMessage(role="user", content="ping")])]
     assert [e.channel for e in events] == ["answer"]
 
 
@@ -229,9 +228,7 @@ async def test_run_with_search_emits_citations_for_referenced_markers_only() -> 
     )
     orch = LangGraphOrchestrator(settings=settings, llm=fake_llm, search=fake_search)
 
-    events = [
-        e async for e in orch.run([ChatMessage(role="user", content="what?")])
-    ]
+    events = [e async for e in orch.run([ChatMessage(role="user", content="what?")])]
     channels = [e.channel for e in events]
     assert channels == ["citation", "answer"]
     citation_ev = events[0]
@@ -365,9 +362,7 @@ async def test_run_defaults_search_knobs_to_none_when_unset() -> None:
     fake_search = _FakeSearch(
         [{"id": "x", "content": "alpha", "title": "A", "url": "http://a"}]
     )
-    orch = LangGraphOrchestrator(
-        settings=settings, llm=fake_llm, search=fake_search
-    )
+    orch = LangGraphOrchestrator(settings=settings, llm=fake_llm, search=fake_search)
 
     _ = [e async for e in orch.run([ChatMessage(role="user", content="q?")])]
 
@@ -407,9 +402,7 @@ async def test_run_with_search_no_hits_skips_citation_block() -> None:
     fake_search = _FakeSearch([])
     orch = LangGraphOrchestrator(settings=settings, llm=fake_llm, search=fake_search)
 
-    events = [
-        e async for e in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    events = [e async for e in orch.run([ChatMessage(role="user", content="hi")])]
     assert [e.channel for e in events] == ["answer"]
     # No system message was prepended.
     assert all(m.role != "system" for m in fake_llm.calls[0])
@@ -429,16 +422,14 @@ async def test_run_with_search_drops_unreferenced_citations() -> None:
     )
     orch = LangGraphOrchestrator(settings=settings, llm=fake_llm, search=fake_search)
 
-    events = [
-        e async for e in orch.run([ChatMessage(role="user", content="?")])
-    ]
+    events = [e async for e in orch.run([ChatMessage(role="user", content="?")])]
     citation_events = [e for e in events if e.channel == "citation"]
     assert len(citation_events) == 1
     assert citation_events[0].metadata["id"] == "[doc2]"
 
 
 # ---------------------------------------------------------------------------
-# CU-004b: streaming via BaseLLMProvider.complete()
+# streaming via BaseLLMProvider.complete()
 # ---------------------------------------------------------------------------
 
 
@@ -478,9 +469,7 @@ async def test_run_streams_reasoning_events_live_then_buffers_answer() -> None:
     )
     orch = LangGraphOrchestrator(settings=settings, llm=fake_llm)
 
-    events = [
-        e async for e in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    events = [e async for e in orch.run([ChatMessage(role="user", content="hi")])]
 
     channels = [(e.channel, e.content) for e in events]
     assert channels == [
@@ -507,9 +496,7 @@ async def test_run_propagates_error_events_from_complete() -> None:
     )
     orch = LangGraphOrchestrator(settings=settings, llm=fake_llm)
 
-    events = [
-        e async for e in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    events = [e async for e in orch.run([ChatMessage(role="user", content="hi")])]
 
     assert [e.channel for e in events] == ["reasoning", "error"]
     assert events[-1].metadata["code"] == "reason_stream_failed"
@@ -546,13 +533,9 @@ async def test_run_filters_citations_against_assembled_answer() -> None:
     fake_search = _FakeSearch(
         [{"id": "src-a", "content": "alpha", "title": "A", "url": "http://a"}]
     )
-    orch = LangGraphOrchestrator(
-        settings=settings, llm=fake_llm, search=fake_search
-    )
+    orch = LangGraphOrchestrator(settings=settings, llm=fake_llm, search=fake_search)
 
-    events = [
-        e async for e in orch.run([ChatMessage(role="user", content="?")])
-    ]
+    events = [e async for e in orch.run([ChatMessage(role="user", content="?")])]
 
     channels = [e.channel for e in events]
     assert channels == ["citation", "answer"]

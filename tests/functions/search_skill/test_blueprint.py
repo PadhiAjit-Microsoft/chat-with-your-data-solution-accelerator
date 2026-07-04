@@ -220,7 +220,7 @@ async def test_missing_values_field_returns_422() -> None:
 
 @pytest.mark.asyncio
 async def test_empty_values_array_returns_422() -> None:
-    """``SearchSkillRequest.values`` has ``min_length=1`` (U10a)."""
+    """``SearchSkillRequest.values`` has ``min_length=1``."""
     req = _make_req(json.dumps({"values": []}).encode())
     resp = await search_skill(req)
     assert resp.status_code == 422
@@ -292,7 +292,7 @@ def test_search_skill_route_registered_on_app() -> None:
     # Importing function_app must register the blueprint route.
     function_names = {fb._function._name for fb in app._function_builders}  # type: ignore[attr-defined]
     assert "search_skill" in function_names
-    # Regression: every previously registered Phase 6 route still present.
+    # Regression: every previously registered route still present.
     assert "batch_start" in function_names
     assert "batch_push" in function_names
     assert "add_url" in function_names

@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 4 (frontend polish — reference-architecture re-skin)
+ * Phase: 4
  *
  * Tests for the Coral <Header> component. Same behavioural contract
  * as the prior <AppHeader> (preserved verbatim accessible names, the

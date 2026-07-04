@@ -60,9 +60,7 @@ def _reasoning_block(text: str) -> SimpleNamespace:
     return SimpleNamespace(type="text_reasoning", text=text)
 
 
-def _function_call_block(
-    *, call_id: str, name: str, arguments: Any
-) -> SimpleNamespace:
+def _function_call_block(*, call_id: str, name: str, arguments: Any) -> SimpleNamespace:
     return SimpleNamespace(
         type="function_call",
         call_id=call_id,
@@ -333,9 +331,7 @@ async def test_run_invokes_build_agent_with_definition_and_db() -> None:
     db = object()
     orch = _make_orchestrator(agents=provider, db=db)
 
-    _ = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    _ = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     assert len(provider.build_calls) == 1
     call = provider.build_calls[0]
@@ -376,9 +372,7 @@ async def test_run_buffers_text_chunks_into_single_answer_event() -> None:
     )
     orch = _make_orchestrator(agents=_FakeAgentsProvider(agent=agent))
 
-    events = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    events = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     answer_events = [e for e in events if e.channel == "answer"]
     assert len(answer_events) == 1
@@ -395,9 +389,7 @@ async def test_run_emits_reasoning_events_for_text_reasoning_blocks() -> None:
     )
     orch = _make_orchestrator(agents=_FakeAgentsProvider(agent=agent))
 
-    events = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    events = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     pairs = [(e.channel, e.content) for e in events]
     assert pairs == [
@@ -422,9 +414,7 @@ async def test_run_strips_native_kb_markers_from_reasoning_events() -> None:
     )
     orch = _make_orchestrator(agents=_FakeAgentsProvider(agent=agent))
 
-    events = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    events = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     reasoning = [e.content for e in events if e.channel == "reasoning"]
     assert reasoning == ["Checking the policy next."]
@@ -448,9 +438,7 @@ async def test_run_emits_tool_events_for_function_call_blocks() -> None:
     )
     orch = _make_orchestrator(agents=_FakeAgentsProvider(agent=agent))
 
-    events = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    events = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     pairs = [(e.channel, e.content) for e in events]
     assert pairs == [
@@ -471,7 +459,7 @@ async def test_run_emits_tool_event_without_narration_for_kb_function_call() -> 
     raw `tool` event (id / arguments) and no `reasoning` narration. The
     during-the-wait KB-search narration is emitted upstream by the shared
     `run_chat` pipeline, so the orchestrator no longer narrates per call --
-    regression guard for BUG-0027 (the per-call narration fired only after
+    regression guard (the per-call narration fired only after
     server-side retrieval had completed, so it never showed during the wait)."""
     agent = _FakeAgent(
         updates=[
@@ -487,9 +475,7 @@ async def test_run_emits_tool_event_without_narration_for_kb_function_call() -> 
     )
     orch = _make_orchestrator(agents=_FakeAgentsProvider(agent=agent))
 
-    events = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    events = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     pairs = [(e.channel, e.content) for e in events]
     assert pairs == [
@@ -500,14 +486,15 @@ async def test_run_emits_tool_event_without_narration_for_kb_function_call() -> 
 
 
 @pytest.mark.asyncio
-async def test_run_emits_tool_event_without_narration_for_kb_mcp_server_tool_call() -> None:
+async def test_run_emits_tool_event_without_narration_for_kb_mcp_server_tool_call() -> (
+    None
+):
     """Server-side Foundry-IQ KB retrieval (GA-FULL `MCPTool`) streams as a
     `mcp_server_tool_call` block, not a client-side `function_call`. The
     orchestrator emits only the raw `tool` event for it (with id / arguments)
     and no `reasoning` narration -- the during-the-wait narration is emitted
-    upstream by the shared `run_chat` pipeline (BUG-0027). Tool-event mapping
-    on this `mcp_server_tool_call` content shape stays a regression guard for
-    BUG-0026."""
+    upstream by the shared `run_chat` pipeline. Tool-event mapping
+    on this `mcp_server_tool_call` content shape stays a regression guard."""
     agent = _FakeAgent(
         updates=[
             _update(
@@ -522,9 +509,7 @@ async def test_run_emits_tool_event_without_narration_for_kb_mcp_server_tool_cal
     )
     orch = _make_orchestrator(agents=_FakeAgentsProvider(agent=agent))
 
-    events = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    events = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     pairs = [(e.channel, e.content) for e in events]
     assert pairs == [
@@ -557,9 +542,7 @@ async def test_run_emits_tool_event_for_non_kb_mcp_server_tool_call() -> None:
     )
     orch = _make_orchestrator(agents=_FakeAgentsProvider(agent=agent))
 
-    events = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    events = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     pairs = [(e.channel, e.content) for e in events]
     assert pairs == [
@@ -584,9 +567,7 @@ async def test_run_serializes_string_arguments_as_is() -> None:
     )
     orch = _make_orchestrator(agents=_FakeAgentsProvider(agent=agent))
 
-    events = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    events = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     assert events[0].metadata["arguments"] == '{"url":"https://x"}'
 
@@ -596,9 +577,7 @@ async def test_run_emits_error_event_when_stream_raises_azure_error() -> None:
     agent = _FakeAgent(run_error=HttpResponseError("quota exceeded"))
     orch = _make_orchestrator(agents=_FakeAgentsProvider(agent=agent))
 
-    events = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    events = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     assert len(events) == 1
     assert events[0].channel == "error"
@@ -610,9 +589,7 @@ async def test_run_emits_error_event_when_no_content_returned() -> None:
     agent = _FakeAgent(updates=[])  # empty stream
     orch = _make_orchestrator(agents=_FakeAgentsProvider(agent=agent))
 
-    events = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    events = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     assert len(events) == 1
     assert events[0].channel == "error"
@@ -624,9 +601,7 @@ async def test_run_closes_agent_via_async_with() -> None:
     agent = _FakeAgent(updates=[_update(_text_block("ok"))])
     orch = _make_orchestrator(agents=_FakeAgentsProvider(agent=agent))
 
-    _ = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    _ = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     assert agent.entered == 1
     assert agent.exited == 1
@@ -637,9 +612,7 @@ async def test_run_closes_agent_even_when_stream_raises() -> None:
     agent = _FakeAgent(run_error=HttpResponseError("boom"))
     orch = _make_orchestrator(agents=_FakeAgentsProvider(agent=agent))
 
-    _ = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    _ = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     assert agent.entered == 1
     assert agent.exited == 1
@@ -647,14 +620,10 @@ async def test_run_closes_agent_even_when_stream_raises() -> None:
 
 @pytest.mark.asyncio
 async def test_run_emits_error_event_when_build_agent_fails() -> None:
-    provider = _FakeAgentsProvider(
-        build_error=HttpResponseError("invalid endpoint")
-    )
+    provider = _FakeAgentsProvider(build_error=HttpResponseError("invalid endpoint"))
     orch = _make_orchestrator(agents=provider)
 
-    events = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    events = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     # build_agent failure surfaces as a terminal error event (not a raise),
     # so the SSE stream closes cleanly.
@@ -703,9 +672,7 @@ def test_build_kb_tool_returns_none_when_kb_name_missing() -> None:
 
 
 def test_build_kb_tool_returns_none_when_connection_name_missing() -> None:
-    orch = _make_orchestrator(
-        settings=_settings_with_search(connection_name="")
-    )
+    orch = _make_orchestrator(settings=_settings_with_search(connection_name=""))
     assert orch._build_kb_tool() is None
 
 
@@ -738,9 +705,7 @@ def test_build_kb_tool_sets_require_approval_never_and_allowed_tools() -> None:
 
 
 def test_build_kb_tool_sets_project_connection_id() -> None:
-    orch = _make_orchestrator(
-        settings=_settings_with_search(connection_name="my-conn")
-    )
+    orch = _make_orchestrator(settings=_settings_with_search(connection_name="my-conn"))
     tool = orch._build_kb_tool()
     assert tool is not None
     assert tool.as_dict()["project_connection_id"] == "my-conn"
@@ -765,9 +730,7 @@ async def test_run_forwards_kb_tool_as_dict_to_build_agent() -> None:
         agents=provider,
     )
 
-    _ = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    _ = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     extra_tools = provider.build_calls[0]["extra_tools"]
     assert extra_tools is not None
@@ -793,9 +756,7 @@ async def test_run_skips_kb_tool_when_unconfigured() -> None:
         agents=provider,
     )
 
-    _ = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    _ = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     assert provider.build_calls[0]["extra_tools"] is None
 
@@ -815,9 +776,7 @@ async def test_run_threads_temperature_and_max_tokens_via_options() -> None:
         settings=settings, agents=_FakeAgentsProvider(agent=agent)
     )
 
-    _ = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    _ = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     options = agent.run_calls[0]["options"]
     assert options is not None
@@ -832,9 +791,7 @@ async def test_run_passes_default_sampling_knobs_via_options() -> None:
         agents=_FakeAgentsProvider(agent=agent)
     )  # default _settings()
 
-    _ = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    _ = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     options = agent.run_calls[0]["options"]
     assert options is not None
@@ -853,9 +810,7 @@ async def test_run_requests_reasoning_summary_when_model_supports_it() -> None:
         agents=_FakeAgentsProvider(agent=agent), supports_reasoning=True
     )
 
-    _ = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    _ = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     options = agent.run_calls[0]["options"]
     assert options is not None
@@ -877,9 +832,7 @@ async def test_run_omits_reasoning_option_when_model_lacks_reasoning() -> None:
         agents=_FakeAgentsProvider(agent=agent), supports_reasoning=False
     )
 
-    _ = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    _ = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     options = agent.run_calls[0]["options"]
     assert options is not None
@@ -909,9 +862,7 @@ async def test_run_emits_citation_event_from_annotations() -> None:
     )
     orch = _make_orchestrator(agents=_FakeAgentsProvider(agent=agent))
 
-    events = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    events = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     citation_events = [e for e in events if e.channel == "citation"]
     assert len(citation_events) == 1
@@ -937,9 +888,7 @@ async def test_run_emits_citations_before_answer() -> None:
     )
     orch = _make_orchestrator(agents=_FakeAgentsProvider(agent=agent))
 
-    events = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    events = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     # Parity with the langgraph path: citations precede the final answer.
     assert [e.channel for e in events] == ["citation", "answer"]
@@ -956,9 +905,7 @@ async def test_run_dedupes_citations_across_updates() -> None:
     )
     orch = _make_orchestrator(agents=_FakeAgentsProvider(agent=agent))
 
-    events = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    events = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     citation_events = [e for e in events if e.channel == "citation"]
     assert len(citation_events) == 1
@@ -991,9 +938,7 @@ async def test_run_merges_annotated_regions_across_updates() -> None:
     )
     orch = _make_orchestrator(agents=_FakeAgentsProvider(agent=agent))
 
-    events = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    events = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     citation_events = [e for e in events if e.channel == "citation"]
     assert len(citation_events) == 1
@@ -1010,7 +955,7 @@ async def test_run_normalizes_native_kb_markers_in_answer_and_ids() -> None:
     `【N:M†source】` markers in the streamed answer are rewritten to the
     grouping-ordered `[docN]` (never parsing the misleading `N:M`), and the
     citation ids are renumbered to match. Wires `normalize_kb_citations` into
-    `run` -- a BUG-0030 parity guard at the orchestrator seam."""
+    `run` -- a parity guard at the orchestrator seam."""
     marker_a = "【6:1†source】"  # attributed to the first-grouped source
     marker_b = "【6:0†source】"  # attributed to the second-grouped source
     answer = f"Alpha {marker_a} and beta {marker_b}."
@@ -1047,9 +992,7 @@ async def test_run_normalizes_native_kb_markers_in_answer_and_ids() -> None:
     )
     orch = _make_orchestrator(agents=_FakeAgentsProvider(agent=agent))
 
-    events = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    events = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     answer_events = [e for e in events if e.channel == "answer"]
     assert len(answer_events) == 1
@@ -1066,9 +1009,7 @@ async def test_run_emits_no_citation_events_when_no_annotations() -> None:
     agent = _FakeAgent(updates=[_update(_text_block("Plain answer."))])
     orch = _make_orchestrator(agents=_FakeAgentsProvider(agent=agent))
 
-    events = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    events = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     assert [e.channel for e in events] == ["answer"]
 
@@ -1077,7 +1018,7 @@ async def test_run_emits_no_citation_events_when_no_annotations() -> None:
 async def test_run_enriches_kb_citations_via_search_lookup() -> None:
     """A KB citation carries only a raw `mcp://searchindex/<key>` id; `run`
     resolves the key through the injected search provider's by-key lookup
-    and backfills the friendly title / snippet / url (BUG-0030 fallback b).
+    and backfills the friendly title / snippet / url (fallback b).
     The langgraph path already ships friendly fields, so both orchestrators
     end at the same citation shape."""
     key = "abc123"
@@ -1103,13 +1044,9 @@ async def test_run_enriches_kb_citations_via_search_lookup() -> None:
     )
     search = MagicMock()
     search.get_document_by_key = AsyncMock(return_value=document)
-    orch = _make_orchestrator(
-        agents=_FakeAgentsProvider(agent=agent), search=search
-    )
+    orch = _make_orchestrator(agents=_FakeAgentsProvider(agent=agent), search=search)
 
-    events = [
-        ev async for ev in orch.run([ChatMessage(role="user", content="hi")])
-    ]
+    events = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     # The bare Search document key (scheme stripped) drives the lookup.
     search.get_document_by_key.assert_awaited_once_with(key)
@@ -1146,17 +1083,10 @@ async def test_run_keeps_raw_citations_when_enrichment_lookup_fails(
     search.get_document_by_key = AsyncMock(
         side_effect=HttpResponseError(message="500 server error")
     )
-    orch = _make_orchestrator(
-        agents=_FakeAgentsProvider(agent=agent), search=search
-    )
+    orch = _make_orchestrator(agents=_FakeAgentsProvider(agent=agent), search=search)
 
     with caplog.at_level("WARNING", logger=_AGENT_FW_LOGGER_NAME):
-        events = [
-            ev
-            async for ev in orch.run(
-                [ChatMessage(role="user", content="hi")]
-            )
-        ]
+        events = [ev async for ev in orch.run([ChatMessage(role="user", content="hi")])]
 
     # The answer + citation still stream; only the cosmetic backfill is lost.
     assert [e.channel for e in events] == ["citation", "answer"]
@@ -1206,9 +1136,7 @@ async def test_run_grounds_on_pgvector_when_kb_unconfigured() -> None:
             ),
         ]
     )
-    agent = _FakeAgent(
-        updates=[_update(_text_block("You can work remotely [doc1]."))]
-    )
+    agent = _FakeAgent(updates=[_update(_text_block("You can work remotely [doc1]."))])
     provider = _FakeAgentsProvider(agent=agent)
     orch = AgentFrameworkOrchestrator(
         settings=_settings_with_search(endpoint=""),  # KB unconfigured

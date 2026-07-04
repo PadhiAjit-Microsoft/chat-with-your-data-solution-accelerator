@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 6 (frontend polish, pulled forward for boss demo)
+ * Phase: 6
  *
  * Tests for the ThemeProvider + useTheme primitive that owns light/dark
  * mode for the v2 frontend. Theme is persisted to localStorage and

@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 1 (Frontend → App Service build-from-source)
+ * Phase: 1
  *
  * Vitest suite for the runtime backend-URL seam. Mocks global `fetch`
  * so the unit test runs offline and stubs `VITE_BACKEND_URL` to exercise

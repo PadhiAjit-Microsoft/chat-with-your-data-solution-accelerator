@@ -22,7 +22,7 @@ def test_error_type_members_are_wire_strings() -> None:
 
 
 def test_error_type_json_serializes_as_bare_string() -> None:
-    # The exception-mapping decorator (U7f) will write ErrorType members
+    # The exception-mapping decorator will write ErrorType members
     # straight into {"error": ...}; ensure that doesn't blow up.
     payload = {"error": ErrorType.VALIDATION_ERROR}
     assert json.dumps(payload) == '{"error": "validation_error"}'
@@ -52,14 +52,16 @@ def test_json_response_body_round_trips_through_json() -> None:
 
 
 def test_json_response_accepts_error_enum_in_payload() -> None:
-    # Verifies U7f's expected wire shape: {"error": ErrorType.X} -> bare string.
-    resp = json_response({"error": ErrorType.UPSTREAM_STORAGE_ERROR}, HTTPStatus.BAD_GATEWAY)
+    # Verifies the expected wire shape: {"error": ErrorType.X} -> bare string.
+    resp = json_response(
+        {"error": ErrorType.UPSTREAM_STORAGE_ERROR}, HTTPStatus.BAD_GATEWAY
+    )
     assert resp.status_code == 502
     assert json.loads(resp.get_body()) == {"error": "upstream_storage_error"}
 
 
 def test_json_response_handles_each_blueprint_status_code() -> None:
-    # Sanity: the four statuses U7f's ladder will emit all round-trip cleanly.
+    # Sanity: the four statuses the exception ladder emits all round-trip cleanly.
     for status in (
         HTTPStatus.OK,
         HTTPStatus.UNPROCESSABLE_ENTITY,
