@@ -160,3 +160,9 @@ When you deploy Chat with Your Data with `azd up`, you may hit error codes that 
 
 > [!NOTE]
 > If you hit an error that is not listed here, see the [Common deployment errors](https://learn.microsoft.com/en-us/azure/azure-resource-manager/troubleshooting/common-deployment-errors) documentation. If the problem persists, raise an issue in the project repository.
+
+## Related documentation
+
+* [Quota check](QuotaCheck.md)
+* [Deploy with azd](LOCAL_DEPLOYMENT.md)
+* [Customizing azd parameters](customizing_azd_parameters.md)

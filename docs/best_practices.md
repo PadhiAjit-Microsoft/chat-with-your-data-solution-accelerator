@@ -72,3 +72,10 @@ In this accelerator, chunking is automatic and driven by document format during 
 - Paragraph chunking groups semantically related paragraphs for text, Markdown, JSON, and HTML sources.
 - Page chunking splits PDFs and images into pages, using Azure AI Document Intelligence to read layout and text.
 - A fixed-size grouping fallback handles Office formats by grouping content up to a target size, with no overlap between chunks.
+
+## Related documentation
+
+* [Architecture overview](architecture.md)
+* [Document ingestion](document_ingestion.md)
+* [Model configuration](model_configuration.md)
+* [Admin and configuration](admin.md)

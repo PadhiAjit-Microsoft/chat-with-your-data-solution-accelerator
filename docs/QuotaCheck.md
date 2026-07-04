@@ -69,7 +69,7 @@ australiaeast, eastus2, japaneast, uksouth
 ### **Sample Output**
 The final table lists regions with available quota. You can select any of these regions for deployment.
 
-![quota-check-ouput](images/quota-check-output.png)
+![quota-check-output](images/quota-check-output.png)
 
 ---
 ### **If using Azure Portal and Cloud Shell**

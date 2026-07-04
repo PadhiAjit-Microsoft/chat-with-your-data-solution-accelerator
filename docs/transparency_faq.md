@@ -38,3 +38,9 @@ This solution accelerator can only be used as a sample to accelerate the creatio
 ### What operational factors and settings allow for effective and responsible use of Chat with your Data Solution Accelerator?
 
 Users can try different values for some parameters like system prompt, temperature, max tokens etc. shared as configurable environment variables while running run evaluations for AI Assistants. Please note that these parameters are only provided as guidance to start the configuration but not as a complete available list to adjust the system behavior. Please always refer to the latest product documentation for these details or reach out to your Microsoft account team if you need assistance.
+
+## Related documentation
+
+* [Architecture overview](architecture.md)
+* [Best practices](best_practices.md)
+* [Admin and configuration](admin.md)

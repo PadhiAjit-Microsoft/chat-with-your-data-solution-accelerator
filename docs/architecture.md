@@ -110,7 +110,7 @@ The default is a starting point, not a lock. An operator can switch orchestrator
 
 A single user-assigned managed identity holds every role assignment the workload needs, and application configuration is passed as environment variables rather than stored in a secret store. See [Managed identity and RBAC](managed_identity.md) for details.
 
-## Additional resources
+## Related documentation
 
 * [Deploy with azd](LOCAL_DEPLOYMENT.md)
 * [Document ingestion](document_ingestion.md)
