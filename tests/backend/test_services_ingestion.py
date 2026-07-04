@@ -1,8 +1,4 @@
-"""Tests for ``backend.services.ingestion``.
-
-Pillar: Stable Core
-Phase: 7 (Testing + Documentation -- admin-side ingestion helpers)
-"""
+"""Tests for ``backend.services.ingestion``."""
 
 from contextlib import asynccontextmanager
 from types import SimpleNamespace as NS

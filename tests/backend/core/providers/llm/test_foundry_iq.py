@@ -1,8 +1,4 @@
-"""Tests for the LLM provider domain.
-
-Pillar: Stable Core
-Phase: 2
-"""
+"""Tests for the LLM provider domain."""
 
 from types import SimpleNamespace
 from typing import Any

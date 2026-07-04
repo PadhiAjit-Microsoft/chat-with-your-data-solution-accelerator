@@ -1,8 +1,5 @@
 """Post-deploy seed: upload sample documents and enqueue ingestion.
 
-Pillar: Stable Core
-Phase:  7
-
 Runs after a successful ``azd deploy`` / ``azd up`` so chat grounds
 out-of-the-box without an operator manually uploading documents. The
 seed scope resolves from ``--set``, then the ``AZURE_ENV_SAMPLE_DATA``

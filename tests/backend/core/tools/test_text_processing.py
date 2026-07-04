@@ -1,8 +1,4 @@
-"""Tests for `shared.tools.text_processing`.
-
-Pillar: Stable Core
-Phase: 3
-"""
+"""Tests for `shared.tools.text_processing`."""
 
 from unittest.mock import AsyncMock
 

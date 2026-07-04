@@ -1,8 +1,5 @@
 """Repo invariant: no tracked file contains this machine's real azd env values.
 
-Pillar: Stable Core
-Phase: 6 (Standards / env-ID hygiene, enforces Hard Rule #18 / ADR-0019)
-
 Per ``.github/copilot-instructions.md`` Hard Rule #18 and
 ``v2/docs/adr/0019-no-env-specific-content-in-tracked-files.md``, no tracked
 file may carry real environment values (subscription / tenant ids, resource

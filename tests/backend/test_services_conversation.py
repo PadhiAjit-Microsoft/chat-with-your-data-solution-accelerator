@@ -1,8 +1,4 @@
-"""Unit tests for ``backend.services.conversation``.
-
-Pillar: Stable Core
-Phase: 7 (router cleanup -- conversation buffered-response helpers)
-"""
+"""Unit tests for ``backend.services.conversation``."""
 
 from collections.abc import AsyncIterator
 from typing import cast

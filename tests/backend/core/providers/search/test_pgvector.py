@@ -1,8 +1,5 @@
 """Tests for the pgvector search provider.
 
-Pillar: Stable Core
-Phase: 4
-
 Asserts on (a) registry key matches `index_store` Literal lowercase
 so dispatch is registry-only (Hard Rule #4), (b) hybrid SQL shape
 (parameterized, vector cast, ORDER BY cosine distance), (c) FTS

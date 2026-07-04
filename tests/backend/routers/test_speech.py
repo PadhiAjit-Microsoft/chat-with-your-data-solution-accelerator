@@ -1,8 +1,5 @@
 """Tests for ``/api/speech`` router.
 
-Pillar: Stable Core
-Phase: 4
-
 Self-contained: builds a minimal FastAPI app from just the speech
 router so the test does not depend on B4's full app wiring.
 """

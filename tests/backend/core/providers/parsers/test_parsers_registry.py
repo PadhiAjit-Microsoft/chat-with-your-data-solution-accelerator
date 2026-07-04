@@ -1,8 +1,4 @@
-"""Tests for the parsers provider domain.
-
-Pillar: Stable Core
-Phase: 6
-"""
+"""Tests for the parsers provider domain."""
 
 import importlib
 from unittest.mock import patch

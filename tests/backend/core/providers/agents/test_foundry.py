@@ -1,8 +1,5 @@
 """Tests for the `agents` provider domain.
 
-Pillar: Stable Core
-Phase: 4
-
 The `agents` registry domain is the swap-in point for the
 `azure.ai.projects.aio.AIProjectClient` consumed by the
 `agent_framework` orchestrator. Today only `foundry` is registered;

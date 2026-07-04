@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 3.5, lifespan wires search provider."""
+"""Lifespan wires search provider."""
 
 from contextlib import asynccontextmanager
 from unittest.mock import AsyncMock, MagicMock, patch

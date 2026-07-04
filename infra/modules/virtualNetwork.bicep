@@ -1,7 +1,5 @@
 // =============================================================================
 // CWYD v2 - Virtual Network module
-// Pillar: Stable Core
-// Phase:  1 (Infrastructure + Project Skeleton)
 //
 // Wraps AVM `network/virtual-network:0.7.0` + per-subnet AVM
 // `network/network-security-group:0.5.1` to deploy the v2 hub VNet.

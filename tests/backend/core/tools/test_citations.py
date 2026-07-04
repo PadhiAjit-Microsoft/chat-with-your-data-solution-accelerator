@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 3, tests for backend/core/tools/citations.py."""
+"""Tests for backend/core/tools/citations.py."""
 
 from collections.abc import Awaitable, Callable
 

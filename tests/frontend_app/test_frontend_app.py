@@ -1,8 +1,4 @@
-"""Tests for the prod frontend ASGI app (debt #Q3).
-
-Pillar: Stable Core
-Phase: 1
-"""
+"""Tests for the prod frontend ASGI app (debt #Q3)."""
 
 import importlib
 import os

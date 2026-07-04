@@ -1,8 +1,5 @@
 """Type-level invariants for `shared.types`.
 
-Pillar: Stable Core
-Phase: 2
-
 Locks the `OrchestratorChannel` `StrEnum` contract. The enum has to
 satisfy three properties at once so that the channel-literal sweep
 stays a *one-time* refactor instead of re-introducing drift the next

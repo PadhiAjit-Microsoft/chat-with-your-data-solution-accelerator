@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 4, chat history router tests."""
+"""Chat history router tests."""
 
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock

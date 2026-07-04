@@ -1,8 +1,4 @@
-"""Tests for the credentials provider domain.
-
-Pillar: Stable Core
-Phase: 2
-"""
+"""Tests for the credentials provider domain."""
 
 import importlib
 from unittest.mock import patch

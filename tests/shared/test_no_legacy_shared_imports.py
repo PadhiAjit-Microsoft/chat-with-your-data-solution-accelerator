@@ -1,8 +1,5 @@
 """AST invariant: no `from shared.` or `import shared` imports in v2/.
 
-Pillar: Stable Core
-Phase: 5.5 (Stable Core Refactor, REFACTOR-B sub-unit B1)
-
 Per `v2/docs/development_plan.md` §0.1 REFACTOR-B + `/memories/session/plan.md`
 Phase B: the legacy `shared/` package has been moved to `src/backend/core/`.
 Backend is now standalone; functions opt-in extension layer for ingestion.

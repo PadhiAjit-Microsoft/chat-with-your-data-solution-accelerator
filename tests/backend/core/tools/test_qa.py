@@ -1,8 +1,4 @@
-"""Tests for `shared.tools.qa`.
-
-Pillar: Stable Core
-Phase: 3
-"""
+"""Tests for `shared.tools.qa`."""
 
 from unittest.mock import AsyncMock
 

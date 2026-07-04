@@ -1,8 +1,5 @@
 """AST invariant: no `if TYPE_CHECKING:` and no `from __future__ import annotations` in v2/.
 
-Pillar: Stable Core
-Phase: 4 (cleanup audit batch 2 follow-on, CU-013a)
-
 Per `.github/copilot-instructions.md` Hard Rule #11 (Python bullet, CU-013
 amendment 2026-05-05): types in v2/ are always available at runtime. The
 `if TYPE_CHECKING:` guard and `from __future__ import annotations` (PEP 563)

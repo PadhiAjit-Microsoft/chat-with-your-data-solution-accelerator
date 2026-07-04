@@ -1,8 +1,4 @@
-"""Tests for `backend.core.agents.presets` (assistant-type prompt presets, ADR 0030).
-
-Pillar: Scenario Pack
-Phase: 7
-"""
+"""Tests for `backend.core.agents.presets` (assistant-type prompt presets, ADR 0030)."""
 
 from enum import StrEnum
 

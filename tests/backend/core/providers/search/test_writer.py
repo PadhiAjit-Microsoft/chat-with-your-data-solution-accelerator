@@ -1,8 +1,4 @@
-"""Tests for the search write-side helper.
-
-Pillar: Stable Core
-Phase: 6
-"""
+"""Tests for the search write-side helper."""
 
 from collections.abc import Sequence
 from unittest.mock import AsyncMock, MagicMock

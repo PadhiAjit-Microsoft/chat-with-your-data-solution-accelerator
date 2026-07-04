@@ -1,8 +1,4 @@
-"""Import-time wiring tests for the orchestrators provider domain.
-
-Pillar: Stable Core
-Phase: 3
-"""
+"""Import-time wiring tests for the orchestrators provider domain."""
 
 import importlib
 from unittest.mock import patch

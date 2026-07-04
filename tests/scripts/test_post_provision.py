@@ -1,6 +1,4 @@
 """
-Pillar: Stable Core
-Phase: 3
 Purpose: Validate post_provision.py search-index bootstrap and CLI flags.
 """
 

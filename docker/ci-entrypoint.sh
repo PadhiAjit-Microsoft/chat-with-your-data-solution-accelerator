@@ -1,7 +1,5 @@
 #!/usr/bin/env bash
 # CWYD v2 CI validation entrypoint.
-# Pillar: Stable Core
-# Phase: 1
 #
 # Runs everything that must be green before merging a v2 change.
 # Each step is independent; later steps still run if earlier ones fail,

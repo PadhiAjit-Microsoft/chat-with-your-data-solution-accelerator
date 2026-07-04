@@ -1,8 +1,4 @@
-"""Import-time wiring tests for the LLM provider domain.
-
-Pillar: Stable Core
-Phase: 2
-"""
+"""Import-time wiring tests for the LLM provider domain."""
 
 import importlib
 from unittest.mock import patch

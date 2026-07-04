@@ -1,8 +1,4 @@
-"""Tests for backend.core.discovery.
-
-Pillar: Stable Core
-Phase: 4
-"""
+"""Tests for backend.core.discovery."""
 
 import logging
 from importlib.metadata import EntryPoint

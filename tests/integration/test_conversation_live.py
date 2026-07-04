@@ -1,8 +1,5 @@
 """Live conversation checks (integration lane).
 
-Pillar: Stable Core
-Phase: 6
-
 Drives ``POST /api/conversation`` against the real orchestrator + real
 Foundry IQ / Azure Search over the in-process app boot (see
 ``conftest.live_app``). Assertions check behavioral invariants -- grounded

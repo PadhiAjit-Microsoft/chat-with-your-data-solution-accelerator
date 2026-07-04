@@ -1,8 +1,5 @@
 """AST invariant: every `__init__.py` under `v2/` is a package marker only.
 
-Pillar: Stable Core
-Phase: 4 (cleanup audit follow-on, IA-C1)
-
 Per `.github/copilot-instructions.md` Hard Rule #13 (codified 2026-05-20,
 finalised 2026-05-26 after IA-B1..IA-B8): an `__init__.py` is a package
 marker. The *only* permitted content is the module docstring (which

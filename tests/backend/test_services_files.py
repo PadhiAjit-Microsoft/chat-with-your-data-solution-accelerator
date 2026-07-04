@@ -1,8 +1,4 @@
-"""Tests for ``backend.services.files``.
-
-Pillar: Stable Core
-Phase: 7 (Testing + Documentation -- citation document download helper)
-"""
+"""Tests for ``backend.services.files``."""
 
 import logging
 from types import SimpleNamespace as NS

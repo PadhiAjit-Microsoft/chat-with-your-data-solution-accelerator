@@ -1,8 +1,5 @@
 """AST + tokenize invariant: production code carries no process narrative.
 
-Pillar: Stable Core
-Phase: 6 (Standards / Audit turn between U11 and U12, codifies Hard Rule #16)
-
 Per ``.github/copilot-instructions.md`` Hard Rule #16 (codified 2026-05-28):
 comments and docstrings under ``src/**`` describe **what the code is** --
 never how it got there, what unit shipped it, what work lands next, what date

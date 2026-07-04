@@ -1,8 +1,5 @@
 """Live health-endpoint checks (integration lane).
 
-Pillar: Stable Core
-Phase: 6
-
 Boots the real app against real Azure (see ``conftest.live_app``) and
 asserts the diagnostic health contract over a real request. ``/api/health``
 is designed to always return 200 so it stays reachable while dependencies

@@ -1,8 +1,4 @@
-"""Tests for the LLM provider ABC default behavior.
-
-Pillar: Stable Core
-Phase: 2
-"""
+"""Tests for the LLM provider ABC default behavior."""
 
 from typing import AsyncIterator, Sequence
 from unittest.mock import MagicMock

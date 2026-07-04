@@ -1,6 +1,4 @@
 // ========================================================================
-// Pillar:  Stable Core
-// Phase:   1 (Infrastructure + Project Skeleton)
 // Purpose: Entry-point Bicep template for CWYD v2. Provisions a
 //          Foundry-first AI footprint where a single `databaseType`
 //          parameter selects BOTH the chat-history backend AND the

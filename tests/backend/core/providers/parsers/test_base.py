@@ -1,8 +1,4 @@
-"""Tests for `BaseParser` shared helpers.
-
-Pillar: Stable Core
-Phase: 6
-"""
+"""Tests for `BaseParser` shared helpers."""
 
 import hashlib
 import re

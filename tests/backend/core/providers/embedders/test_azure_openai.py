@@ -1,8 +1,4 @@
-"""Tests for AzureOpenAIEmbedder.
-
-Pillar: Stable Core
-Phase: 6
-"""
+"""Tests for AzureOpenAIEmbedder."""
 
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock

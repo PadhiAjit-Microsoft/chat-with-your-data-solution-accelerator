@@ -1,8 +1,4 @@
-"""Tests for the Agent Framework orchestrator.
-
-Pillar: Stable Core
-Phase: 3
-"""
+"""Tests for the Agent Framework orchestrator."""
 
 from types import SimpleNamespace
 from typing import Any, Self

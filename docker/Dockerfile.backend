@@ -1,6 +1,4 @@
 # Backend image: FastAPI + uv (shared by docker-compose.dev + azd deploy)
-# Pillar: Stable Core
-# Phase: 1
 FROM python:3.11-slim
 
 ENV PYTHONUNBUFFERED=1 \

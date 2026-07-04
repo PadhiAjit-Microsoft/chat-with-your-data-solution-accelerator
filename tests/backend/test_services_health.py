@@ -1,8 +1,4 @@
-"""Tests for `backend.services.health` (health-probe diagnostic helpers).
-
-Pillar: Stable Core
-Phase: 7 (router cleanup -- health-probe diagnostic helpers)
-"""
+"""Tests for `backend.services.health` (health-probe diagnostic helpers)."""
 
 from types import SimpleNamespace
 from typing import cast

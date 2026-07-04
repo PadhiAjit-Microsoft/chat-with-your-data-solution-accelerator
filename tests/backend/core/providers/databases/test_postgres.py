@@ -1,8 +1,5 @@
 """Tests for the PostgreSQL chat-history client.
 
-Pillar: Stable Core
-Phase: 4
-
 asyncpg's pool / connection / transaction surface is faked end-to-end
 -- no live Postgres required. Tests assert on (a) parameterized SQL
 shape (no string interpolation), (b) tenant-isolation (user_id always

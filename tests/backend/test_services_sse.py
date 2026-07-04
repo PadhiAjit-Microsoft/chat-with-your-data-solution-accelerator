@@ -1,8 +1,4 @@
-"""Tests for ``backend.services.sse``.
-
-Pillar: Stable Core
-Phase: 7 (router cleanup -- conversation SSE helpers)
-"""
+"""Tests for ``backend.services.sse``."""
 
 import json
 from collections.abc import AsyncIterator

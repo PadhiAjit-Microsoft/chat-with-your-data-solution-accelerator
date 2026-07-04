@@ -1,8 +1,4 @@
-"""Import-time wiring tests for the search registry.
-
-Pillar: Stable Core
-Phase: 3
-"""
+"""Import-time wiring tests for the search registry."""
 
 import importlib
 from unittest.mock import patch

@@ -1,8 +1,5 @@
 """AST invariant: cleaned routers carry only routes + module setup.
 
-Pillar: Stable Core
-Phase: 7 (router cleanup -- locks the U-P7-ROUTER-CLEAN-N series in place)
-
 Per `.github/copilot-instructions.md` Hard Rule #10 (Option 1 bucket
 plan locked CLEAN-6, dev_plan §0.1 ROUTERS-NON-ROUTE-CONTENT-DEBT):
 router modules under `src/backend/routers/` are route-only files.

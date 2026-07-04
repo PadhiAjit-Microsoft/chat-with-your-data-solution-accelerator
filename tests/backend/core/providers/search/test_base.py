@@ -1,8 +1,4 @@
-"""Tests for the `BaseSearch` ABC default behavior.
-
-Pillar: Stable Core
-Phase: 3
-"""
+"""Tests for the `BaseSearch` ABC default behavior."""
 
 from typing import Sequence
 from unittest.mock import MagicMock

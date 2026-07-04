@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 3, tests for the conversation router."""
+"""Tests for the conversation router."""
 
 import ast
 import inspect

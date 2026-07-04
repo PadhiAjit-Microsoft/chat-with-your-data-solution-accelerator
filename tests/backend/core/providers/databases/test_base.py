@@ -1,8 +1,4 @@
-"""Tests for the databases domain skeleton.
-
-Pillar: Stable Core
-Phase: 4
-"""
+"""Tests for the databases domain skeleton."""
 
 from typing import Sequence
 from unittest.mock import MagicMock

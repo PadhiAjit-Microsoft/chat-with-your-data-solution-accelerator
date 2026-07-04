@@ -1,8 +1,6 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
 
 # ========================================================================
-# Pillar:  Stable Core
-# Phase:   1
 # Purpose: Azure Developer CLI manifest for CWYD v2. Drives `azd up` /
 #          `azd provision` / `azd deploy`. The `parameters:` block uses
 #          azd's typed-prompt feature (CGSA pattern) to ask the operator

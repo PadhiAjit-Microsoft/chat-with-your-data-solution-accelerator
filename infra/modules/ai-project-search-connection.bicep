@@ -1,6 +1,4 @@
 // ========================================================================
-// Pillar:  Stable Core
-// Phase:   1 (Infrastructure + Project Skeleton)
 // Purpose: Foundry Project connection to Azure AI Search. Registers the
 //          Search service with the Project so Foundry IQ knowledge bases
 //          can resolve it by friendly name and so the Project's system

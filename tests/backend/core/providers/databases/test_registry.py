@@ -1,8 +1,4 @@
-"""Import-time wiring tests for the databases registry.
-
-Pillar: Stable Core
-Phase: 4
-"""
+"""Import-time wiring tests for the databases registry."""
 
 import importlib
 from unittest.mock import patch

@@ -1,8 +1,4 @@
-"""Tests for `shared.settings`.
-
-Pillar: Stable Core
-Phase: 2
-"""
+"""Tests for `shared.settings`."""
 
 from enum import StrEnum
 from pathlib import Path

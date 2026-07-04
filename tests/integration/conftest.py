@@ -1,8 +1,5 @@
 """Integration-lane fixtures: boot the real FastAPI app against real Azure.
 
-Pillar: Stable Core
-Phase: 6
-
 This conftest powers the opt-in ``@pytest.mark.integration`` lane. Unlike the
 mocked unit suite, these fixtures load the real ``.env`` and run the real
 application lifespan so requests hit live Azure data-plane services (Foundry

@@ -1,8 +1,4 @@
-"""Tests for the search domain.
-
-Pillar: Stable Core
-Phase: 3
-"""
+"""Tests for the search domain."""
 
 import os
 from typing import Any

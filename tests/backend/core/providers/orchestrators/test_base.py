@@ -1,8 +1,4 @@
-"""Tests for the orchestrator domain skeleton.
-
-Pillar: Stable Core
-Phase: 3
-"""
+"""Tests for the orchestrator domain skeleton."""
 
 from typing import Any, AsyncIterator, Sequence
 from unittest.mock import MagicMock

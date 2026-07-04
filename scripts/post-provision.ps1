@@ -1,6 +1,3 @@
-# Pillar: Stable Core
-# Phase:  1
-#
 # Thin PowerShell wrapper around scripts/post_provision.py invoked by
 # azd via the `hooks.postprovision.windows` block in azure.yaml. All
 # logic lives in the Python script so behaviour is identical across

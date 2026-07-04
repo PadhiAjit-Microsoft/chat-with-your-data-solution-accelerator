@@ -1,8 +1,5 @@
 """Tests for `BaseAgentsProvider.get_or_create_agent`.
 
-Pillar: Stable Core
-Phase: 4
-
 The lazy resolver is implemented on the base class (provider-agnostic
 algorithm using `self.get_client()` for SDK calls). These tests
 exercise it through a minimal concrete subclass that injects a fake

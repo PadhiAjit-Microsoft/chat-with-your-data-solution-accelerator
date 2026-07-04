@@ -1,8 +1,4 @@
-"""Import-time wiring tests for the agents provider domain.
-
-Pillar: Stable Core
-Phase: 4
-"""
+"""Import-time wiring tests for the agents provider domain."""
 
 import importlib
 from unittest.mock import patch

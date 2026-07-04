@@ -1,6 +1,4 @@
 # CI validation image: runs Bicep build, what-if preview, pytest, frontend tests, lints.
-# Pillar: Stable Core
-# Phase: 1
 #
 # Build: docker build -f docker/Dockerfile.ci-validate -t cwyd-ci .
 # Run:   docker run --rm -v $PWD:/work -w /work cwyd-ci

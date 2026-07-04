@@ -1,8 +1,5 @@
 """Regression guards for the `databases` provider factory contract.
 
-Pillar: Stable Core
-Phase: 4
-
 The factory contract freezes two invariants:
 
 1. The registry keys self-registered by concrete clients

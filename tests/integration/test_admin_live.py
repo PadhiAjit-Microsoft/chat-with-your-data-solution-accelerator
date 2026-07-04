@@ -1,8 +1,5 @@
 """Live admin-config checks (integration lane).
 
-Pillar: Stable Core
-Phase: 6
-
 Drives the admin-gated config endpoints against the real app + real Easy
 Auth claims parser (see ``conftest.admin_headers`` / ``non_admin_headers``).
 Assertions check the response *shape* and the role gate, never the live

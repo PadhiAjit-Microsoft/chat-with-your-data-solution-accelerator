@@ -1,6 +1,4 @@
 # Azure Functions image: Python 3.11 (Functions-on-ACA deploy + docker-compose dev).
-# Pillar: Stable Core
-# Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
 #
 # Reproduces the deploy layout the Functions Python host requires (sys.path
 # is the deploy root /home/site/wwwroot):

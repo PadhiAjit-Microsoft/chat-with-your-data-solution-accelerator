@@ -1,8 +1,5 @@
 # CWYD v2 developer convenience targets.
 #
-# Pillar: Stable Core (developer tooling)
-# Phase: 2
-#
 # This Makefile is intentionally tiny: it wraps `uv` invocations so
 # every target works from a clean checkout with no Python on $PATH
 # beyond what `uv` provisions (`uv` bootstraps the interpreter via

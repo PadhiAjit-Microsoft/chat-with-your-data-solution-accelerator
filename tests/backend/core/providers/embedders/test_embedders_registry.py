@@ -1,8 +1,4 @@
-"""Tests for the embedders provider domain.
-
-Pillar: Stable Core
-Phase: 6
-"""
+"""Tests for the embedders provider domain."""
 
 import importlib
 from typing import cast

@@ -1,8 +1,4 @@
-"""Tests for `shared.tools.post_prompt`.
-
-Pillar: Stable Core
-Phase: 3
-"""
+"""Tests for `shared.tools.post_prompt`."""
 
 from unittest.mock import AsyncMock
 

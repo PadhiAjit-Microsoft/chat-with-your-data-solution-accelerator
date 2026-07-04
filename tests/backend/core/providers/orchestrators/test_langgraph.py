@@ -1,8 +1,4 @@
-"""Tests for the LangGraph orchestrator.
-
-Pillar: Stable Core
-Phase: 3
-"""
+"""Tests for the LangGraph orchestrator."""
 
 from typing import Any, AsyncIterator, Sequence
 from unittest.mock import MagicMock

@@ -1,8 +1,4 @@
-"""Tests for the health router.
-
-Pillar: Stable Core
-Phase: 2
-"""
+"""Tests for the health router."""
 
 from enum import StrEnum
 from unittest.mock import AsyncMock, MagicMock

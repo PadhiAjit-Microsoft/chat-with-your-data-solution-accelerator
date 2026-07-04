@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 3.5 + Phase 5, DI provider tests."""
+"""DI provider tests."""
 
 from types import SimpleNamespace
 from typing import Any

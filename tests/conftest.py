@@ -1,8 +1,5 @@
 """
 Global pytest fixtures for CWYD v2.
-
-Pillar: Stable Core
-Phase: 0
 """
 
 import os

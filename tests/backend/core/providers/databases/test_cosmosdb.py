@@ -1,8 +1,5 @@
 """Tests for the Cosmos DB chat-history client.
 
-Pillar: Stable Core
-Phase: 4
-
 The async iterator + replace/read/delete surface of `azure.cosmos.aio`
 is faked end-to-end -- no Cosmos emulator required. Tests assert on
 (a) the wire shape (item dict shape sent to the SDK), (b) the

@@ -1,8 +1,5 @@
 """AST invariant: closed-set dict returns must be typed Pydantic models.
 
-Pillar: Stable Core
-Phase: 6 (Standards / Audit turn between U10a and U10b, codifies Hard Rule #15)
-
 Per `.github/copilot-instructions.md` Hard Rule #15 (codified 2026-05-28): when
 a function returns a dict (or ``list[dict]``) whose keys are a *fixed,
 known-at-author-time* schema, the function must return a Pydantic v2

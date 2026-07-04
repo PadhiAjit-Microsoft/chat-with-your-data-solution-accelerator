@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase:  1
-
-Post-provision hook executed by `azd up` / `azd provision` after every
+"""Post-provision hook executed by `azd up` / `azd provision` after every
 Bicep deployment. Idempotent and safe to re-run.
 
 Responsibilities

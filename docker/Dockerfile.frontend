@@ -1,6 +1,4 @@
 # Frontend image, single-runtime production image.
-# Pillar: Stable Core
-# Phase: 1
 #
 # One runtime per container (uvicorn serves the built assets). The
 # frontend-only profile boots independently with zero backend connectivity;

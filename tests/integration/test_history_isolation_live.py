@@ -1,8 +1,5 @@
 """Live cross-user history-isolation check (integration lane).
 
-Pillar: Stable Core
-Phase: 6
-
 Proves the chat-history surface is partitioned per caller: a conversation
 created by one Easy Auth principal is invisible to a second principal, and the
 second principal cannot delete it. The history routes derive ``user_id`` from

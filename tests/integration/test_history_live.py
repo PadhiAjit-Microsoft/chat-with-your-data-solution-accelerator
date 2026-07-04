@@ -1,8 +1,5 @@
 """Live chat-history checks (integration lane).
 
-Pillar: Stable Core
-Phase: 6
-
 Exercises the chat-history CRUD surface against the real database backend
 (``cosmosdb`` / ``postgresql`` -- whichever the live env wires) over the
 in-process app boot. The lifecycle test creates a uniquely-titled

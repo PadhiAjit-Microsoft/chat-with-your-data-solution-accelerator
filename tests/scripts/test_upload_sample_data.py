@@ -1,8 +1,5 @@
 """Tests for the sample-data seed (upload-sample-data.{sh,ps1} + upload_sample_data.py).
 
-Pillar: Stable Core
-Phase: 7
-
 The wrappers are thin OS shims azd's project-level `hooks.postdeploy`
 invokes after a successful deploy to seed curated documents and enqueue
 ingestion so chat grounds out-of-the-box. The wrappers carry no

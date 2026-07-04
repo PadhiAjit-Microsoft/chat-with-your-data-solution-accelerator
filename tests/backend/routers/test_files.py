@@ -1,8 +1,5 @@
 """Tests for the ``/api/files`` router.
 
-Pillar: Stable Core
-Phase: 7 (Testing + Documentation -- citation document download route)
-
 Self-contained: builds a minimal FastAPI app from just the files
 router so the test does not depend on the full app wiring.
 """

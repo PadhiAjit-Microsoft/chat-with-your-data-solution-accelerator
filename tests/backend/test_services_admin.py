@@ -1,8 +1,4 @@
-"""Tests for ``backend.services.admin``.
-
-Pillar: Stable Core
-Phase: 5 (admin surface helpers)
-"""
+"""Tests for ``backend.services.admin``."""
 
 from datetime import UTC, datetime
 from types import SimpleNamespace

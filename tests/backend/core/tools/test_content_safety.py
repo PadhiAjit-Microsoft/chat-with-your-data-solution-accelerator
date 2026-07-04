@@ -1,8 +1,4 @@
-"""Tests for the content safety guardrail and the RAI agent classifier.
-
-Pillar: Stable Core
-Phase: 3
-"""
+"""Tests for the content safety guardrail and the RAI agent classifier."""
 
 from types import SimpleNamespace
 from typing import Any, Self
