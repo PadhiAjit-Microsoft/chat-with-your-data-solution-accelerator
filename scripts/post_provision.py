@@ -213,7 +213,7 @@ def _ensure_public_network_access(*, dry_run: bool, runner=None) -> str:
     This re-asserts ``Enabled`` via ``az`` after provisioning, mirroring the
     MACAE ``selecting_team_config_and_data.sh`` toggle. Data-plane auth stays
     RBAC-only (Cosmos ``disableLocalAuth``, Storage ``allowSharedKeyAccess``
-    off), so opening the network exposes no key surface. Tracked as BUG-0093.
+    off), so opening the network exposes no key surface.
 
     No-op under private networking (the accounts are reached through private
     endpoints and stay ``Disabled``). Returns ``"skipped"``, ``"dry-run"``,

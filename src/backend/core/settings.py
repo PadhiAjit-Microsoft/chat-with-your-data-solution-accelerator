@@ -5,9 +5,8 @@ Phase: 2
 
 `AppSettings` composes ~9 small `BaseSettings` models, one per Azure
 subsystem, that read **only** the `AZURE_*` env vars emitted by
-`infra/main.bicep` outputs (verified list of 37 vars as of Phase
-1.2). The orchestrator namespace uses the runtime-tunable `CWYD_`
-prefix because it is not infra-pinned.
+`infra/main.bicep` outputs. The orchestrator namespace uses the
+runtime-tunable `CWYD_` prefix because it is not infra-pinned.
 
 Design rules (binding):
 

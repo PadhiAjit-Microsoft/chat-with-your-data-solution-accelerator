@@ -492,7 +492,7 @@ class FoundryIQ(BaseLLMProvider):
         ``temperature`` / ``max_tokens`` are intentionally not exposed:
         reasoning models reject the former and prefer
         ``max_output_tokens`` (left to the deployment's configured
-        default for now).
+        default).
         """
         model = self._resolve_deployment(deployment, kind="chat")
         oai = await self._get_openai_client()
