@@ -15,8 +15,11 @@ This gate walks every ``*.py`` under ``src/``, harvests:
 * every module / class / function docstring (via ``ast.get_docstring``);
 * every comment token (via ``tokenize.generate_tokens``);
 
-and fails the parametrised case for that file if any harvested text contains
-a banned pattern that is not covered by a Hard Rule #16 carve-out.
+and, separately, every ``*.ts`` / ``*.tsx`` under ``src/`` (the frontend
+tree), harvesting ``//`` line comments and ``/* ... */`` block comments via a
+minimal string-aware scanner. Either walk fails the parametrised case for that
+file if any harvested text contains a banned pattern that is not covered by a
+Hard Rule #16 carve-out.
 
 **Banned patterns** (line-level regex set):
 
@@ -30,6 +33,10 @@ a banned pattern that is not covered by a Hard Rule #16 carve-out.
 * ``\\b20\\d{2}-\\d{2}-\\d{2}\\b(?!-)`` -- ISO process dates, with the
   trailing ``(?!-)`` lookahead carving out Azure API version literals such as
   ``2025-04-01-preview`` which keep the suffix.
+* ``\\bCU-\\d+\\w*`` -- cleanup-unit IDs (``CU-009a``, ``CU-010b3``).
+* ``#35[a-z]\\b`` -- GitHub issue references (``#35d``, ``#35g``); the trailing
+  word boundary keeps multi-character hex colors such as ``#35abcd`` from
+  matching.
 
 **Per-line carve-outs** (applied to the source line containing the comment /
 docstring text -- a match inside any line below is ignored):
@@ -80,6 +87,8 @@ _FUTURE_TESTS_RE = re.compile(
     re.IGNORECASE,
 )
 _ISO_DATE_RE = re.compile(r"\b20\d{2}-\d{2}-\d{2}\b(?!-)")
+_CU_ID_RE = re.compile(r"\bCU-\d+\w*")
+_ISSUE_35_RE = re.compile(r"#35[a-z]\b")
 
 # (regex, human-readable label) pairs. Order is presentation-only.
 _CHECKS: tuple[tuple[re.Pattern[str], str], ...] = (
@@ -90,6 +99,8 @@ _CHECKS: tuple[tuple[re.Pattern[str], str], ...] = (
     (_DEVPLAN_RE, "dev_plan citation"),
     (_FUTURE_TESTS_RE, "future tests"),
     (_ISO_DATE_RE, "ISO date"),
+    (_CU_ID_RE, "CU-### unit ID"),
+    (_ISSUE_35_RE, "#35x issue ref"),
 )
 
 
@@ -117,6 +128,88 @@ def _iter_v2_src_python_files() -> list[Path]:
             continue
         files.append(path)
     return sorted(files)
+
+
+_TS_SUFFIXES = ("*.ts", "*.tsx")
+
+
+def _iter_v2_src_ts_files() -> list[Path]:
+    """Return every ``*.ts`` / ``*.tsx`` under ``src/``, sorted."""
+    files: list[Path] = []
+    if not _SRC_ROOT.is_dir():
+        return files
+    for pattern in _TS_SUFFIXES:
+        for path in _SRC_ROOT.rglob(pattern):
+            parts = set(path.parts)
+            if (
+                "__pycache__" in parts
+                or ".venv" in parts
+                or "build" in parts
+                or "dist" in parts
+                or "node_modules" in parts
+            ):
+                continue
+            files.append(path)
+    return sorted(files)
+
+
+def _iter_ts_comments(source: str) -> list[tuple[int, str]]:
+    """Return ``(line_no, comment_text)`` for every TS/TSX comment.
+
+    A minimal string-aware scanner: it tracks single-quote, double-quote, and
+    backtick string context so that ``//`` and ``/*`` sequences inside string
+    literals are not mistaken for comments. Both ``//`` line comments and
+    ``/* ... */`` block comments are harvested; the reported line number is the
+    line the comment opens on.
+    """
+    results: list[tuple[int, str]] = []
+    i = 0
+    n = len(source)
+    line = 1
+    while i < n:
+        ch = source[i]
+        two = source[i : i + 2]
+        if ch == "\n":
+            line += 1
+            i += 1
+        elif ch in "'\"`":
+            quote = ch
+            i += 1
+            while i < n:
+                c = source[i]
+                if c == "\\":
+                    if i + 1 < n and source[i + 1] == "\n":
+                        line += 1
+                    i += 2
+                    continue
+                if c == "\n":
+                    line += 1
+                    i += 1
+                    if quote != "`":
+                        break
+                    continue
+                if c == quote:
+                    i += 1
+                    break
+                i += 1
+        elif two == "//":
+            start = i
+            while i < n and source[i] != "\n":
+                i += 1
+            results.append((line, source[start:i]))
+        elif two == "/*":
+            start = i
+            start_line = line
+            i += 2
+            while i < n and source[i : i + 2] != "*/":
+                if source[i] == "\n":
+                    line += 1
+                i += 1
+            i = min(i + 2, n)
+            results.append((start_line, source[start:i]))
+        else:
+            i += 1
+    return results
 
 
 def _iter_docstrings(tree: ast.Module) -> list[tuple[int, str]]:
@@ -197,6 +290,15 @@ def _scan_file(path: Path) -> list[str]:
     return violations
 
 
+def _scan_ts_file(path: Path) -> list[str]:
+    """Return every violation discovered in the given TS/TSX source file."""
+    source = path.read_text(encoding="utf-8")
+    violations: list[str] = []
+    for line_no, text in _iter_ts_comments(source):
+        violations.extend(_scan_text(text, line_no))
+    return violations
+
+
 # --- Parametrised test --------------------------------------------------------
 
 
@@ -222,6 +324,27 @@ def test_no_process_narrative_in_src(path: Path) -> None:
         )
 
 
+@pytest.mark.parametrize(
+    "path",
+    _iter_v2_src_ts_files(),
+    ids=lambda p: str(p.relative_to(_REPO_ROOT)),
+)
+def test_no_process_narrative_in_frontend_ts(path: Path) -> None:
+    """Per-file gate: each ``*.ts`` / ``*.tsx`` under src/ is narrative-free."""
+    violations = _scan_ts_file(path)
+    if violations:
+        rel = path.relative_to(_REPO_ROOT)
+        pytest.fail(
+            f"\n{rel}: Hard Rule #16 violations:\n"
+            + "\n".join(violations)
+            + "\n\nFix the comment. Process state belongs in "
+            "v2/docs/development_plan.md and commit history, not production "
+            "source. See .github/copilot-instructions.md Hard Rule #16 for "
+            "the carve-out list (bare Pillar:/Phase: headers, -DEBT anchors, "
+            "Hard Rule N citations, Azure SDK API version literals)."
+        )
+
+
 def test_scan_actually_walked_files() -> None:
     """Sanity guard: the source-tree walk must not be empty.
 
@@ -235,10 +358,15 @@ def test_scan_actually_walked_files() -> None:
     assert files, "no `*.py` files discovered under src/"
     rel_parts = {p.relative_to(_SRC_ROOT).parts[0] for p in files}
     assert "backend" in rel_parts, (
-        "no `*.py` files found under src/backend/ -- path resolution "
-        "likely broken"
+        "no `*.py` files found under src/backend/ -- path resolution " "likely broken"
     )
     assert "functions" in rel_parts, (
-        "no `*.py` files found under src/functions/ -- path resolution "
-        "likely broken"
+        "no `*.py` files found under src/functions/ -- path resolution " "likely broken"
+    )
+    ts_files = _iter_v2_src_ts_files()
+    assert ts_files, "no `*.ts` / `*.tsx` files discovered under src/"
+    ts_rel_parts = {p.relative_to(_SRC_ROOT).parts[0] for p in ts_files}
+    assert "frontend" in ts_rel_parts, (
+        "no `*.ts` / `*.tsx` files found under src/frontend/ -- path "
+        "resolution likely broken"
     )
