@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 — tests for functions/core/exception_mapping.py."""
+"""Pillar: Stable Core / Phase: 6, tests for functions/core/exception_mapping.py."""
 
 import json
 import logging

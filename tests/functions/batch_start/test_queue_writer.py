@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 — tests for src/functions/batch_start/queue_writer.py."""
+"""Pillar: Stable Core / Phase: 6, tests for src/functions/batch_start/queue_writer.py."""
 
 import logging
 from typing import cast

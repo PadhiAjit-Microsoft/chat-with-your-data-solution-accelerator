@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 — tests for src/functions/core/telemetry.py."""
+"""Pillar: Stable Core / Phase: 6, tests for src/functions/core/telemetry.py."""
 
 import pytest
 

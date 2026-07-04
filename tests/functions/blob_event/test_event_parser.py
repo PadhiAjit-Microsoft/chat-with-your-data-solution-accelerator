@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 — tests for src/functions/blob_event/event_parser.py."""
+"""Pillar: Stable Core / Phase: 6, tests for src/functions/blob_event/event_parser.py."""
 
 import base64
 import json
@@ -94,7 +94,7 @@ def _event_body(subject: str) -> dict[str, object]:
 
 
 # ---------------------------------------------------------------------------
-# parse_blob_event — classify the event type + parse the blob reference
+# parse_blob_event: classify the event type + parse the blob reference
 # ---------------------------------------------------------------------------
 
 

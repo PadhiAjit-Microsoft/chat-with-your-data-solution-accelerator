@@ -72,7 +72,11 @@ async def get_speech_config(
     return SpeechConfig(
         token=token,
         region=settings.speech.service_region,
-        languages=[lang.strip() for lang in settings.speech.recognizer_languages.split(",") if lang.strip()],
+        languages=[
+            lang.strip()
+            for lang in settings.speech.recognizer_languages.split(",")
+            if lang.strip()
+        ],
     )
 
 

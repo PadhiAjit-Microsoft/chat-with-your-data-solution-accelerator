@@ -400,7 +400,7 @@ def test_runtime_config_partial_override_leaves_other_fields_none() -> None:
 
 def test_runtime_config_content_safety_enabled_defaults_to_none() -> None:
     """`content_safety_enabled` joins the existing mutable fields with
-    the same `T | None = None` shape — None means 'no admin override,
+    the same `T | None = None` shape: None means 'no admin override,
     fall through to `AppSettings.content_safety.enabled` at request
     time via `get_content_safety_guard`'."""
     rc = RuntimeConfig()
@@ -443,7 +443,7 @@ def test_runtime_config_content_safety_enabled_distinguishes_false_from_none() -
 
 def test_runtime_config_partial_override_preserves_content_safety_unset() -> None:
     """A partial override carrying only `content_safety_enabled` must
-    leave every other mutable field at None — mirrors the existing
+    leave every other mutable field at None, mirroring the existing
     `test_runtime_config_partial_override_leaves_other_fields_none`
     pattern from the other direction."""
     rc = RuntimeConfig(content_safety_enabled=True)
@@ -458,7 +458,7 @@ def test_runtime_config_partial_override_preserves_content_safety_unset() -> Non
 
 def test_runtime_config_cwyd_agent_instructions_defaults_to_none() -> None:
     """`cwyd_agent_instructions` joins the existing mutable fields with
-    the same `T | None = None` shape — None means 'no admin override,
+    the same `T | None = None` shape: None means 'no admin override,
     fall through to `CWYD_AGENT.instructions` at agent-creation time
     in the agents provider'."""
     rc = RuntimeConfig()
@@ -479,7 +479,7 @@ def test_runtime_config_cwyd_agent_instructions_round_trips() -> None:
 
 def test_runtime_config_partial_override_preserves_cwyd_agent_unset() -> None:
     """A partial override carrying only `cwyd_agent_instructions` must
-    leave every other mutable field at None — mirrors the existing
+    leave every other mutable field at None, mirroring the existing
     partial-override tests for the other fields."""
     rc = RuntimeConfig(cwyd_agent_instructions="custom prompt")
     assert rc.cwyd_agent_instructions == "custom prompt"

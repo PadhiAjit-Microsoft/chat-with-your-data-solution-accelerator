@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 — tests for src/functions/blob_event/handler.py."""
+"""Pillar: Stable Core / Phase: 6, tests for src/functions/blob_event/handler.py."""
 
 from typing import cast
 
@@ -38,7 +38,7 @@ def _as_queue(fake: _FakeQueueClient) -> QueueClient:
 
 
 # ---------------------------------------------------------------------------
-# handle_blob_created — enqueue an ingestion job
+# handle_blob_created: enqueue an ingestion job
 # ---------------------------------------------------------------------------
 
 
@@ -94,7 +94,7 @@ async def test_created_outcome_is_frozen() -> None:
 
 
 # ---------------------------------------------------------------------------
-# handle_blob_deleted — de-index by source
+# handle_blob_deleted: de-index by source
 # ---------------------------------------------------------------------------
 
 
