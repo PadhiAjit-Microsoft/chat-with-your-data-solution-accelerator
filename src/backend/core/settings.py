@@ -28,9 +28,7 @@ import json
 from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
-# ---------------------------------------------------------------------------
 # Cross-cutting enums
-# ---------------------------------------------------------------------------
 
 
 class Environment(StrEnum):
@@ -123,9 +121,7 @@ class IngestionTrigger(StrEnum):
     EVENT_GRID = "event_grid"
 
 
-# ---------------------------------------------------------------------------
 # Per-subsystem settings
-# ---------------------------------------------------------------------------
 
 
 class IdentitySettings(BaseSettings):
@@ -487,9 +483,7 @@ class DocumentIntelligenceSettings(BaseSettings):
     model_id: str = "prebuilt-layout"
 
 
-# ---------------------------------------------------------------------------
 # Root settings
-# ---------------------------------------------------------------------------
 
 
 class AppSettings(BaseSettings):
@@ -533,9 +527,7 @@ class AppSettings(BaseSettings):
     )
 
 
-# ---------------------------------------------------------------------------
 # Cached accessor (FastAPI Depends-friendly)
-# ---------------------------------------------------------------------------
 
 
 @lru_cache(maxsize=1)

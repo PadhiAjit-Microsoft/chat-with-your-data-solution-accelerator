@@ -4,8 +4,8 @@ Every concrete database client (`cosmosdb`, `postgres`, future
 swap-ins like Redis) inherits from `BaseDatabaseClient`
 and self-registers via `@registry.register("<key>")`.
 
-Per Q10 design: chat-history CRUD lives **on the database client** --
-there is no separate `chat_history` provider domain. A future expansion
+Chat-history CRUD lives **on the database client** -- there is no
+separate `chat_history` provider domain. A future expansion
 (vector-store metadata, config storage) layers more methods on the same
 client.
 
@@ -42,7 +42,7 @@ class BaseDatabaseClient(ABC):
         self._settings = settings
         self._credential = credential
 
-    # ---- Conversations --------------------------------------------------
+    # Conversations
 
     @abstractmethod
     async def list_conversations(self, user_id: str) -> Sequence[Conversation]:
@@ -68,7 +68,7 @@ class BaseDatabaseClient(ABC):
     async def delete_conversation(self, conversation_id: str, user_id: str) -> None:
         """Delete `conversation_id` and all its messages. Idempotent."""
 
-    # ---- Messages -------------------------------------------------------
+    # Messages
 
     @abstractmethod
     async def list_messages(
@@ -96,7 +96,7 @@ class BaseDatabaseClient(ABC):
         """Attach / overwrite feedback (e.g. ``"positive"``,
         ``"negative"``) on `message_id`."""
 
-    # ---- Agent registry -------------------------------------------------
+    # Agent registry
     #
     # `name` is the `AgentDefinition.name` (e.g. "cwyd", "rai"). The
     # value persisted is the Foundry-side agent id returned by
@@ -120,7 +120,7 @@ class BaseDatabaseClient(ABC):
         this when Foundry returns 404 for a stale persisted id).
         """
 
-    # ---- Runtime config -------------------------------------------------
+    # Runtime config
     #
     # The admin API (`PATCH /api/admin/config`) persists a
     # singleton `RuntimeConfig` row that overrides selected env
@@ -145,7 +145,7 @@ class BaseDatabaseClient(ABC):
         merge semantics belong in the route, not the storage layer.
         """
 
-    # ---- Admin audit log ------------------------------------------------
+    # Admin audit log
     #
     # Append-only audit row written by the admin router after every
     # successful `PATCH /api/admin/config`. The router
@@ -164,7 +164,7 @@ class BaseDatabaseClient(ABC):
         with identical bodies are still two distinct events.
         """
 
-    # ---- Lifecycle ------------------------------------------------------
+    # Lifecycle
 
     async def aclose(self) -> None:
         """Release any owned SDK clients. Default no-op."""

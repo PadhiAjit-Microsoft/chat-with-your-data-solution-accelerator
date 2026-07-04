@@ -45,7 +45,6 @@ from .base import BaseSearch, SourceListing
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
 # Try/except policy
 #
 # Per v2/docs/exception_handling_policy.md (Provider entry-points + Lifespan
@@ -61,7 +60,6 @@ logger = logging.getLogger(__name__)
 # `aclose()` widens the catch to `(AzureError, OSError)` and downgrades
 # to `logger.warning` + swallow: shutdown is best-effort per the policy
 # doc Lifespan row.
-# ---------------------------------------------------------------------------
 
 
 _DEFAULT_SELECT_FIELDS = ("id", "content", "title", "url")
@@ -82,9 +80,7 @@ class AzureSearch(BaseSearch):
         self._client_override = client
         self._client: SearchClient | None = client
 
-    # ------------------------------------------------------------------
     # Internals
-    # ------------------------------------------------------------------
 
     def _get_client(self) -> SearchClient:
         if self._client is not None:
@@ -122,9 +118,7 @@ class AzureSearch(BaseSearch):
             score=float(score) if score is not None else None,
         )
 
-    # ------------------------------------------------------------------
     # BaseSearch implementation
-    # ------------------------------------------------------------------
 
     async def search(
         self,

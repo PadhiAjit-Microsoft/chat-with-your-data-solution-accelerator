@@ -34,16 +34,26 @@ from typing import cast
 from fastapi import APIRouter, HTTPException, status
 
 from backend.core.types import ChatMessage, ChatRole, Conversation, MessageRecord
-from backend.dependencies import ContentSafetyGuardDep, DatabaseClientDep, SettingsDep, UserIdDep
-from backend.models.history import AddMessageRequest, ConversationDetail, CreateConversationRequest, HistoryStatus, RenameConversationRequest, SetFeedbackRequest
+from backend.dependencies import (
+    ContentSafetyGuardDep,
+    DatabaseClientDep,
+    SettingsDep,
+    UserIdDep,
+)
+from backend.models.history import (
+    AddMessageRequest,
+    ConversationDetail,
+    CreateConversationRequest,
+    HistoryStatus,
+    RenameConversationRequest,
+    SetFeedbackRequest,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/history", tags=["history"])
 
 
-# ---------------------------------------------------------------------------
 # Routes
-# ---------------------------------------------------------------------------
 
 
 @router.get(
@@ -64,8 +74,7 @@ async def history_status(settings: SettingsDep) -> HistoryStatus:
     response_model=list[Conversation],
     summary="List conversations",
     description=(
-        "List every conversation belonging to the signed-in user, most "
-        "recent first."
+        "List every conversation belonging to the signed-in user, most " "recent first."
     ),
 )
 async def list_conversations(
@@ -149,9 +158,7 @@ async def rename_conversation(
                 detail="Title was blocked by the content safety guard.",
             )
     try:
-        return await db.rename_conversation(
-            conversation_id, user_id, body.title
-        )
+        return await db.rename_conversation(conversation_id, user_id, body.title)
     except KeyError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

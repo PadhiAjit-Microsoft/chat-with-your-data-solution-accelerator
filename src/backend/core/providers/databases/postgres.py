@@ -43,7 +43,6 @@ from .base import BaseDatabaseClient
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
 # Try/except policy
 #
 # Per v2/docs/exception_handling_policy.md (Provider entry-points + Lifespan
@@ -51,7 +50,7 @@ logger = logging.getLogger(__name__)
 # `asyncpg.PostgresError` catch (the umbrella for all SQL-layer failures --
 # foreign-key, serialization, deadlock, admin shutdown, etc.), structured-
 # logged via `logger.exception(..., extra={"operation": ..., "provider":
-# "postgres", ...domain_ids})`, and re-raised so the router layer (C4) can
+# "postgres", ...domain_ids})`, and re-raised so the router layer can
 # map to a sanitized HTTPException.
 #
 # Two carve-outs in this file:
@@ -66,7 +65,6 @@ logger = logging.getLogger(__name__)
 #   variants on either the INSERT or the parent updated_at UPDATE, while
 #   the inner KeyError bubbles past it unchanged (KeyError is not a
 #   PostgresError).
-# ---------------------------------------------------------------------------
 
 
 # Bounded startup connect timeout (seconds) handed to `asyncpg.create_pool`.
@@ -160,8 +158,7 @@ CREATE INDEX IF NOT EXISTS idx_admin_audit_created
 """
 
 
-# ---------------------------------------------------------------------------
-# Narrow asyncpg Protocols (Q14b).
+# Narrow asyncpg Protocols.
 #
 # `asyncpg` ships no type stubs, so every method call would otherwise leak
 # `Unknown` through pyright `--strict`. Rather than scattering `cast()`
@@ -174,7 +171,6 @@ CREATE INDEX IF NOT EXISTS idx_admin_audit_created
 # `tests/shared/providers/databases/test_postgres.py`) already match
 # this shape structurally; Protocol is structural so no test edit is
 # required.
-# ---------------------------------------------------------------------------
 
 
 class _Record(Protocol):
@@ -263,9 +259,7 @@ class PostgresClient(BaseDatabaseClient):
         self._init_lock = asyncio.Lock()
         self._schema_ready = pool is not None
 
-    # ------------------------------------------------------------------
     # Lifecycle / pool
-    # ------------------------------------------------------------------
 
     @property
     def pool(self) -> "asyncpg.Pool":
@@ -377,9 +371,7 @@ class PostgresClient(BaseDatabaseClient):
             self._pool = None
             self._schema_ready = False
 
-    # ------------------------------------------------------------------
     # Conversations
-    # ------------------------------------------------------------------
 
     async def list_conversations(self, user_id: str) -> Sequence[Conversation]:
         pool = await self._ensure_pool()
@@ -480,9 +472,7 @@ class PostgresClient(BaseDatabaseClient):
             )
             raise
 
-    # ------------------------------------------------------------------
     # Messages
-    # ------------------------------------------------------------------
 
     async def list_messages(
         self, conversation_id: str, user_id: str
@@ -582,9 +572,7 @@ class PostgresClient(BaseDatabaseClient):
         if result.endswith(" 0"):
             raise KeyError(message_id)
 
-    # ------------------------------------------------------------------
     # Agent registry
-    # ------------------------------------------------------------------
 
     async def get_agent_id(self, name: str) -> str | None:
         pool = await self._ensure_pool()
@@ -630,9 +618,7 @@ class PostgresClient(BaseDatabaseClient):
             )
             raise
 
-    # ------------------------------------------------------------------
     # Runtime config
-    # ------------------------------------------------------------------
 
     async def get_runtime_config(self) -> RuntimeConfig | None:
         pool = await self._ensure_pool()
@@ -681,9 +667,7 @@ class PostgresClient(BaseDatabaseClient):
             )
             raise
 
-    # ------------------------------------------------------------------
     # Admin audit log
-    # ------------------------------------------------------------------
 
     async def write_admin_audit(self, entry: AdminAuditEntry) -> None:
         pool = await self._ensure_pool()

@@ -167,9 +167,7 @@ class AgentFrameworkOrchestrator(OrchestratorBase):
             else settings.openai.max_tokens
         )
 
-    # ------------------------------------------------------------------
     # OrchestratorBase implementation
-    # ------------------------------------------------------------------
 
     async def run(
         self,
@@ -209,9 +207,7 @@ class AgentFrameworkOrchestrator(OrchestratorBase):
             )
             if query:
                 embedding = await self.llm.embed([query])
-                query_vector = (
-                    embedding.vectors[0] if embedding.vectors else None
-                )
+                query_vector = embedding.vectors[0] if embedding.vectors else None
                 sources = await self._search.search(
                     query,
                     top_k=self._search_top_k,
@@ -357,9 +353,7 @@ class AgentFrameworkOrchestrator(OrchestratorBase):
             )
 
         if answer:
-            yield OrchestratorEvent(
-                channel=OrchestratorChannel.ANSWER, content=answer
-            )
+            yield OrchestratorEvent(channel=OrchestratorChannel.ANSWER, content=answer)
         elif not saw_any_content:
             yield OrchestratorEvent(
                 channel=OrchestratorChannel.ERROR,
@@ -373,9 +367,7 @@ class AgentFrameworkOrchestrator(OrchestratorBase):
         # is nothing for the orchestrator to release here.
         return None
 
-    # ------------------------------------------------------------------
     # Helpers
-    # ------------------------------------------------------------------
 
     def _build_kb_tool(self) -> MCPTool | None:
         """Build the Foundry IQ Knowledge Base retrieval tool.

@@ -57,30 +57,15 @@ logger = logging.getLogger(__name__)
 
 
 class CosmosItemType(StrEnum):
-    """Closed set of `type=` discriminator values stored on every
-    item in the chat-history container.
+    """Closed set of `type=` discriminator values stored on every item in
+    the chat-history container (Hard Rule #11 StrEnum contract).
 
-    Per `.github/copilot-instructions.md` Hard Rule #11 (Python
-    bullet) and `.github/instructions/v2-shared.instructions.md`
-    §Constants: closed-set string literals must be `StrEnum`, not
-    bare `_FOO = "foo"` module constants. `StrEnum` subclasses
-    `str`, so the wire shape stays exactly `"conversation"` /
-    `"message"` / `"agent"` / `"config"` -- existing tests asserting
-    on raw strings continue to pass without modification.
-
-    Agent rows and runtime-config rows live in
-    the same container as conversations + messages, differentiated
-    by their `type=` value. Neither is user-scoped, so both pin to
-    the synthetic `_system` partition key. Cardinality is bounded
-    by `BUILTIN_AGENTS` (~2 rows today) plus a single runtime-config
-    row, so the usual "avoid low-cardinality partitions" guidance
-    does not apply -- there is no hot-partition risk on a
-    read-mostly handful-of-rows partition. The `ADMIN_AUDIT` value
-    is the append-only admin audit log -- also pinned to
-    `_system` because the audit query is non-user-scoped, with
-    cardinality bounded by `# of admin PATCH operations`
-    (single-tenant CWYD: ~hundreds/year, well under the 20 GB
-    partition cap).
+    Agent, runtime-config, and admin-audit rows share the container with
+    conversations + messages, differentiated by their `type=` value. None
+    is user-scoped, so all pin to the synthetic `_system` partition key.
+    Cardinality is bounded (a handful of agent/config rows plus the
+    append-only admin-audit log at ~hundreds of PATCHes/year), so there is
+    no hot-partition risk and the 20 GB partition cap is never approached.
     """
 
     CONVERSATION = "conversation"
@@ -92,18 +77,10 @@ class CosmosItemType(StrEnum):
 
 class CosmosSystemPartition(StrEnum):
     """Synthetic partition keys for non-user-scoped rows in the
-    chat-history container.
+    chat-history container (Hard Rule #11 StrEnum contract).
 
-    Per Hard Rule #11 (Python bullet -- "sibling partition keys" are
-    explicitly called out as a closed set requiring `StrEnum`, not
-    bare module constants). Currently a single member because every
-    non-user-scoped surface (agent registry, runtime config)
-    shares the same `_system` partition; declaring it as an
-    enum (a) groups the concept under a named type so a future second
-    partition (e.g. tenant-scoped overrides) is a one-line addition
-    rather than a fresh module constant, and (b) keeps the wire shape
-    stable -- `CosmosSystemPartition.DEFAULT` serializes as the bare
-    string `"_system"` because `StrEnum` subclasses `str`.
+    A single member today: every non-user-scoped surface (agent registry,
+    runtime config) shares the same `_system` partition.
     """
 
     DEFAULT = "_system"
@@ -111,14 +88,10 @@ class CosmosSystemPartition(StrEnum):
 
 class CosmosFixedItemId(StrEnum):
     """Closed-set fixed item ids for singleton rows under
-    `CosmosSystemPartition.DEFAULT`.
+    `CosmosSystemPartition.DEFAULT` (Hard Rule #11 StrEnum contract).
 
-    Agent-registry rows use the agent `name` as their id and so are
-    NOT enumerated here -- only truly-fixed sentinel ids belong in
-    this enum. Per Hard Rule #11 (Python bullet) closed-set string
-    literals must be `StrEnum`; a future second sentinel (e.g. a
-    feature-flag singleton) joins this enum rather than landing as
-    a fresh module constant.
+    Agent-registry rows use the agent `name` as their id and so are NOT
+    enumerated here -- only truly-fixed sentinel ids belong in this enum.
     """
 
     RUNTIME_CONFIG = "runtime"
@@ -149,9 +122,7 @@ class CosmosDBClient(BaseDatabaseClient):
         self._client: CosmosClient | None = client
         self._container: "ContainerProxy | None" = None
 
-    # ------------------------------------------------------------------
     # Internals
-    # ------------------------------------------------------------------
 
     def _get_container(self) -> ContainerProxy:
         if self._container is not None:
@@ -199,9 +170,7 @@ class CosmosDBClient(BaseDatabaseClient):
         except CosmosResourceNotFoundError:
             return None
 
-    # ------------------------------------------------------------------
     # Conversations
-    # ------------------------------------------------------------------
 
     async def list_conversations(self, user_id: str) -> Sequence[Conversation]:
         container = self._get_container()
@@ -211,7 +180,7 @@ class CosmosDBClient(BaseDatabaseClient):
         # `parameters` is typed `list[dict[str, object]]` explicitly so
         # the StrEnum value (`CosmosItemType.CONVERSATION` is a `str`
         # subclass) doesn't trip pyright's invariant-list check. Same
-        # rationale on every `query_items` call below (Q14c).
+        # rationale on every `query_items` call below.
         params: list[dict[str, object]] = [
             {"name": "@type", "value": CosmosItemType.CONVERSATION}
         ]
@@ -332,9 +301,7 @@ class CosmosDBClient(BaseDatabaseClient):
             )
             return None
 
-    # ------------------------------------------------------------------
     # Messages
-    # ------------------------------------------------------------------
 
     async def list_messages(
         self, conversation_id: str, user_id: str
@@ -425,9 +392,7 @@ class CosmosDBClient(BaseDatabaseClient):
                 )
         return self._to_message(stored)
 
-    # ------------------------------------------------------------------
     # Agent registry
-    # ------------------------------------------------------------------
 
     async def get_agent_id(self, name: str) -> str | None:
         container = self._get_container()
@@ -594,9 +559,7 @@ class CosmosDBClient(BaseDatabaseClient):
             )
             raise
 
-    # ------------------------------------------------------------------
     # Lifecycle
-    # ------------------------------------------------------------------
 
     async def aclose(self) -> None:
         if self._client is not None:

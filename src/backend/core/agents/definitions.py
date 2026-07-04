@@ -50,9 +50,7 @@ class AgentDefinition(BaseModel):
     tools: tuple[str, ...] = ()
 
 
-# ---------------------------------------------------------------------------
 # Built-in agents
-# ---------------------------------------------------------------------------
 
 # Fixed safety + grounding guardrail. Single source of truth for the
 # non-negotiable rules; appended once after the built-in CWYD persona
