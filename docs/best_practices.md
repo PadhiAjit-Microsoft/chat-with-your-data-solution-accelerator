@@ -40,6 +40,8 @@ The more limited the data set, the broader the questions should be. If the data 
 
 **Azure AI Search used as retriever in RAG**
 
+The guidance in this section and the next applies when your deployment uses the Azure AI Search backend (`cosmosdb` mode). On the PostgreSQL backend (`postgresql` mode), retrieval runs on the `pgvector` HNSW index instead; see [PostgreSQL](postgreSQL.md).
+
 Azure AI Search, when used as a retriever in the Retrieval-Augmented Generation (RAG) pattern, plays a key role in fetching relevant information from a large corpus of data. The RAG pattern involves two key steps: retrieval of documents and generation of responses. Azure AI Search, in the retrieval phase, filters and ranks the most relevant documents from the dataset based on a given query.
 
 The importance of optimizing data in the index for relevance lies in the fact that the quality of retrieved documents directly impacts the generation phase. The more relevant the retrieved documents are, the more accurate and pertinent the generated responses will be.
@@ -48,12 +50,18 @@ Azure AI Search allows for fine-tuning the relevance of search results through f
 
 Moreover, optimizing the data in the index also enhances the efficiency, the speed of the retrieval process and increases relevance which is an integral part of the RAG pattern.
 
-**Azure AI Search**
+**Hardening the Azure AI Search backend (`cosmosdb` mode)**
 
 - Consider switching security keys and using [RBAC](https://learn.microsoft.com/azure/search/search-security-rbac) instead for authentication.
 - Consider setting up a [firewall](https://learn.microsoft.com/azure/search/service-configure-firewall), [private endpoints](https://learn.microsoft.com/azure/search/service-create-private-endpoint) for inbound connections and [shared private links](https://learn.microsoft.com/azure/search/search-indexer-howto-access-trusted-service-exception) for [built-in pull indexers](https://learn.microsoft.com/en-us/azure/search/search-indexer-overview).
 - For the best results, prepare your index data and consider [analyzers](https://learn.microsoft.com/azure/search/search-analyzers).
 - Analyze your [resource capacity needs](https://learn.microsoft.com/azure/search/search-capacity-planning).
+
+**Hardening the PostgreSQL backend (`postgresql` mode)**
+
+- Keep Microsoft Entra authentication only and connect with the workload's managed identity, so there are no database passwords to rotate. See [Managed identity and RBAC](managed_identity.md).
+- Restrict network access with private networking and firewall rules; the `enablePrivateNetworking` deployment option keeps data-plane traffic off the public internet.
+- Size the server compute tier and storage for your document volume and query concurrency, and keep the `pgvector` HNSW index on the retrieval column.
 
 **Before deploying Azure RAG implementations to production**
 

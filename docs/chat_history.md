@@ -22,7 +22,20 @@ Chat history is written to the deployment's database. The database is chosen onc
 | `cosmosdb` (default) | Azure Cosmos DB |
 | `postgresql` | PostgreSQL Flexible Server |
 
-Both modes store conversations and their messages through the same databases provider, so the chat experience is identical regardless of which one you deploy. The backend authenticates to the database with the workload's managed identity, so there are no connection-string secrets to manage. See [Architecture overview](architecture.md) for how the two modes fit together, and [PostgreSQL](postgreSQL.md) for the PostgreSQL schema.
+Both modes store conversations and their messages through the same databases provider, so the chat experience is identical regardless of which one you deploy. The backend authenticates to the database with the workload's managed identity, so there are no connection-string secrets to manage. See [Architecture overview](architecture.md) for how the two modes fit together, and [PostgreSQL](postgreSQL.md) for the PostgreSQL schema. The following diagram traces that selection.
+
+```mermaid
+flowchart TD
+    Backend["Backend<br/>authenticates with managed identity"]
+    Provider["Databases provider<br/>identical chat experience"]
+    Decision{"databaseType, set once at deploy time"}
+    Cosmos["Azure Cosmos DB<br/>conversations and messages"]
+    PG["PostgreSQL Flexible Server<br/>conversations and messages tables"]
+
+    Backend --> Provider --> Decision
+    Decision -->|"cosmosdb (default)"| Cosmos
+    Decision -->|postgresql| PG
+```
 
 Chat history is enabled by default. Every conversation is saved as it happens, and reloading a conversation restores its messages and citations.
 

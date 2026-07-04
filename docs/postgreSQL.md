@@ -13,6 +13,23 @@ ms.topic: concept
 
 Chat with Your Data can run on PostgreSQL. When you deploy with `databaseType=postgresql`, a single PostgreSQL Flexible Server holds both the retrieval index and the chat history, and no Azure AI Search resource is deployed. The other mode, `cosmosdb`, pairs Azure AI Search with Cosmos DB; see [Architecture overview](architecture.md) to compare them.
 
+The following diagram shows the single server holding the vector index and the two chat-history tables, reached over a passwordless connection.
+
+```mermaid
+flowchart LR
+    App["Backend Container App<br/>user-assigned managed identity"]
+
+    subgraph PG["PostgreSQL Flexible Server<br/>Entra-only auth, passwordless"]
+        Docs["documents table<br/>pgvector HNSW vector index"]
+        Conv["conversations table"]
+        Msg["messages table"]
+    end
+
+    App -->|"short-lived Entra token, auto-refreshed"| Docs
+    App -->|"read and write chat history"| Conv
+    Conv -->|"foreign key, cascade delete"| Msg
+```
+
 ## Choosing PostgreSQL mode
 
 Set the database type before you deploy:

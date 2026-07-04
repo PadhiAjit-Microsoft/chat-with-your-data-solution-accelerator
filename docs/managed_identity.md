@@ -15,7 +15,31 @@ Chat with Your Data authenticates to Azure with a single user-assigned managed i
 
 ## One identity for the workload
 
-The deployment creates one user-assigned managed identity and attaches it to the backend, the frontend, and the ingestion worker. Each Container App pulls its image and calls downstream services as that identity, so access is granted once and applies consistently across the three services.
+The deployment creates one user-assigned managed identity and attaches it to the backend, the frontend, and the ingestion worker. Each Container App pulls its image and calls downstream services as that identity, so access is granted once and applies consistently across the three services. The following diagram shows the three services assuming the shared identity, which carries the least-privilege RBAC roles on each downstream Azure service.
+
+```mermaid
+flowchart LR
+    Backend["Backend Container App"]
+    Frontend["Frontend Container App"]
+    Worker["Ingestion worker Container App"]
+    UAMI["User-assigned managed identity<br/>one per deployment"]
+    RBAC["Least-privilege RBAC roles"]
+    Foundry["Azure AI Foundry"]
+    Index["Azure AI Search or PostgreSQL"]
+    Storage["Azure Storage"]
+    History["Cosmos DB or PostgreSQL"]
+    Support["Content Safety, Speech,<br/>Container Registry, Event Grid"]
+
+    Backend --> UAMI
+    Frontend --> UAMI
+    Worker --> UAMI
+    UAMI --> RBAC
+    RBAC --> Foundry
+    RBAC --> Index
+    RBAC --> Storage
+    RBAC --> History
+    RBAC --> Support
+```
 
 ## Role assignments
 
