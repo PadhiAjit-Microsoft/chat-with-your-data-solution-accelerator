@@ -2,6 +2,8 @@
 
 If your deployment fails and you need to clean up the resources manually, follow these steps in the Azure Portal.
 
+If you deployed with `azd`, run `azd down` from the repository root to remove every resource this accelerator created. The manual portal steps below are for cleaning up a failed or partial deployment where `azd down` cannot complete.
+
 ---
 
 ## **1. Navigate to the Azure Portal**

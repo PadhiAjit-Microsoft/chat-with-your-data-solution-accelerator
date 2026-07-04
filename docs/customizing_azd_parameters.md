@@ -117,3 +117,4 @@ azd env set AZURE_ENV_ENABLE_PRIVATE_NETWORKING true
 
 * **Region availability.** Not every service or model is available in every region. Confirm availability for your chosen region before deploying; see [Check quota by region](QuotaCheck.md).
 * **Locked after deploy.** The database type cannot change after deployment. To switch, deploy a new environment.
+* **Orchestrator selection.** The chat orchestrator has no dedicated azd parameter. `azd up` sets it automatically from the `databaseType` choice: `postgresql` selects `langgraph`, and `cosmosdb` selects `agent_framework`. To run a different orchestrator than that default, switch it at runtime from the admin Configuration page with no redeploy; both orchestrators are served on either store. See [Admin and configuration](admin.md#configuration) and [Architecture overview](architecture.md#orchestrators).

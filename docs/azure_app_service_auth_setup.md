@@ -54,7 +54,7 @@ Visitors are now prompted to sign in with Microsoft Entra ID before the web app 
 
 Any signed-in user can open the chat experience and see only their own history. The admin pages (where documents are ingested, removed, and application settings are changed) are meant for a smaller group. Because the platform attests each caller's identity before the request reaches the app, you control admin access at the identity provider rather than inside the application. Choose one of these approaches:
 
-- **Require an app role or group.** Define an app role (for example, `Admin`) on the app registration, assign it to your administrators, and require that role or a security group at the identity provider so only its members can sign in. Users who hold the admin role see the admin area; everyone else sees only chat.
+- **Require an app role or group.** Define an app role (for example, `Admin`) on the app registration, assign it to your administrators, and require that role or a security group at the identity provider so only its members can sign in. Only members of that role or group can sign in and reach the app, including its admin pages, so the admin surface stays closed to everyone else. The app does not vary what it renders by role; access is enforced entirely at the identity provider.
 - **Restrict how the backend is reached.** Keep the backend reachable only from the web app's own origin or a private network, so the admin routes cannot be called directly by arbitrary clients.
 
 Use either approach on its own or both together. Both keep the admin surface closed to the general audience while leaving chat open to every signed-in user.

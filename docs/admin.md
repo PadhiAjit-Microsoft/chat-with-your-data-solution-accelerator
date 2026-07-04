@@ -28,7 +28,7 @@ The admin area has three pages.
 |------|---------|
 | Ingest | Upload documents or submit a URL to add content to the index. |
 | Delete | Remove documents from the index and their source blobs. |
-| Configuration | View and adjust application settings. |
+| Configuration | Review and adjust application settings, including the chat orchestrator. |
 
 ![Admin ingest page](images/admin-ingest.png)
 
@@ -42,7 +42,9 @@ Use the Delete page to remove a document from the index along with its source bl
 
 ## Configuration
 
-Use the Configuration page to review application settings for the deployment.
+Use the Configuration page to review and adjust application settings for the deployment. Among those settings is the orchestrator selector, which chooses how chat answers are produced.
+
+The selector offers the two orchestrators, `agent_framework` and `langgraph`. Switching between them takes effect at runtime, with no redeploy. The value shown by default reflects the deployed default, which follows the `databaseType` choice made at deployment: `postgresql` starts on `langgraph`, and `cosmosdb` starts on `agent_framework`. You can switch to the other orchestrator, and it is served on whichever index store the deployment uses. For the difference between the two, see [Architecture overview](architecture.md#orchestrators).
 
 ![Admin site](images/admin-site.png)
 

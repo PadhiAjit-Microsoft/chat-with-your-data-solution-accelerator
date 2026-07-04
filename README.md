@@ -113,7 +113,7 @@ You ask a question in natural language. The backend retrieves the most relevant 
 | Azure subscription | With rights to create resources and role assignments (Owner, or Contributor plus User Access Administrator). [Create one for free](https://azure.microsoft.com/free/). |
 | Azure Developer CLI (azd) | Version `>= 1.18.0` (and not `1.23.9`). [Install azd](https://learn.microsoft.com/azure/developer/azure-developer-cli/install-azd). |
 | Azure CLI (az) | Used for sign-in and supporting commands. [Install the Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli). |
-| Docker | Required for local development and image builds. [Install Docker Desktop](https://www.docker.com/products/docker-desktop/). |
+| Docker | Required for local development. Not required for `azd up`, which builds the container images remotely. [Install Docker Desktop](https://www.docker.com/products/docker-desktop/). |
 | Model capacity | Deploy to a region with Azure AI Foundry model capacity. Check availability first with the [quota check](docs/QuotaCheck.md) and [model quota settings](docs/azure_openai_model_quota_settings.md) guides. |
 
 ### Deploy with azd
