@@ -146,6 +146,5 @@ def test_scan_actually_walked_files() -> None:
         "no `__init__.py` files found under src/ -- path resolution " "likely broken"
     )
     assert "tests" in rel_parts, (
-        "no `__init__.py` files found under tests/ -- path resolution "
-        "likely broken"
+        "no `__init__.py` files found under tests/ -- path resolution " "likely broken"
     )

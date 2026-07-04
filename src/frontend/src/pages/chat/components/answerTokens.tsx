@@ -8,8 +8,8 @@
  * …) interleaved with the prose; we tokenize on a fixed regex and
  * promote each marker whose index resolves against the message's
  * `citations` array into a `<button>` that dispatches a focus action
- * back into `<ChatContext>`. Markers that do not resolve — either
- * because no citation list exists or the index is out of bounds —
+ * back into `<ChatContext>`. Markers that do not resolve -- either
+ * because no citation list exists or the index is out of bounds --
  * are rendered verbatim so the wire content is never destroyed.
  *
  * Numbering is 1-based on the wire (the first citation is `[doc1]`)
@@ -29,7 +29,7 @@ export function renderAnswerTokens(
   onCitationClick: (citationId: string) => void,
 ): ReactNode {
   if (citations === undefined || citations.length === 0) {
-    // No resolvable citations — render the answer verbatim so any
+    // No resolvable citations -- render the answer verbatim so any
     // `[docN]` markers stay visible to the user.
     return content;
   }
@@ -55,7 +55,7 @@ export function renderAnswerTokens(
         : undefined;
 
     if (citation === undefined) {
-      // Out-of-bounds token — render verbatim so the user can see
+      // Out-of-bounds token -- render verbatim so the user can see
       // the marker the model produced.
       parts.push(raw);
     } else {
@@ -85,7 +85,7 @@ export function renderAnswerTokens(
     parts.push(content.slice(cursor));
   }
 
-  // No markers matched — return the original string so React mounts a
+  // No markers matched -- return the original string so React mounts a
   // single text node rather than an array of one.
   if (parts.length === 0) {
     return content;

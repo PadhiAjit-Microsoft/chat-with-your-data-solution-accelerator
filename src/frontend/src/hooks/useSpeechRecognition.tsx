@@ -18,11 +18,11 @@
  *     the next interim doesn't clobber the previous final.
  *
  *   - `stop()` stops continuous recognition and closes the recognizer.
- *     Idempotent — calling `stop()` while not listening is a no-op.
+ *     Idempotent -- calling `stop()` while not listening is a no-op.
  *
  *   - On any error (token fetch, SDK construction, recognizer
  *     `canceled` event), the hook flips `error` to a human-readable
- *     string and stops listening. It NEVER throws — the consumer can
+ *     string and stops listening. It NEVER throws -- the consumer can
  *     safely render `{error}` and disable the mic button.
  *
  *   - Cleanup: an unmount while the recognizer is alive triggers
@@ -80,7 +80,7 @@ export function useSpeechRecognition(): UseSpeechRecognition {
   const [transcript, setTranscript] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  // Mutable refs (not state) for SDK plumbing — we don't want a
+  // Mutable refs (not state) for SDK plumbing -- we don't want a
   // re-render every time the recognizer's reference changes, only
   // when surface state (`isListening` / `transcript` / `error`) does.
   const recognizerRef = useRef<SpeechRecognizer | null>(null);
@@ -177,7 +177,7 @@ export function useSpeechRecognition(): UseSpeechRecognition {
         },
       );
     }).catch(() => {
-      // Swallow — we've already surfaced the error via `setError`.
+      // Swallow -- we've already surfaced the error via `setError`.
     });
   }, [teardownRecognizer]);
 

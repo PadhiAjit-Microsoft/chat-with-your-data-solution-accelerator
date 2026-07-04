@@ -6,11 +6,11 @@
  * descendant (a malformed message, an unexpected stream / citation
  * shape) would otherwise unmount the whole React tree to a blank page.
  * This boundary catches it via `getDerivedStateFromError` and renders a
- * recoverable fallback in place — a heading, the error message, and a
+ * recoverable fallback in place -- a heading, the error message, and a
  * "Try again" button that clears the error and re-renders the children.
  *
- * Error boundaries must be class components — there is no hook
- * equivalent for `getDerivedStateFromError` — so this is the sole class
+ * Error boundaries must be class components -- there is no hook
+ * equivalent for `getDerivedStateFromError` -- so this is the sole class
  * component in the frontend.
  */
 import { Button, Text } from "@fluentui/react-components";

@@ -276,10 +276,8 @@ def test_scan_actually_walked_files() -> None:
     assert files, "no `*.py` files discovered under src/"
     rel_parts = {p.relative_to(_SRC_ROOT).parts[0] for p in files}
     assert "backend" in rel_parts, (
-        "no `*.py` files found under src/backend/ -- path resolution "
-        "likely broken"
+        "no `*.py` files found under src/backend/ -- path resolution " "likely broken"
     )
     assert "functions" in rel_parts, (
-        "no `*.py` files found under src/functions/ -- path resolution "
-        "likely broken"
+        "no `*.py` files found under src/functions/ -- path resolution " "likely broken"
     )

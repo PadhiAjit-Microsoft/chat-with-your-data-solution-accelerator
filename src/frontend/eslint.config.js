@@ -64,7 +64,7 @@ export default tseslint.config(
         { allowNumber: true },
       ],
       // Cross-folder imports must go through the `@/*` alias (ADR 0015).
-      // Regex matches the source text only — sibling `./X` passes; the
+      // Regex matches the source text only -- sibling `./X` passes; the
       // resolved-path check that `import/no-relative-parent-imports`
       // would do is the wrong shape here (it would flag aliased
       // `@/pages/...` because the resolver maps it to a parent dir).

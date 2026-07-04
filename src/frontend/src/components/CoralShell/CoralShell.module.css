@@ -4,11 +4,11 @@
    CSS Modules for the Coral shell layout primitives. Mirrors the reference architecture's
    commonComponents/Layout pattern verbatim:
 
-   - .column   — vertical stack, full viewport height, recessed shell bg.
+   - .column   -- vertical stack, full viewport height, recessed shell bg.
                  Hosts <Header> at the top + a single <CoralShellRow> that
                  fills the remaining space.
 
-   - .row      — horizontal flex split inside the column. Hosts the
+   - .row      -- horizontal flex split inside the column. Hosts the
                  PanelLeft + content + (optional) PanelRight columns.
 
    Background uses Fluent's --colorNeutralBackground3 token (slightly

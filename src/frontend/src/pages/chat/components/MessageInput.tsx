@@ -55,7 +55,7 @@ function newId(): string {
 /**
  * Narrow a `citation` SSE frame's `metadata` payload into the typed
  * `Citation` shape. Returns `null` when the wire is missing the
- * required `id` field — without an id the reducer can't dedupe, and
+ * required `id` field -- without an id the reducer can't dedupe, and
  * a panel section with no source identifier has no anchor to link
  * to, so dropping is safer than rendering a half-built section.
  * Missing optional fields fall back to the same defaults Pydantic v2
@@ -143,7 +143,7 @@ export function MessageInput() {
       streaming: true,
     };
 
-    // Snapshot history BEFORE the dispatch — `state.messages` from this
+    // Snapshot history BEFORE the dispatch -- `state.messages` from this
     // closure is the pre-dispatch value, and we add the new user turn
     // ourselves to keep the wire payload aligned with what the user
     // actually saw on screen at submit time.
@@ -163,7 +163,7 @@ export function MessageInput() {
     try {
       for await (const ev of streamChat(history, {
         // Continue the active thread when one exists; `null` starts a
-        // fresh conversation — the backend mints the id and returns it
+        // fresh conversation -- the backend mints the id and returns it
         // on the terminal `conversation` control frame, surfaced via
         // `onConversationId` below.
         conversationId: state.conversationId,
@@ -226,7 +226,7 @@ export function MessageInput() {
       dispatch({ type: "finish_stream", id: assistantId });
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
-        // User-initiated cancel — keep whatever content streamed in,
+        // User-initiated cancel -- keep whatever content streamed in,
         // mark the message done, do NOT surface an error toast.
         dispatch({ type: "finish_stream", id: assistantId });
       } else {

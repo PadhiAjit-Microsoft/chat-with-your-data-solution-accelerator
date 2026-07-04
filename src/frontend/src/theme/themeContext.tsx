@@ -60,7 +60,7 @@ export function ThemeProvider({
     try {
       window.localStorage.setItem(STORAGE_KEY, theme);
     } catch {
-      // localStorage unavailable (private mode, etc.) — non-fatal.
+      // localStorage unavailable (private mode, etc.) -- non-fatal.
     }
   }, [theme]);
 

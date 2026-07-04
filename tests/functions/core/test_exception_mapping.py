@@ -31,7 +31,9 @@ def _force_validation_error() -> ValidationError:
 async def test_decorator_returns_handler_response_when_no_exception() -> None:
     @map_function_exceptions("batch_start")
     async def route(_req: func.HttpRequest) -> func.HttpResponse:
-        return func.HttpResponse(body=b"{}", status_code=200, mimetype="application/json")
+        return func.HttpResponse(
+            body=b"{}", status_code=200, mimetype="application/json"
+        )
 
     resp = await route(func.HttpRequest(method="POST", url="/", body=b""))
     assert resp.status_code == 200
@@ -90,7 +92,9 @@ async def test_validation_error_logs_warning_not_exception(
     with caplog.at_level(logging.WARNING, logger="functions.core.exception_mapping"):
         await route(func.HttpRequest(method="POST", url="/", body=b""))
 
-    records = [r for r in caplog.records if r.name == "functions.core.exception_mapping"]
+    records = [
+        r for r in caplog.records if r.name == "functions.core.exception_mapping"
+    ]
     assert len(records) == 1
     record = records[0]
     assert record.levelno == logging.WARNING
@@ -112,7 +116,9 @@ async def test_azure_error_logs_exception_with_structured_extras(
     with caplog.at_level(logging.ERROR, logger="functions.core.exception_mapping"):
         await route(func.HttpRequest(method="POST", url="/", body=b""))
 
-    records = [r for r in caplog.records if r.name == "functions.core.exception_mapping"]
+    records = [
+        r for r in caplog.records if r.name == "functions.core.exception_mapping"
+    ]
     assert len(records) == 1
     record = records[0]
     assert record.levelno == logging.ERROR
@@ -133,7 +139,9 @@ async def test_unexpected_exception_logs_exception_with_500_status(
     with caplog.at_level(logging.ERROR, logger="functions.core.exception_mapping"):
         await route(func.HttpRequest(method="POST", url="/", body=b""))
 
-    records = [r for r in caplog.records if r.name == "functions.core.exception_mapping"]
+    records = [
+        r for r in caplog.records if r.name == "functions.core.exception_mapping"
+    ]
     assert len(records) == 1
     record = records[0]
     assert record.levelno == logging.ERROR
@@ -179,7 +187,9 @@ async def test_queue_decorator_passthrough_returns_none_and_logs_nothing(
         result = await handler("ok")
 
     assert result is None
-    assert not [r for r in caplog.records if r.name == "functions.core.exception_mapping"]
+    assert not [
+        r for r in caplog.records if r.name == "functions.core.exception_mapping"
+    ]
 
 
 @pytest.mark.asyncio
@@ -196,7 +206,9 @@ async def test_queue_decorator_validation_error_reraises_with_warning(
         with pytest.raises(ValidationError):
             await handler("drifted")
 
-    records = [r for r in caplog.records if r.name == "functions.core.exception_mapping"]
+    records = [
+        r for r in caplog.records if r.name == "functions.core.exception_mapping"
+    ]
     assert len(records) == 1
     record = records[0]
     assert record.levelno == logging.WARNING
@@ -220,7 +232,9 @@ async def test_queue_decorator_azure_error_reraises_with_exception(
         with pytest.raises(AzureError):
             await handler("msg")
 
-    records = [r for r in caplog.records if r.name == "functions.core.exception_mapping"]
+    records = [
+        r for r in caplog.records if r.name == "functions.core.exception_mapping"
+    ]
     assert len(records) == 1
     record = records[0]
     assert record.levelno == logging.ERROR
@@ -242,7 +256,9 @@ async def test_queue_decorator_unexpected_exception_reraises_with_exception(
         with pytest.raises(RuntimeError):
             await handler("msg")
 
-    records = [r for r in caplog.records if r.name == "functions.core.exception_mapping"]
+    records = [
+        r for r in caplog.records if r.name == "functions.core.exception_mapping"
+    ]
     assert len(records) == 1
     record = records[0]
     assert record.levelno == logging.ERROR
@@ -260,4 +276,3 @@ async def test_queue_decorator_preserves_handler_name_and_doc() -> None:
 
     assert my_consumer.__name__ == "my_consumer"
     assert my_consumer.__doc__ == "Original docstring."
-

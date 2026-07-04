@@ -4,7 +4,7 @@
  *
  * Fetch one persisted conversation and map its stored messages onto the
  * frontend `ChatMessage[]` shape so selecting a past conversation in the
- * history panel rehydrates the full transcript — including the grounding
+ * history panel rehydrates the full transcript -- including the grounding
  * citations persisted in each assistant message's `metadata.citations`
  * (no retrieval re-run). This is the single seam that talks to
  * `GET /api/history/conversations/{id}`; the panel / page wiring consumes
@@ -15,7 +15,7 @@
  * (the `/config` `backendUrl` resolved at boot, falling back to
  * build-time `VITE_BACKEND_URL`) so a single build targets both the
  * same-origin dev proxy and the deployed separate-origin backend
- * without a rebuild — matching the `streamChat` / `documentHref` /
+ * without a rebuild -- matching the `streamChat` / `documentHref` /
  * `HistoryPanel` base convention.
  */
 import type { ChatMessage, Citation, MessageRole } from "@/models/chat";
@@ -59,7 +59,7 @@ function asMessageRole(role: string): MessageRole | null {
  * into the typed `Citation`. Returns `null` for a payload missing the
  * required non-empty `id` so a malformed stored entry is dropped rather
  * than rendered as an anchorless panel section. Mirrors the SSE-side
- * narrowing in `MessageInput`'s `parseCitation` — same wire shape, a
+ * narrowing in `MessageInput`'s `parseCitation` -- same wire shape, a
  * separate (persisted) seam.
  */
 function toCitation(raw: unknown): Citation | null {
@@ -92,7 +92,7 @@ function toCitation(raw: unknown): Citation | null {
 /**
  * Pull the persisted grounding citations off a stored message. Citations
  * ride `metadata.citations` as a list of serialized `Citation`s (written
- * by `persist_turn`); a user turn — or an assistant turn with none —
+ * by `persist_turn`); a user turn -- or an assistant turn with none --
  * yields `[]`, and malformed entries are dropped.
  */
 function citationsFrom(metadata: Record<string, unknown> | undefined): Citation[] {

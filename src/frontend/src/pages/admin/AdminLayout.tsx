@@ -3,8 +3,8 @@
  * Phase: 5
  *
  * Shared chrome for the admin section. Renders a secondary navigation
- * bar — a "back to chat home" button plus one <NavLink> per admin page
- * (Ingest data, Delete data, Configuration) — above an
+ * bar -- a "back to chat home" button plus one <NavLink> per admin page
+ * (Ingest data, Delete data, Configuration) -- above an
  * <Outlet/> for the active admin route. Mounted as the element of the
  * parent `/admin` route so every admin page shares the same nav frame
  * and the `/admin/<page>` deep links stay first-class.

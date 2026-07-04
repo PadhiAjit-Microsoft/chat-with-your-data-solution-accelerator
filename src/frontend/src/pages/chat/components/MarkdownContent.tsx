@@ -4,9 +4,9 @@
  *
  * Renders an assistant-supplied markdown string as HTML. Both the answer
  * body and the reasoning panel feed their text through here so the
- * model's markdown — bold, lists, headings, fenced code, and the
+ * model's markdown -- bold, lists, headings, fenced code, and the
  * GitHub-flavoured extensions (tables, strikethrough, task lists,
- * autolinks) — displays as formatted HTML instead of literal source.
+ * autolinks) -- displays as formatted HTML instead of literal source.
  *
  * Rendering goes through `react-markdown` with `remark-gfm` and no
  * raw-HTML rehype pass (`rehype-raw` is deliberately omitted), so any

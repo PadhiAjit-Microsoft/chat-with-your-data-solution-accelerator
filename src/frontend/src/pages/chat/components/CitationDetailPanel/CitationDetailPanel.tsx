@@ -9,7 +9,7 @@
  * (resolved by `deriveDocumentHref` from the citation's blob name or
  * URL, omitted when neither is usable), and the reference text
  * rendered through `<MarkdownContent>` so markdown in the snippet
- * becomes formatted HTML — without `rehype-raw`, so any embedded raw
+ * becomes formatted HTML -- without `rehype-raw`, so any embedded raw
  * HTML stays escaped and XSS-safe.
  *
  * The header, title, and deep-link form a pinned head; only the

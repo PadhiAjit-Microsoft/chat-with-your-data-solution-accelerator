@@ -18,7 +18,7 @@ import type { AuthMeResponse, UserInfo } from "@/models/auth";
 
 /**
  * Entra object-identifier claim URI. The stable per-user id (the `oid`)
- * the backend partitions chat history on — preferred over the mutable
+ * the backend partitions chat history on -- preferred over the mutable
  * email / UPN carried in `AuthMeResponse.user_id`.
  */
 const OBJECT_ID_CLAIM =
@@ -26,7 +26,7 @@ const OBJECT_ID_CLAIM =
 
 /**
  * Identity header every API client forwards for per-user partitioning.
- * A browser-set value is forgeable and is **not** a trust boundary — the
+ * A browser-set value is forgeable and is **not** a trust boundary -- the
  * backend validates only that it is a GUID and otherwise treats it as the
  * shared default partition. Real authentication, when enabled, is enforced
  * at the ingress/proxy (Easy Auth injecting/overwriting this header), never
@@ -51,11 +51,11 @@ let currentUserId: string | null = null;
 
 /**
  * Resolve the signed-in user from Easy Auth `/.auth/me` (the SPA's own
- * origin — never the backend), narrowing to the object-identifier claim.
+ * origin -- never the backend), narrowing to the object-identifier claim.
  * Returns `null` when `/.auth/me` is unavailable (no identity provider,
  * not signed in), the principal list is empty, or no usable object id is
  * present, so callers fall back to the default user. A failed fetch or
- * malformed payload degrades to `null` rather than throwing — an absent
+ * malformed payload degrades to `null` rather than throwing -- an absent
  * identity provider is the normal local-dev state, not an error.
  */
 export async function getUserInfo(): Promise<UserInfo | null> {
@@ -103,7 +103,7 @@ export function setUserId(userId: string | null): void {
 /**
  * Build the per-user identity header every API client spreads onto its
  * request: `{ "x-ms-client-principal-id": <resolved id> }`. The single
- * source of the forwarded principal id — clients never assemble it inline.
+ * source of the forwarded principal id -- clients never assemble it inline.
  */
 export function userIdHeaders(): Record<string, string> {
   return { [PRINCIPAL_ID_HEADER]: getUserId() };

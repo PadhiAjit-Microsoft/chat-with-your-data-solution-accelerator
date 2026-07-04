@@ -18,7 +18,7 @@
  * transport failure) keeps it hidden so non-admin sessions never see a
  * dead-end link. Alongside the health probe, `AppShell` runs the Easy
  * Auth `/.auth/me` lookup (via `useAuth`) to resolve the signed-in user
- * — or the default user when no principal is present — so every API call
+ * -- or the default user when no principal is present -- so every API call
  * forwards a per-user `x-ms-client-principal-id`. `historyOpen`,
  * `newChatNonce`, and
  * `adminAvailable` live here as the single source of truth feeding both

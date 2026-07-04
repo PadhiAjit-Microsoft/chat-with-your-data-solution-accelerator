@@ -15,8 +15,8 @@
  * is a pure utility: no React imports, no DOM.
  *
  * Resilience: a transient connection failure that happens before any
- * event has been yielded — `fetch()` rejecting with a network error,
- * or the server responding with a 5xx — is retried with exponential
+ * event has been yielded -- `fetch()` rejecting with a network error,
+ * or the server responding with a 5xx -- is retried with exponential
  * backoff up to `maxRetries` additional attempts (default 2; total
  * up to 3 attempts). 4xx responses are non-retryable and bubble up
  * immediately. Failures that happen AFTER the first event has been
@@ -60,7 +60,7 @@ const CONVERSATION_EVENT = "conversation";
  * from the runtime `getBackendUrl()` seam (the `/config` `backendUrl`
  * resolved at boot, falling back to build-time `VITE_BACKEND_URL`) so
  * the same build targets the same-origin dev proxy and the deployed
- * separate-origin backend without a rebuild — matching the
+ * separate-origin backend without a rebuild -- matching the
  * `documentHref` / `HistoryPanel` base convention.
  */
 function conversationUrl(): string {
@@ -174,7 +174,7 @@ async function readConversationError(
  * events as they arrive. The function buffers across chunk boundaries
  * so a frame split mid-line by the HTTP transport is reassembled
  * before being parsed. Frames carrying an unknown `event:` channel are
- * silently dropped — forward-compatible with new backend channels
+ * silently dropped -- forward-compatible with new backend channels
  * added later.
  *
  * @throws Error when a non-retryable response (4xx) is returned, when
@@ -207,7 +207,7 @@ export async function* streamChat(
       }
       return;
     } catch (err) {
-      // An abort always wins — never retry, never wrap it as a network
+      // An abort always wins -- never retry, never wrap it as a network
       // failure, even when the SDK error path bubbled up first.
       if (signal?.aborted === true || isAbortError(err)) {
         throw abortError();
@@ -333,7 +333,7 @@ async function* streamChatOnce(
     try {
       await reader.cancel();
     } catch {
-      // Ignore — cancel can reject if the stream is already closed.
+      // Ignore -- cancel can reject if the stream is already closed.
     }
   }
 }

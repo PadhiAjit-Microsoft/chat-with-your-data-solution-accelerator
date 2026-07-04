@@ -9,9 +9,9 @@
  * (user-right / assistant-left) via CSS Modules driven by the
  * `data-role` attribute. A user message places its right-aligned chip
  * bubble directly in the row. An assistant message places a vertical
- * content column beside the avatar — so the avatar lines up on the same
+ * content column beside the avatar -- so the avatar lines up on the same
  * horizontal line as the column's first item (the reasoning panel while
- * streaming, else the answer) — and that column stacks the answer bubble,
+ * streaming, else the answer) -- and that column stacks the answer bubble,
  * a static "AI-generated content may be incorrect" disclaimer under any
  * finished answer, plus the SSE-derived decorations:
  *   - `streaming === true` OR non-empty `reasoning?: string[]` → a
@@ -21,7 +21,7 @@
  *     "▸ Thought process" and
  *     the user can re-expand on demand. Body is formatted by
  *     `formatReasoning`: foundry_iq emits per-token deltas, so per-<li>
- *     would read as one-character mush — we concatenate at render time
+ *     would read as one-character mush -- we concatenate at render time
  *     (keeping the array shape on the wire), drop the model's bold
  *     section titles, and break the remaining reasoning bodies apart so
  *     both orchestrators render the same way. Inline citation markers in
@@ -69,8 +69,8 @@ export function MessageList() {
   // the freshest answer and live streaming tokens stay visible.
   const bottomRef = useRef<HTMLDivElement | null>(null);
   // Track every (message id, error string) pair we have already
-  // toasted so identical error frames — or React Strict Mode's
-  // double-invoked effect in dev — do not stutter the toaster. A
+  // toasted so identical error frames -- or React Strict Mode's
+  // double-invoked effect in dev -- do not stutter the toaster. A
   // ref (not state) is right here: the dedupe set is internal
   // bookkeeping that must not trigger a re-render when it grows.
   const seenErrorsRef = useRef<Set<string>>(new Set());

@@ -5,7 +5,7 @@
  * Pure transform that prepares an assistant answer for v1-style
  * superscript citation rendering. The model emits citation markers as
  * bracketed plain text (`[doc1]`, `[doc2]`, …) positionally keyed to the
- * message's `citations` array on the wire — 1-based, so `[doc1]` maps to
+ * message's `citations` array on the wire -- 1-based, so `[doc1]` maps to
  * `citations[0]`. This walks those markers left to right, deduplicates
  * the sources they point at, renumbers them `1..K` in first-appearance
  * order, and rewrites each marker into the `^K^` token that
@@ -51,7 +51,7 @@ export function parseAnswer(
           ? citations[oneBased - 1]
           : undefined;
       if (citation === undefined) {
-        // Out-of-bounds marker — keep the literal text visible.
+        // Out-of-bounds marker -- keep the literal text visible.
         return raw;
       }
       let displayNumber = displayNumberById.get(citation.id);

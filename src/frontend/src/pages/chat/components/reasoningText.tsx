@@ -17,7 +17,7 @@
  */
 import { collapseConsecutiveSuperscripts } from "./citationTokens";
 
-// A model-emitted section title: a bold span on its own line — `**Title**`
+// A model-emitted section title: a bold span on its own line -- `**Title**`
 // immediately followed by a line break, with any whitespace on either
 // side. Inline bold that is not followed by a newline (rare in reasoning
 // summaries) is left intact so genuine emphasis survives.
@@ -42,7 +42,7 @@ const REASONING_CITATION_MARKER = /(?:docs?\s*)?\[(?:doc)?(\d{1,3})\]/gi;
  * Pure marker→superscript normalizer for the reasoning feed. It rewrites
  * every reasoning citation marker (`[docN]`, `doc[N]`, `docs[N]`, bare
  * `[N]`) into the ` ^N^ ` token that `remark-supersub` renders as a
- * `<sup>` node — the same token the answer body's `parseAnswer`
+ * `<sup>` node -- the same token the answer body's `parseAnswer`
  * produces, so both feeds drive `remark-supersub` identically. The
  * number is emitted verbatim: the reasoning panel is chain-of-thought,
  * not a clickable citation surface, so there is no renumbering against a
