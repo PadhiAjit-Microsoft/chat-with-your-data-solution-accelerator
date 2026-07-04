@@ -7,10 +7,10 @@ Builds a `StateGraph` with a single LLM node, compiled once per
 orchestrator instance and re-used across requests (no mutable
 per-request state held on `self`). The graph is held for future
 tool-node wiring (``ToolNode`` + ``add_conditional_edges``) and is
-**deliberately bypassed** for the LLM call as of CU-004b: live token
+**deliberately bypassed** for the LLM call: live token
 + reasoning streaming is incompatible with
 ``StateGraph.ainvoke``'s buffer-then-return contract, and the unified
-LLM-layer factory ``BaseLLMProvider.complete()`` (CU-004a) already
+LLM-layer factory ``BaseLLMProvider.complete()`` already
 auto-routes between ``chat()`` and ``reason()`` so the orchestrator
 never has to branch on model class.
 
@@ -49,7 +49,12 @@ from backend.core.tools.citations import (
     filter_to_referenced,
     format_sources_block,
 )
-from backend.core.types import ChatMessage, ChatRole, OrchestratorChannel, OrchestratorEvent
+from backend.core.types import (
+    ChatMessage,
+    ChatRole,
+    OrchestratorChannel,
+    OrchestratorEvent,
+)
 
 from .registry import registry
 from .base import OrchestratorBase
@@ -172,9 +177,7 @@ class LangGraphOrchestrator(OrchestratorBase):
                 # AzureSearch uses the vector for hybrid (text + vector)
                 # scoring on top of its semantic re-ranker.
                 embedding = await self.llm.embed([query])
-                query_vector = (
-                    embedding.vectors[0] if embedding.vectors else None
-                )
+                query_vector = embedding.vectors[0] if embedding.vectors else None
                 sources = await self._search.search(
                     query,
                     top_k=self._search_top_k,
@@ -190,8 +193,8 @@ class LangGraphOrchestrator(OrchestratorBase):
 
         graph_messages: list[ChatMessage] = [*system_messages, *messages]
 
-        # CU-004b: stream events through the LLM-layer factory
-        # (CU-004a). `complete()` auto-routes to `chat()` / `reason()`
+        # Stream events through the LLM-layer factory.
+        # `complete()` auto-routes to `chat()` / `reason()`
         # based on the configured deployment, so o-series `reasoning`
         # tokens flow live to the SSE channel without per-orchestrator
         # branching. The compiled graph is bypassed for the LLM call --

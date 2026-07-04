@@ -211,7 +211,7 @@ ContentSafetyGuardDep = Annotated[
 
 
 # ---------------------------------------------------------------------------
-# #35e(a) -- Live-reload runtime overrides
+# Live-reload runtime overrides
 #
 # Lifespan loads the persisted ``RuntimeConfig`` from the database
 # once at startup and stashes the result on

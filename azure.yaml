@@ -2,21 +2,14 @@
 
 # ========================================================================
 # Pillar:  Stable Core
-# Phase:   1 (Infrastructure + Project Skeleton)
+# Phase:   1
 # Purpose: Azure Developer CLI manifest for CWYD v2. Drives `azd up` /
-#          `azd provision` / `azd deploy`.
-#
-#          The `parameters:` block uses azd's typed-prompt feature
-#          (CGSA pattern) so `azd up` asks the operator for the few
-#          decisions that cannot be defaulted safely:
+#          `azd provision` / `azd deploy`. The `parameters:` block uses
+#          azd's typed-prompt feature (CGSA pattern) to ask the operator
+#          for the few decisions that cannot be defaulted safely:
 #            - databaseType (LOCKED at deploy: chat history + index store)
 #            - azureAiServiceLocation (model availability)
 #            - WAF flags (monitoring, scalability, redundancy, networking)
-#
-#          `services:` is intentionally empty in Phase 1. Backend,
-#          frontend, and functions are wired in their own units
-#          (tasks #14, #15, #16) once their Bicep modules emit the
-#          required outputs.
 # ========================================================================
 
 name: chat-with-your-data-v2
@@ -96,8 +89,7 @@ parameters:
 #   - function → Container App  (tag 'function', kind=functionapp)
 # Each service uses its own Dockerfile under docker/. `azd deploy`
 # builds the image, pushes to the Bicep-deployed ACR, and updates the
-# target resource. Debt #Q4 (Phase 3.5 QA remediation) — closes the
-# blocker that `azure.yaml` `services:` was empty.
+# target resource.
 # ----------------------------------------------------------------------
 services:
   backend:

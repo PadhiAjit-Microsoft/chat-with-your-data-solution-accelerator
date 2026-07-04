@@ -9,8 +9,7 @@
 # Path A scope: this overlay does NOT spin up a mock OpenAI / mock
 # Foundry sidecar. The smoke tests under `tests/smoke/` exercise
 # only non-LLM paths (`/api/health`, `/openapi.json`, and
-# `/api/conversation` with an invalid body -> 422). End-to-end
-# inference smoke is deferred to a future unit.
+# `/api/conversation` with an invalid body -> 422).
 #
 # Usage:
 #   docker compose \

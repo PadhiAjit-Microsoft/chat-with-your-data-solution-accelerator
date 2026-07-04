@@ -1,19 +1,19 @@
 /**
  * Pillar: Stable Core
- * Phase: 5 (FE bridge — dev_plan §4 task #24, FE half)
+ * Phase: 5
  *
  * Chat domain state. Single React Context + useReducer per the v2 frontend
  * conventions (no Zustand, no Redux). Consumers must wrap their tree in
  * <ChatProvider> and read state via useChat(); calling useChat() outside the
  * provider throws so misuse fails fast.
  *
- * Phase 5 extension: assistant messages now carry a `reasoning: string[]`
- * array (one entry per `reasoning` SSE frame) and a transient `streaming`
- * flag toggled while a `streamChat()` iterator is in flight. The reducer
- * gains four streaming actions (`append_answer`, `append_reasoning`,
- * `finish_stream`, `set_error`) that target a single message by id so
- * `MessageInput` can fold SSE events from `api/streamChat` into the live
- * transcript without juggling local state.
+ * Assistant messages carry a `reasoning: string[]` array (one entry per
+ * `reasoning` SSE frame) and a transient `streaming` flag toggled while a
+ * `streamChat()` iterator is in flight. The reducer has four streaming
+ * actions (`append_answer`, `append_reasoning`, `finish_stream`,
+ * `set_error`) that target a single message by id so `MessageInput` can
+ * fold SSE events from `api/streamChat` into the live transcript without
+ * juggling local state.
  */
 import {
   createContext,
@@ -102,9 +102,8 @@ export function chatReducer(state: ChatState, action: ChatAction): ChatState {
         reasoning: [...(m.reasoning ?? []), action.chunk],
       }));
     case ChatActionType.SetReasoningPlaceholder:
-      // Replaces (never appends): the transient retrieval narration is a
-      // single line, and the renderer shows it only until real reasoning
-      // frames land in `reasoning`.
+      // Replaces (never appends): the transient retrieval narration is one
+      // line, shown only until real reasoning frames land in `reasoning`.
       return mapMessage(state, action.id, (m) => ({
         ...m,
         reasoningPlaceholder: action.text,

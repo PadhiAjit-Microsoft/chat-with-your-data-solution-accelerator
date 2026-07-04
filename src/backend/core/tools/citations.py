@@ -21,7 +21,7 @@ Lives under ``shared/tools/`` because it is a cross-cutting helper
 imported directly by orchestrators / pipelines (tools are NOT a
 registry domain).
 
-Caller pattern (Phase 3 wiring)::
+Caller pattern::
 
     sources = await search.search(query)
     block = format_sources_block(sources)              # → str for prompt
@@ -38,7 +38,6 @@ from typing import Sequence, cast
 from agent_framework import Annotation, TextSpanRegion
 
 from backend.core.types import Citation, SearchResult
-
 
 _DOC_MARKER_RE = re.compile(r"\[doc(\d+)\]")
 
@@ -353,9 +352,7 @@ def referenced_markers(text: str) -> list[str]:
     return found
 
 
-def filter_to_referenced(
-    text: str, citations: Sequence[Citation]
-) -> list[Citation]:
+def filter_to_referenced(text: str, citations: Sequence[Citation]) -> list[Citation]:
     """Keep only citations whose marker actually appears in ``text``."""
     referenced = set(referenced_markers(text))
     if not referenced:

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Pillar: Stable Core
-# Phase:  1 (Infrastructure + Project Skeleton, task #19)
+# Phase:  1
 #
 # Thin POSIX wrapper around scripts/post_provision.py invoked by azd
 # via the `hooks.postprovision.posix` block in azure.yaml. All logic

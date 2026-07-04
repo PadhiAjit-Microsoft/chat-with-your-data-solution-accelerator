@@ -1,7 +1,5 @@
 """Pillar: Stable Core
-Phase:  1 (Infrastructure + Project Skeleton, task #19)
-Phase:  3 (Conversation + RAG, task #26 — search-index bootstrap)
-Phase:  8 (agent_framework default + Foundry IQ Knowledge Base — KB seed)
+Phase:  1
 
 Post-provision hook executed by `azd up` / `azd provision` after every
 Bicep deployment. Idempotent and safe to re-run.
@@ -21,16 +19,14 @@ Responsibilities
 
 Notes
 -----
-* Table/index DDL for chat history and pgvector indexing belongs to the
-  modules that own those schemas (Phase 4, dev_plan tasks #28 and #30).
-  Naming-stability rule §11: do not pre-create tables here whose column
-  names would lock in a contract before the consuming code exists.
+* Schema DDL for chat history and pgvector indexing belongs to the modules
+  that own those schemas; do not pre-create tables here whose column names
+  would lock in a contract before the consuming code exists.
 * Authentication uses ``DefaultAzureCredential`` so the script works
-  unchanged for an interactive deployer, a service principal in CI, or
-  a managed identity in Cloud Shell.
-* ``--dry-run`` skips every external SDK call (no postgres connect, no
-  Search index create) but still validates env vars and prints the
-  summary. Wire-trace before a real deploy.
+  unchanged for an interactive deployer, a service principal in CI, or a
+  managed identity in Cloud Shell.
+* ``--dry-run`` skips every external SDK call but still validates env vars
+  and prints the summary.
 """
 
 import argparse
@@ -70,7 +66,7 @@ POSTGRES_DB = "postgres"
 # `azure_search` provider reads in
 # src/backend/core/providers/search/azure_search.py
 # (id / content / title / url / content_vector). Re-naming here without
-# the corresponding provider change breaks Phase 3 RAG retrieval.
+# the corresponding provider change breaks RAG retrieval.
 DEFAULT_INDEX_NAME = "cwyd-index"
 DEFAULT_EMBEDDING_DIMENSIONS = 1536  # text-embedding-3-small / -ada-002
 VECTOR_PROFILE_NAME = "cwyd-vector-profile"

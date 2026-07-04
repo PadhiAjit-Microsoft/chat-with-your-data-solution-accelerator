@@ -1,7 +1,7 @@
 """Conversation request/response models.
 
 Pillar: Stable Core
-Phase: 3 (task #22a)
+Phase: 3
 """
 
 from pydantic import BaseModel, Field

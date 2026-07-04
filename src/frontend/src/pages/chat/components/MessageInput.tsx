@@ -1,10 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 5 (FE bridge — dev_plan §4 task #24, FE half) +
- *        4 (reference-architecture re-skin — composer pill: Fluent <Button>/<ToggleButton>
- *           replace hand-rolled SVG buttons; Send24Regular / Mic24Regular
- *           / MicOff24Regular replace inline SVG icons; surface uses
- *           Fluent tokens with a focus-ring border swap.)
+ * Phase: 5
  *
  * Controlled chat input wired to the backend SSE feed.
  *
@@ -20,8 +16,7 @@
  * Citation frames are narrowed via the local `parseCitation` helper
  * before dispatch so a malformed wire payload (missing `id`) is
  * dropped at the boundary rather than corrupting reducer state. The
- * tool channel is still dropped \u2014 tool-step visualization is a
- * separate FE backlog item.
+ * tool channel is still dropped.
  *
  * Input + Send are disabled while a stream is in flight so the user
  * can't fire a second request mid-response. The mic toggle uses
@@ -99,10 +94,8 @@ export function MessageInput() {
   const [isStreaming, setIsStreaming] = useState(false);
   const speech = useSpeechRecognition();
 
-  // Snapshot of the draft at the moment the mic was pressed. While
-  // listening, the visible draft is `baseDraftRef.current` + a
-  // separator + the live transcript, so the user can dictate ON TOP of
-  // text they've already typed without losing it.
+  // Snapshot of the draft when the mic was pressed, so dictation appends
+  // on top of already-typed text instead of replacing it.
   const baseDraftRef = useRef("");
 
   // Holds the AbortController for the in-flight stream so the Cancel

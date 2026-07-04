@@ -44,11 +44,10 @@ from backend.core.types import (
 from .registry import registry
 from .base import BaseDatabaseClient
 
-
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Try/except policy (Phase C2c)
+# Try/except policy
 #
 # Per v2/docs/exception_handling_policy.md (Provider entry-points + Lifespan
 # rows): every `asyncpg` call at a provider boundary is wrapped with a narrow
@@ -111,8 +110,8 @@ CREATE INDEX IF NOT EXISTS idx_messages_conv_created
 -- lazy-bootstrap contract (no separate migration step).
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS metadata JSONB NOT NULL DEFAULT '{}';
 
--- Agent registry (CU-010b). `name` is the AgentDefinition.name
--- ("cwyd", "rai"). Used by the lazy resolver in CU-010c so agent
+-- Agent registry. `name` is the AgentDefinition.name
+-- ("cwyd", "rai"). Used by the lazy resolver so agent
 -- identity survives container restarts without an env-var seam
 -- (see ADR 0008). Lazy-bootstrapped here alongside conversations +
 -- messages so a fresh deployment needs no separate migration.
@@ -123,8 +122,8 @@ CREATE TABLE IF NOT EXISTS agents (
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Runtime config (#35c-2). Single-row table -- the admin API
--- (`PATCH /api/admin/config`, #35c-7) overrides selected env defaults
+-- Runtime config. Single-row table -- the admin API
+-- (`PATCH /api/admin/config`) overrides selected env defaults
 -- at request time, and there is exactly one override document. The
 -- `CHECK (id = 1)` constraint enforces the singleton at the DB layer
 -- so a future bug in the writer cannot accumulate stray rows. The
@@ -138,9 +137,9 @@ CREATE TABLE IF NOT EXISTS runtime_config (
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Admin audit log (#35f-2). Append-only forensic trail of
+-- Admin audit log. Append-only forensic trail of
 -- successful `PATCH /api/admin/config` mutations. Mirrors the
--- cosmos `ADMIN_AUDIT` item type from #35f-1 so a single audit
+-- cosmos `ADMIN_AUDIT` item type so a single audit
 -- contract works across providers. Row id is a writer-generated
 -- UUID4 (no `gen_random_uuid()` -- avoids the `pgcrypto` extension
 -- dependency on a fresh deployment) and `created_at` defaults to
@@ -263,7 +262,7 @@ class PostgresClient(BaseDatabaseClient):
         # Single lock guards both lazy pool construction AND the schema
         # bootstrap. Two coroutines hitting `_ensure_pool` simultaneously
         # would otherwise both pass the `is None` check and both call
-        # `asyncpg.create_pool`, leaking one pool. Hardened in #32c.
+        # `asyncpg.create_pool`, leaking one pool.
         self._init_lock = asyncio.Lock()
         self._schema_ready = pool is not None
 
@@ -407,9 +406,7 @@ class PostgresClient(BaseDatabaseClient):
         )
         return _row_to_conversation(row) if row else None
 
-    async def create_conversation(
-        self, user_id: str, title: str
-    ) -> Conversation:
+    async def create_conversation(self, user_id: str, title: str) -> Conversation:
         pool = await self._ensure_pool()
         try:
             row = await pool.fetchrow(
@@ -461,9 +458,7 @@ class PostgresClient(BaseDatabaseClient):
             raise KeyError(conversation_id)
         return _row_to_conversation(row)
 
-    async def delete_conversation(
-        self, conversation_id: str, user_id: str
-    ) -> None:
+    async def delete_conversation(self, conversation_id: str, user_id: str) -> None:
         pool = await self._ensure_pool()
         # ON DELETE CASCADE removes child messages atomically. Returns
         # silently on missing rows (idempotent), matching the cosmosdb
@@ -564,16 +559,13 @@ class PostgresClient(BaseDatabaseClient):
         assert row is not None
         return _row_to_message(row)
 
-    async def set_feedback(
-        self, message_id: str, user_id: str, feedback: str
-    ) -> None:
+    async def set_feedback(self, message_id: str, user_id: str, feedback: str) -> None:
         pool = await self._ensure_pool()
         # `WHERE user_id` keeps tenants isolated -- a message id leaked
         # across users still won't match.
         try:
             result = await pool.execute(
-                "UPDATE messages SET feedback = $1 "
-                "WHERE id = $2 AND user_id = $3",
+                "UPDATE messages SET feedback = $1 " "WHERE id = $2 AND user_id = $3",
                 feedback,
                 uuid.UUID(message_id),
                 user_id,
@@ -594,7 +586,7 @@ class PostgresClient(BaseDatabaseClient):
             raise KeyError(message_id)
 
     # ------------------------------------------------------------------
-    # Agent registry (CU-010b)
+    # Agent registry
     # ------------------------------------------------------------------
 
     async def get_agent_id(self, name: str) -> str | None:
@@ -612,8 +604,8 @@ class PostgresClient(BaseDatabaseClient):
         # `ON CONFLICT (name) DO UPDATE` makes this an atomic
         # CREATE-or-REPLACE in a single round-trip. `EXCLUDED.agent_id`
         # references the value the INSERT would have written, so the
-        # update path picks up the new id when the lazy resolver in
-        # CU-010c rewrites a stale Foundry agent id. `updated_at` is
+        # update path picks up the new id when the lazy resolver
+        # rewrites a stale Foundry agent id. `updated_at` is
         # bumped on every conflict; `created_at` keeps its original
         # value so an audit can distinguish "first bootstrapped at"
         # from "most recently rewritten".
@@ -642,7 +634,7 @@ class PostgresClient(BaseDatabaseClient):
             raise
 
     # ------------------------------------------------------------------
-    # Runtime config (#35c-2)
+    # Runtime config
     # ------------------------------------------------------------------
 
     async def get_runtime_config(self) -> RuntimeConfig | None:
@@ -657,9 +649,7 @@ class PostgresClient(BaseDatabaseClient):
         # registered); `model_validate_json` round-trips it back into
         # a `RuntimeConfig`. Cold start (no row) returns None so the
         # admin merge falls through to env defaults.
-        row = await pool.fetchrow(
-            "SELECT payload FROM runtime_config WHERE id = 1"
-        )
+        row = await pool.fetchrow("SELECT payload FROM runtime_config WHERE id = 1")
         if row is None:
             return None
         return RuntimeConfig.model_validate_json(row["payload"])
@@ -668,8 +658,8 @@ class PostgresClient(BaseDatabaseClient):
         pool = await self._ensure_pool()
         # Single-round-trip atomic CREATE-or-REPLACE on the singleton
         # `id = 1` row (CHECK constraint enforces the singleton at
-        # the DB layer). `EXCLUDED.payload` lets the PATCH route in
-        # #35c-4 rewrite the row without first reading + deleting it.
+        # the DB layer). `EXCLUDED.payload` lets the PATCH route
+        # rewrite the row without first reading + deleting it.
         # The id is hard-coded in the SQL (not bound) -- it is not
         # operator-controlled, so binding adds no security value;
         # only the JSONB payload is parameterized via $1. asyncpg
@@ -695,7 +685,7 @@ class PostgresClient(BaseDatabaseClient):
             raise
 
     # ------------------------------------------------------------------
-    # Admin audit log (#35f-2)
+    # Admin audit log
     # ------------------------------------------------------------------
 
     async def write_admin_audit(self, entry: AdminAuditEntry) -> None:
@@ -705,8 +695,8 @@ class PostgresClient(BaseDatabaseClient):
         # default (`NOW()`) fills it in so the writer never trusts
         # an app-side clock (clock-skew across containers is
         # surprisingly common in ACA cold starts). The id is a
-        # writer-generated UUID4 (mirrors the cosmos impl in
-        # #35f-1) so the same id schema works across providers and
+        # writer-generated UUID4 (mirrors the cosmos impl)
+        # so the same id schema works across providers and
         # avoids the `pgcrypto` extension dependency that
         # `gen_random_uuid()` would otherwise pull in. asyncpg's
         # JSONB codec accepts a JSON-shaped `str` directly
@@ -715,9 +705,7 @@ class PostgresClient(BaseDatabaseClient):
         # NULL when the audit captures the very first PATCH against
         # an unseeded override row (truthful first-PATCH receipt,
         # distinct from an empty `RuntimeConfig()`).
-        before_payload = (
-            entry.before.model_dump_json() if entry.before else None
-        )
+        before_payload = entry.before.model_dump_json() if entry.before else None
         try:
             await pool.execute(
                 "INSERT INTO admin_audit "

@@ -32,7 +32,6 @@ import json
 from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
-
 # ---------------------------------------------------------------------------
 # Cross-cutting enums
 # ---------------------------------------------------------------------------
@@ -336,9 +335,7 @@ class NetworkSettings(BaseSettings):
                 if isinstance(parsed, list):
                     parsed_list = cast(list[Any], parsed)
                     return [
-                        str(item).strip()
-                        for item in parsed_list
-                        if str(item).strip()
+                        str(item).strip() for item in parsed_list if str(item).strip()
                     ]
             return [item.strip() for item in stripped.split(",") if item.strip()]
         if isinstance(raw, (list, tuple)):
@@ -356,16 +353,13 @@ class OrchestratorSettings(BaseSettings):
     infra-pinned value -- the admin UI and tests need to flip it
     without redeploying Bicep.
 
-    CU-009b removed the previous `agent_id` field +
-    cross-field validator (originally added in CU-001a). Per ADR 0008
-    (lazy-foundry-agent-bootstrap), the Foundry agent identity is no
-    longer settings-driven -- the `agent_framework` orchestrator must
-    call the registry-backed `agents` provider's
+    Per ADR 0008 (lazy-foundry-agent-bootstrap), the Foundry agent
+    identity is not settings-driven -- the `agent_framework`
+    orchestrator must call the registry-backed `agents` provider's
     `get_or_create_agent(CWYD_AGENT, ...)` on first request and let it
     persist the resolved id in the chat-history database (Cosmos in
     cosmosdb-mode, Postgres in postgresql-mode). Restoring an
-    `agent_id` field here would re-introduce the dead-config drift the
-    cleanup audit batch was opened to remove.
+    `agent_id` field here would re-introduce dead-config drift.
     """
 
     model_config = SettingsConfigDict(env_prefix="CWYD_ORCHESTRATOR_", extra="ignore")
@@ -537,9 +531,7 @@ class AppSettings(BaseSettings):
     network: NetworkSettings = Field(default_factory=NetworkSettings)
     orchestrator: OrchestratorSettings = Field(default_factory=OrchestratorSettings)
     speech: SpeechSettings = Field(default_factory=SpeechSettings)
-    content_safety: ContentSafetySettings = Field(
-        default_factory=ContentSafetySettings
-    )
+    content_safety: ContentSafetySettings = Field(default_factory=ContentSafetySettings)
     document_intelligence: DocumentIntelligenceSettings = Field(
         default_factory=DocumentIntelligenceSettings
     )

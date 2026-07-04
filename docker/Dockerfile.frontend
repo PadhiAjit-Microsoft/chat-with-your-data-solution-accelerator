@@ -1,13 +1,10 @@
-# Frontend image — single-runtime production image.
+# Frontend image, single-runtime production image.
 # Pillar: Stable Core
-# Phase: 1 (development_plan.md §4 Phase 1, task #6 + #7)
+# Phase: 1
 #
-# Design rationale:
-#   - One runtime per container (FastAPI/uvicorn) → satisfies the anti-overengineering gate
-#     in v2-workflow.instructions.md ("simplest thing that works").
-#   - Frontend-only profile must boot independently (plug-and-play contract):
-#     this image needs zero backend connectivity to start; VITE_BACKEND_URL is baked at build.
-#   - No nginx, no extra reverse proxy — neither is in the development plan.
+# One runtime per container (uvicorn serves the built assets). The
+# frontend-only profile boots independently with zero backend connectivity;
+# VITE_BACKEND_URL is baked at build time. No nginx or reverse proxy.
 #
 # Stages:
 #   - dev:   Vite dev server with HMR, used by docker-compose.dev.yml
@@ -44,7 +41,7 @@ ARG VITE_BACKEND_URL=""
 ENV VITE_BACKEND_URL=${VITE_BACKEND_URL}
 RUN npm run build
 
-# ---- prod stage: Python + uvicorn (matches v1 hosting model) ----
+# ---- prod stage: Python + uvicorn ----
 FROM python:3.11-slim AS prod
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1

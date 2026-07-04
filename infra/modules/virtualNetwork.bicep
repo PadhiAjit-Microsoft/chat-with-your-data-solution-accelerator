@@ -1,7 +1,7 @@
 // =============================================================================
 // CWYD v2 - Virtual Network module
 // Pillar: Stable Core
-// Phase:  1 (Infrastructure + Project Skeleton, tasks #7-#8)
+// Phase:  1 (Infrastructure + Project Skeleton)
 //
 // Wraps AVM `network/virtual-network:0.7.0` + per-subnet AVM
 // `network/network-security-group:0.5.1` to deploy the v2 hub VNet.
@@ -21,11 +21,6 @@
 // reference `pepsSubnetResourceId`. Postgres uses `postgresSubnetResourceId`
 // directly (delegated subnet, not a PE). CAE uses `containerAppsSubnetResourceId`.
 // Web App + Function App use `webSubnetResourceId` / `functionsSubnetResourceId`.
-//
-// References:
-//   v1 wrapper:                   infra/modules/virtualNetwork.bicep
-//   reference-architecture pattern (read-only): infra/main.bicep
-//   CGSA pattern (read-only):     content-generation-solution-accelerator/infra/modules/virtualNetwork.bicep
 // =============================================================================
 
 @description('Required. Name of the virtual network.')

@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 4 (S1 / SPEECH-MVP — pulled forward from Phase 5 task #38)
+ * Phase: 4
  *
  * React hook wrapping `microsoft-cognitiveservices-speech-sdk` for
  * browser-side multi-lingual speech-to-text. The backend (`/api/speech`)
@@ -28,11 +28,6 @@
  *   - Cleanup: an unmount while the recognizer is alive triggers
  *     `stop()` synchronously via `useEffect` cleanup so we don't leak
  *     the underlying audio stream.
- *
- * Adapted from v1's `code/frontend/src/util/SpeechToText.ts`
- * `multiLingualSpeechRecognizer()`, but reshaped as a React hook for
- * the v2 functional-component world and with continuous (not
- * single-shot) recognition for a more responsive UX.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import {

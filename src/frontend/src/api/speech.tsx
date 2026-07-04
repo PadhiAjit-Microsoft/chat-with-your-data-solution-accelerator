@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 4 (S1 / SPEECH-MVP — pulled forward from Phase 5 task #38)
+ * Phase: 4
  *
  * REST client for `GET /api/speech`. Mirrors the hand-rolled
  * `streamChat.ts` pattern — no OpenAPI generator wired in v2 yet, so

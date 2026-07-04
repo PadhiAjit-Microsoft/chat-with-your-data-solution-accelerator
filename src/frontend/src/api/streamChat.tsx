@@ -1,8 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 5 (FE bridge — dev_plan §4 task #24, FE half) +
- *        7 (Testing + Documentation — SSE resilience: retry-with-backoff
- *           on transient connection failures)
+ * Phase: 5
  *
  * SSE client utility for `POST /api/conversation`. The backend emits
  * Server-Sent Events on the locked channel set defined in

@@ -1,5 +1,5 @@
 # Pillar: Stable Core
-# Phase:  1 (Infrastructure + Project Skeleton, task #19)
+# Phase:  1
 #
 # Thin PowerShell wrapper around scripts/post_provision.py invoked by
 # azd via the `hooks.postprovision.windows` block in azure.yaml. All

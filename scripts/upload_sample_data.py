@@ -1,19 +1,17 @@
 """Post-deploy seed: upload sample documents and enqueue ingestion.
 
 Pillar: Stable Core
-Phase:  7 (post-deploy sample-data seed)
+Phase:  7
 
 Runs after a successful ``azd deploy`` / ``azd up`` so chat grounds
 out-of-the-box without an operator manually uploading documents. The
-operator chooses which assistant scenario to seed -- ``default`` /
-``employee assistant`` (benefits / HR documents) or ``contract
-assistant`` (contract documents) -- or ``all`` to seed every sample
-document. The scope is taken from ``--set``, then the
-``AZURE_ENV_SAMPLE_DATA`` env override, then an interactive menu when the
-hook runs in a terminal; a non-interactive shell with no override seeds
-the default PDF document set so chat grounds out-of-the-box (set
-``AZURE_ENV_SAMPLE_DATA=none`` to opt out). Files resolve from the
-repo-root ``data/`` folder; no binary documents are committed.
+seed scope resolves from ``--set``, then the ``AZURE_ENV_SAMPLE_DATA``
+env override, then an interactive menu when the hook runs in a terminal:
+``default`` / ``employee assistant`` (benefits / HR documents),
+``contract assistant`` (contract documents), ``all`` to seed everything,
+or ``none`` to opt out. A non-interactive shell with no override seeds
+the default document set. Files resolve from the repo-root ``data/``
+folder; no binary documents are committed.
 
 Behaviour mirrors the admin upload path (``backend.services.ingestion``):
 each newly-uploaded blob is followed by an ingestion message on the

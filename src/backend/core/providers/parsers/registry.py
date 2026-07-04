@@ -6,9 +6,8 @@ Phase: 6
 Holds the `Registry[type[BaseParser]]` instance for the parsers
 domain. Concrete ingestion-only parsers (PDF/DOCX/MD/HTML/TXT) live
 under `src/functions/core/parsers/` and self-register against this
-registry via `@registry.register("<ext>")` (decision D1 in
-development_plan §4.6.1). Eager side-effect imports of those
-concretes are added here as they land (Option SE-1 in §2.4.5).
+registry via `@registry.register("<ext>")`. Eager side-effect imports
+of those concretes are added here.
 
 Caller pattern (Hard Rule #13):
 

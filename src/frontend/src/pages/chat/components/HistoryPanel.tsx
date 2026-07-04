@@ -1,33 +1,28 @@
 /**
  * Pillar: Scenario Pack
- * Phase: 4 (task #32) +
- *        6 (visual polish — icon buttons + hover-reveal actions,
- *           pulled forward for boss demo)
+ * Phase: 4
  *
  * Conversation history side panel. Loads `/api/history/conversations`
  * on mount, lets the user select / rename / delete entries. The
  * selected conversation id is bubbled up via `onSelect` so the chat
- * page can rehydrate messages once the SSE wiring (#24/#25) feeds
- * them through `ChatContext`.
+ * page can rehydrate messages once the SSE wiring feeds them through
+ * `ChatContext`.
  *
  * Backend agnostic: the `/api/history` router dispatches to either
  * `cosmosdb` or `postgresql`, but this panel never reads or surfaces
  * that discriminator and never branches on it (Hard Rule #4: no
  * `if/elif` over provider keys).
  *
- * Phase 6 polish: Rename / Delete buttons render as round icon
- * buttons (Fluent v9 Edit16Regular / Delete16Regular). Per-row
- * Rename + Delete are hover/focus-revealed (Slack/Outlook pattern).
- * Every `data-testid` + `aria-label` is preserved verbatim from
- * Phase 4.
+ * Rename / Delete buttons render as round icon buttons (Fluent v9
+ * Edit16Regular / Delete16Regular). Per-row Rename + Delete are
+ * hover/focus-revealed (Slack/Outlook pattern).
  *
- * Phase 4 reference-architecture re-skin: rows render as reference-architecture-style `.tab` chips
- * (border-radius var(--borderRadiusMedium), hover
- * var(--colorSubtleBackgroundHover), selected with a 2px
+ * Rows render as `.tab` chips (border-radius var(--borderRadiusMedium),
+ * hover var(--colorSubtleBackgroundHover), selected with a 2px
  * var(--colorCompoundBrandStroke) left tick). The outer landmark
- * (`<aside aria-label="conversation history">`) is now provided by
- * the parent `<PanelLeft>`, so this component renders a plain `<div>`
- * to avoid nesting two `complementary` landmarks.
+ * (`<aside aria-label="conversation history">`) is provided by the
+ * parent `<PanelLeft>`, so this component renders a plain `<div>` to
+ * avoid nesting two `complementary` landmarks.
  */
 import { useCallback, useEffect, useState, type JSX } from "react";
 import { Delete16Regular, Edit16Regular } from "@fluentui/react-icons";
@@ -115,8 +110,7 @@ export function HistoryPanel({
 
   const handleRename = useCallback(
     async (id: string, currentTitle: string) => {
-      // `prompt` keeps this unit self-contained -- a richer modal
-      // lands when the panel grows beyond Phase 4.
+      // `prompt` keeps this rename flow self-contained.
       const next = window.prompt("Rename conversation", currentTitle);
       if (next === null || next.trim() === "") {
         return;

@@ -24,8 +24,7 @@ its chat client from the same project endpoint. Wrapping would add
 ceremony without any swap-in benefit since every provider in this
 domain ultimately produces the same SDK type.
 
-Try/except policy (Phase C2e -- mirrors C2d for foundry_iq /
-azure_search):
+Try/except policy (mirrors foundry_iq / azure_search):
   * Per v2/docs/exception_handling_policy.md (Provider entry-points
     row), every `await client.X(...)` against the agents SDK is
     wrapped with `azure.core.exceptions.AzureError` -- the umbrella

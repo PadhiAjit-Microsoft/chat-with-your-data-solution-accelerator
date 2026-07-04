@@ -3,7 +3,7 @@
 Pillar: Stable Core
 Phase: 2
 
-Per Hard Rule #13 / development_plan §2.4: this `__init__.py` is a
+Per Hard Rule #13: this `__init__.py` is a
 package marker only. The `Registry[type[BaseCredentialProvider]]`
 instance, eager concrete-provider side-effect imports, and the
 `select_default` domain helper live in `registry.py`. Callers:

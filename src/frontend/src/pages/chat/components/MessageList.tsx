@@ -1,15 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 5 (FE bridge — dev_plan §4 task #24, FE half) +
- *        6 (visual polish — bubble layout, pulled forward for boss demo;
- *           H6 patch 2026-05-08: live "Thinking…" panel) +
- *        4 (reference-architecture re-skin — assistant runs as full-width prose with no
- *           bubble; user is a brand-tinted right-aligned chip; avatars
- *           use Fluent v9 icons; empty state uses Fluent Chat48 +
- *           Title2 "Start a conversation".) +
- *        7 (Testing + Documentation — error surface hoisted from an
- *           inline `<p role="alert">` to a Fluent v9 Toast dispatched
- *           through `<Toaster toasterId=TOASTER_ID>`.)
+ * Phase: 5
  *
  * Renders the chat transcript from ChatContext. Each message renders a
  * single <li> holding one flex `.row`: a 28x28 round avatar (Fluent
@@ -25,9 +16,9 @@
  * finished answer, plus the SSE-derived decorations:
  *   - `streaming === true` OR non-empty `reasoning?: string[]` → a
  *     <details> reasoning panel. While streaming the panel is forced
- *     open with summary "Thinking…" + animated dots so the boss-demo
- *     viewer sees the model think live; once `finish_stream` clears
- *     `streaming`, the summary collapses to "▸ Thought process" and
+ *     open with summary "Thinking…" + animated dots; once
+ *     `finish_stream` clears `streaming`, the summary collapses to
+ *     "▸ Thought process" and
  *     the user can re-expand on demand. Body is formatted by
  *     `formatReasoning`: foundry_iq emits per-token deltas, so per-<li>
  *     would read as one-character mush — we concatenate at render time
@@ -50,9 +41,6 @@
  *     ref dedupes so identical SSE error frames or React Strict
  *     Mode double-invocation surface only one toast per failure.
  * Both decorations are skipped when neither field applies.
- *
- * All `data-testid` and `data-role` attributes are preserved verbatim
- * from the Phase-5 contract — visual changes only.
  */
 import { useEffect, useRef } from "react";
 import {
@@ -77,11 +65,8 @@ import styles from "./MessageList.module.css";
 export function MessageList() {
   const { state, dispatch } = useChat();
   const { dispatchToast } = useToastController(TOASTER_ID);
-  // Bottom sentinel kept just below the last <li>. A useEffect keyed
-  // on transcript size + the last message's content length scrolls it
-  // into view so the freshest answer (and live streaming tokens) stay
-  // visible without manual scrolling. Plain <div> + scrollIntoView is
-  // the smallest contract jsdom can spy on.
+  // Bottom sentinel scrolled into view whenever the transcript grows so
+  // the freshest answer and live streaming tokens stay visible.
   const bottomRef = useRef<HTMLDivElement | null>(null);
   // Track every (message id, error string) pair we have already
   // toasted so identical error frames — or React Strict Mode's

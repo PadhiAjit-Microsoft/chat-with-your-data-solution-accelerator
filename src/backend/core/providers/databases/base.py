@@ -48,9 +48,7 @@ class BaseDatabaseClient(ABC):
     # ---- Conversations --------------------------------------------------
 
     @abstractmethod
-    async def list_conversations(
-        self, user_id: str
-    ) -> Sequence[Conversation]:
+    async def list_conversations(self, user_id: str) -> Sequence[Conversation]:
         """Return all conversations owned by `user_id`, newest first."""
 
     @abstractmethod
@@ -60,9 +58,7 @@ class BaseDatabaseClient(ABC):
         """Return one conversation or `None` if missing / not owned."""
 
     @abstractmethod
-    async def create_conversation(
-        self, user_id: str, title: str
-    ) -> Conversation:
+    async def create_conversation(self, user_id: str, title: str) -> Conversation:
         """Create a new empty conversation; returns the stored row."""
 
     @abstractmethod
@@ -72,9 +68,7 @@ class BaseDatabaseClient(ABC):
         """Rename `conversation_id`. Raises `KeyError` if not found."""
 
     @abstractmethod
-    async def delete_conversation(
-        self, conversation_id: str, user_id: str
-    ) -> None:
+    async def delete_conversation(self, conversation_id: str, user_id: str) -> None:
         """Delete `conversation_id` and all its messages. Idempotent."""
 
     # ---- Messages -------------------------------------------------------
@@ -105,12 +99,12 @@ class BaseDatabaseClient(ABC):
         """Attach / overwrite feedback (e.g. ``"positive"``,
         ``"negative"``) on `message_id`."""
 
-    # ---- Agent registry (CU-010b) ---------------------------------------
+    # ---- Agent registry -------------------------------------------------
     #
     # `name` is the `AgentDefinition.name` (e.g. "cwyd", "rai"). The
     # value persisted is the Foundry-side agent id returned by
-    # `client.create_agent(...)`. Used by the lazy resolver added in
-    # CU-010c (`BaseAgentsProvider.get_or_create_agent`) so agent
+    # `client.create_agent(...)`. Used by the lazy resolver
+    # `BaseAgentsProvider.get_or_create_agent` so agent
     # identity survives container restarts without an env-var seam
     # (see ADR 0008).
 
@@ -125,17 +119,17 @@ class BaseDatabaseClient(ABC):
         """Persist `agent_id` against `name`. Idempotent: a second
         call with the same `(name, agent_id)` must not raise, and a
         call with a new `agent_id` for an existing `name` must
-        replace the prior value (the lazy resolver in CU-010c does
+        replace the prior value (the lazy resolver does
         this when Foundry returns 404 for a stale persisted id).
         """
 
-    # ---- Runtime config (#35c) ------------------------------------------
+    # ---- Runtime config -------------------------------------------------
     #
-    # The admin API (`PATCH /api/admin/config`, #35c-7) persists a
+    # The admin API (`PATCH /api/admin/config`) persists a
     # singleton `RuntimeConfig` row that overrides selected env
     # defaults at request time. The reader returns `None` on cold
     # start (no row yet) so the admin merge falls through to env
-    # defaults rather than raising. The writer (#35c-3) is
+    # defaults rather than raising. The writer is
     # idempotent and overwrites any prior payload.
 
     @abstractmethod
@@ -149,15 +143,15 @@ class BaseDatabaseClient(ABC):
         """Persist `config` as the singleton runtime-config row.
         Idempotent: a second call with the same `config` must not
         raise, and a call with a new `config` must replace the
-        prior payload (the PATCH route in #35c-4 does this on
+        prior payload (the PATCH route does this on
         every operator update). The full payload is overwritten --
         merge semantics belong in the route, not the storage layer.
         """
 
-    # ---- Admin audit log (#35f) ----------------------------------------
+    # ---- Admin audit log ------------------------------------------------
     #
     # Append-only audit row written by the admin router after every
-    # successful `PATCH /api/admin/config` (#35f-3, T+8). The router
+    # successful `PATCH /api/admin/config`. The router
     # populates `actor / action / before / after`; the storage layer
     # assigns the row id + `created_at` on persist so callers fire
     # and forget without minting timestamps. Errors propagate -- the

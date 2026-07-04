@@ -71,7 +71,7 @@ class CosmosItemType(StrEnum):
     `"message"` / `"agent"` / `"config"` -- existing tests asserting
     on raw strings continue to pass without modification.
 
-    Agent rows (CU-010b) and runtime-config rows (#35c-1) live in
+    Agent rows and runtime-config rows live in
     the same container as conversations + messages, differentiated
     by their `type=` value. Neither is user-scoped, so both pin to
     the synthetic `_system` partition key. Cardinality is bounded
@@ -79,7 +79,7 @@ class CosmosItemType(StrEnum):
     row, so the usual "avoid low-cardinality partitions" guidance
     does not apply -- there is no hot-partition risk on a
     read-mostly handful-of-rows partition. The `ADMIN_AUDIT` value
-    (#35f-1) is the append-only admin audit log -- also pinned to
+    is the append-only admin audit log -- also pinned to
     `_system` because the audit query is non-user-scoped, with
     cardinality bounded by `# of admin PATCH operations`
     (single-tenant CWYD: ~hundreds/year, well under the 20 GB
@@ -100,15 +100,13 @@ class CosmosSystemPartition(StrEnum):
     Per Hard Rule #11 (Python bullet -- "sibling partition keys" are
     explicitly called out as a closed set requiring `StrEnum`, not
     bare module constants). Currently a single member because every
-    non-user-scoped surface (agent registry CU-010b1, runtime config
-    #35c-2) shares the same `_system` partition; declaring it as an
+    non-user-scoped surface (agent registry, runtime config)
+    shares the same `_system` partition; declaring it as an
     enum (a) groups the concept under a named type so a future second
     partition (e.g. tenant-scoped overrides) is a one-line addition
     rather than a fresh module constant, and (b) keeps the wire shape
     stable -- `CosmosSystemPartition.DEFAULT` serializes as the bare
-    string `"_system"` because `StrEnum` subclasses `str`. The prior
-    `_AGENT_PARTITION` lone-sentinel carve-out no longer applies once
-    `_CONFIG_PARTITION` was added in #35c-2 (it created the sibling).
+    string `"_system"` because `StrEnum` subclasses `str`.
     """
 
     DEFAULT = "_system"
@@ -169,9 +167,7 @@ class CosmosDBClient(BaseDatabaseClient):
                 "a Cosmos DB account endpoint."
             )
         if self._client is None:
-            self._client = CosmosClient(
-                url=endpoint, credential=self._credential
-            )
+            self._client = CosmosClient(url=endpoint, credential=self._credential)
         database = self._client.get_database_client(cfg.cosmos_database_name)
         self._container = database.get_container_client(cfg.cosmos_container_name)
         return self._container
@@ -199,9 +195,7 @@ class CosmosDBClient(BaseDatabaseClient):
             metadata=item.get("metadata", {}),
         )
 
-    async def _read_item(
-        self, item_id: str, user_id: str
-    ) -> dict[str, Any] | None:
+    async def _read_item(self, item_id: str, user_id: str) -> dict[str, Any] | None:
         container = self._get_container()
         try:
             return await container.read_item(item=item_id, partition_key=user_id)
@@ -216,10 +210,7 @@ class CosmosDBClient(BaseDatabaseClient):
         container = self._get_container()
         # Single-partition query (`partition_key=user_id`) so RU cost is
         # bounded; ORDER BY uses the default range index on `/updatedAt`.
-        query = (
-            "SELECT * FROM c WHERE c.type = @type "
-            "ORDER BY c.updatedAt DESC"
-        )
+        query = "SELECT * FROM c WHERE c.type = @type " "ORDER BY c.updatedAt DESC"
         # `parameters` is typed `list[dict[str, object]]` explicitly so
         # the StrEnum value (`CosmosItemType.CONVERSATION` is a `str`
         # subclass) doesn't trip pyright's invariant-list check. Same
@@ -248,9 +239,7 @@ class CosmosDBClient(BaseDatabaseClient):
             return None
         return self._to_conversation(item)
 
-    async def create_conversation(
-        self, user_id: str, title: str
-    ) -> Conversation:
+    async def create_conversation(self, user_id: str, title: str) -> Conversation:
         container = self._get_container()
         now = _utcnow_iso()
         item = {
@@ -289,9 +278,7 @@ class CosmosDBClient(BaseDatabaseClient):
         existing["title"] = title
         existing["updatedAt"] = _utcnow_iso()
         try:
-            stored = await container.replace_item(
-                item=conversation_id, body=existing
-            )
+            stored = await container.replace_item(item=conversation_id, body=existing)
         except CosmosHttpResponseError:
             logger.exception(
                 "cosmos replace_item failed",
@@ -305,16 +292,13 @@ class CosmosDBClient(BaseDatabaseClient):
             raise
         return self._to_conversation(stored)
 
-    async def delete_conversation(
-        self, conversation_id: str, user_id: str
-    ) -> None:
+    async def delete_conversation(self, conversation_id: str, user_id: str) -> None:
         container = self._get_container()
         # Delete all messages in the conversation first (single-partition
         # query, then per-id deletes -- there is no bulk-delete-by-query
         # in the SDK as of azure-cosmos 4.14).
         msg_query = (
-            "SELECT c.id FROM c WHERE c.type = @type "
-            "AND c.conversationId = @cid"
+            "SELECT c.id FROM c WHERE c.type = @type " "AND c.conversationId = @cid"
         )
         params: list[dict[str, object]] = [
             {"name": "@type", "value": CosmosItemType.MESSAGE},
@@ -328,9 +312,7 @@ class CosmosDBClient(BaseDatabaseClient):
         )
         async for row in rows:
             try:
-                await container.delete_item(
-                    item=str(row["id"]), partition_key=user_id
-                )
+                await container.delete_item(item=str(row["id"]), partition_key=user_id)
             except CosmosResourceNotFoundError:
                 # Idempotent: another caller (or a prior failed sweep) may
                 # have already removed this message. Per
@@ -343,15 +325,12 @@ class CosmosDBClient(BaseDatabaseClient):
                     conversation_id,
                 )
         try:
-            await container.delete_item(
-                item=conversation_id, partition_key=user_id
-            )
+            await container.delete_item(item=conversation_id, partition_key=user_id)
         except CosmosResourceNotFoundError:
             # Parent already gone -- delete is idempotent at the
             # conversation level too. Log so the no-op is visible.
             logger.debug(
-                "cosmos delete_item: conversation %s already gone "
-                "(idempotent skip)",
+                "cosmos delete_item: conversation %s already gone " "(idempotent skip)",
                 conversation_id,
             )
             return None
@@ -450,7 +429,7 @@ class CosmosDBClient(BaseDatabaseClient):
         return self._to_message(stored)
 
     # ------------------------------------------------------------------
-    # Agent registry (CU-010b)
+    # Agent registry
     # ------------------------------------------------------------------
 
     async def get_agent_id(self, name: str) -> str | None:
@@ -476,7 +455,7 @@ class CosmosDBClient(BaseDatabaseClient):
         now = _utcnow_iso()
         # `upsert_item` does CREATE-or-REPLACE atomically on (id,
         # partition_key). No read-then-write race on a stale id (the
-        # lazy resolver in CU-010c writes a new id when Foundry 404s
+        # lazy resolver writes a new id when Foundry 404s
         # the persisted one). `userId` is the partition key value;
         # `_system` keeps agent rows out of every per-tenant
         # partition. `createdAt` is set on every write -- on REPLACE
@@ -541,7 +520,7 @@ class CosmosDBClient(BaseDatabaseClient):
         # `upsert_item` does CREATE-or-REPLACE atomically on (id,
         # partition_key) -- mirrors `upsert_agent_id`. The full
         # payload is overwritten on every call; merge semantics
-        # (RFC 7396) live in the PATCH route (#35c-4), not here.
+        # (RFC 7396) live in the PATCH route, not here.
         # `payload` uses `mode="json"` so any future non-string
         # field types (datetime, UUID, ...) round-trip through the
         # Cosmos JSON wire shape without custom encoders.
@@ -565,9 +544,7 @@ class CosmosDBClient(BaseDatabaseClient):
             )
             raise
 
-    async def set_feedback(
-        self, message_id: str, user_id: str, feedback: str
-    ) -> None:
+    async def set_feedback(self, message_id: str, user_id: str, feedback: str) -> None:
         container = self._get_container()
         existing = await self._read_item(message_id, user_id)
         if existing is None or existing.get("type") != CosmosItemType.MESSAGE:
@@ -595,9 +572,7 @@ class CosmosDBClient(BaseDatabaseClient):
         # (not `upsert_item`) enforces append-only at the SDK layer
         # so a future bug that re-uses an id surfaces as a 409 rather
         # than silently overwriting a prior audit row.
-        before_payload = (
-            entry.before.model_dump(mode="json") if entry.before else None
-        )
+        before_payload = entry.before.model_dump(mode="json") if entry.before else None
         body = {
             "id": str(uuid.uuid4()),
             "userId": CosmosSystemPartition.DEFAULT,

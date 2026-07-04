@@ -18,10 +18,10 @@ Field choices:
 
 * `instructions` -- the system prompt. Foundry SDK uses the term
   `instructions`; we mirror it to avoid translation friction in the
-  provider (CU-010c).
+  provider.
 
 * `tools` -- opaque tool keys. The agent_framework orchestrator
-  (CU-010d) maps these into actual tool implementations; the
+  maps these into actual tool implementations; the
   definition stays implementation-free so a swap-in provider can
   interpret `tools` differently if it chooses.
 
@@ -114,9 +114,7 @@ def resolve_cwyd_instructions(override_text: str | None) -> str:
     affected.
     """
     body = (
-        override_text
-        if override_text and override_text.strip()
-        else CWYD_DEFAULT_BODY
+        override_text if override_text and override_text.strip() else CWYD_DEFAULT_BODY
     )
     return compose_cwyd_instructions(body)
 

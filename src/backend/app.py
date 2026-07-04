@@ -22,7 +22,9 @@ from typing import Any, AsyncGenerator
 
 from azure.ai.contentsafety.aio import ContentSafetyClient
 from azure.core.credentials_async import AsyncTokenCredential
-from azure.monitor.opentelemetry import configure_azure_monitor  # pyright: ignore[reportUnknownVariableType]
+from azure.monitor.opentelemetry import (
+    configure_azure_monitor,
+)  # pyright: ignore[reportUnknownVariableType]
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -71,9 +73,7 @@ async def _lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         configure_azure_monitor(connection_string=conn_str)
         logger.info("Application Insights telemetry configured.")
     else:
-        logger.info(
-            "AZURE_APP_INSIGHTS_CONNECTION_STRING not set; telemetry disabled."
-        )
+        logger.info("AZURE_APP_INSIGHTS_CONNECTION_STRING not set; telemetry disabled.")
 
     cred_key = credentials_registry.select_default(settings.identity.uami_client_id)
     cred_provider = credentials_registry.registry.get(cred_key)(settings=settings)
@@ -93,9 +93,7 @@ async def _lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     agents_provider = agents_registry.registry.get("foundry")(
         settings=settings,
         credential=credential,
-        runtime_overrides_getter=lambda: getattr(
-            app.state, "runtime_overrides", None
-        ),
+        runtime_overrides_getter=lambda: getattr(app.state, "runtime_overrides", None),
     )
 
     app.state.credential_provider = cred_provider
@@ -119,7 +117,7 @@ async def _lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     app.state.database_client = database_client
     logger.info("Database client ready (%s).", settings.database.db_type)
 
-    # #35e(a): Live-reload runtime overrides. Load the persisted
+    # Live-reload runtime overrides. Load the persisted
     # `RuntimeConfig` once at startup so reads survive container
     # restarts -- the PATCH route reassigns this attribute on every
     # successful upsert, but cold start needs to seed it from the
@@ -238,7 +236,7 @@ def create_app() -> FastAPI:
         lifespan=_lifespan,
     )
 
-    # Sourced from typed `NetworkSettings.cors_origins` (CU-002b),
+    # Sourced from typed `NetworkSettings.cors_origins`,
     # which reads the bare `BACKEND_CORS_ORIGINS` env var via
     # `validation_alias`. Empty list -> wildcard, matching the legacy
     # behavior of the previous `os.getenv` default.

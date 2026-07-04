@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 5 (FE bridge — dev_plan §4 task #24, FE half)
+ * Phase: 5
  *
  * Fetch one persisted conversation and map its stored messages onto the
  * frontend `ChatMessage[]` shape so selecting a past conversation in the

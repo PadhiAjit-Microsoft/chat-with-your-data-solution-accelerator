@@ -16,7 +16,7 @@ Two endpoints:
 
 Each probe is intentionally **shallow**: we verify configuration is
 present and the provider can be constructed. Deep liveness probes
-(actual round-trip to the SDK) are deferred to Phase 6.
+(actual round-trip to the SDK) are not performed here.
 """
 
 import logging

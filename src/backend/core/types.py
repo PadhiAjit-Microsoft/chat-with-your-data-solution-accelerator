@@ -127,7 +127,7 @@ class Chunk(BaseModel):
     Returned by `BaseParser.parse(...)` and consumed by the batch_push
     handler. Carried as the unit of work between the parser, the
     embedder, and the search writer -- no chunker primitive sits in
-    between (decision D2 in development_plan §4.6.1).
+    between.
 
     Frozen + `extra="forbid"` so the ingestion pipeline cannot
     silently smuggle provider-specific fields through `metadata`
@@ -269,25 +269,25 @@ class MessageRecord(BaseModel):
 
 class RuntimeConfig(BaseModel):
     """Persisted runtime overrides for the admin-mutable subset of
-    `AppSettings` (Phase 5 task #35c-1).
+    `AppSettings`.
 
     Mirrors the runtime-toggle fields exposed read-only by
-    `AdminConfig` in #35b (orchestrator key, OpenAI
+    `AdminConfig` (orchestrator key, OpenAI
     temperature/max_tokens, search semantic-toggle/top_k, log_level,
-    content_safety_enabled). Persisted via the new
-    `BaseDatabaseClient.upsert_runtime_config(...)` (#35c-3) and
-    read via `get_runtime_config()` (#35c-2). The CosmosDB row
-    pins to the synthetic `_system` partition (mirrors CU-010b1
-    `AGENT`); the Postgres row uses a singleton
+    content_safety_enabled). Persisted via
+    `BaseDatabaseClient.upsert_runtime_config(...)` and
+    read via `get_runtime_config()`. The CosmosDB row
+    pins to the synthetic `_system` partition (mirrors the
+    `AGENT` row); the Postgres row uses a singleton
     `id INT PRIMARY KEY DEFAULT 1` row with `INSERT ... ON CONFLICT`
-    upsert semantics (#35c-6).
+    upsert semantics.
 
     All mutable fields are `T | None = None` so the persisted shape
     can distinguish 'explicitly overridden' from 'not overridden' --
     required for booleans like `search_use_semantic_search` or
     `content_safety_enabled` where `False` is a legitimate override
     value distinct from 'fall through to env default'.
-    The RFC 7396 merge semantics in #35c-7 rely on this
+    The RFC 7396 merge semantics rely on this
     distinction: an absent JSON key leaves the override alone, an
     explicit `null` clears the override, an explicit value sets it.
 
@@ -339,13 +339,13 @@ class RuntimeConfig(BaseModel):
 
 
 class AdminAuditEntry(BaseModel):
-    """Append-only audit row for admin config mutations (#35f-1).
+    """Append-only audit row for admin config mutations.
 
     Persisted by `BaseDatabaseClient.write_admin_audit` after every
-    successful `PATCH /api/admin/config` (#35f-3, T+8). The wire
+    successful `PATCH /api/admin/config`. The wire
     shape is uniform across providers (Cosmos: one item with
     `type=admin_audit` in the `_system` partition; Postgres: one
-    row in `admin_audit` table, T+7) and captures the four answers
+    row in `admin_audit` table) and captures the four answers
     an operator forensic query needs:
 
     * **who** -- `actor` is the admin user id (Entra object id)

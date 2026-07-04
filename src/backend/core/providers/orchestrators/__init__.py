@@ -15,5 +15,5 @@ the eager side-effect imports of concretes (``agent_framework``,
     )(settings=settings, llm=llm, ...)
 
 There is no ``create()`` helper -- ``Registry.get(key)(**kwargs)`` does
-the same work in one expression (see development_plan.md §2.4).
+the same work in one expression.
 """

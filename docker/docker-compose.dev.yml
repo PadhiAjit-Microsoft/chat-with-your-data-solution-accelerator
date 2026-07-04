@@ -29,8 +29,7 @@ services:
     # Loads .env (operator-supplied; copy from .env.sample). Marked
     # `required: false` (compose v2.24+) so a clean checkout can boot the
     # backend-only profile without first creating the file. Single source
-    # of truth at repo root (CU-008a); the previous docker/.env.dev was
-    # deleted. Debt #Q5.
+    # of truth at repo root.
     env_file:
       - path: ../.env
         required: false
@@ -48,15 +47,14 @@ services:
       AZURE_STORAGE_BLOB_URL: http://azurite:10000/devstoreaccount1
       AZURE_STORAGE_QUEUE_URL: http://azurite:10001/devstoreaccount1
       # Telemetry: when AZURE_APP_INSIGHTS_CONNECTION_STRING is set in .env,
-      # azure-monitor-opentelemetry exports directly to App Insights (matches v1).
-      # AppSettings reads AZURE_LOG_LEVEL (env_prefix=AZURE_); the bare LOG_LEVEL
-      # used in v1 is silently ignored.
+      # azure-monitor-opentelemetry exports directly to App Insights.
+      # AppSettings reads AZURE_LOG_LEVEL (env_prefix=AZURE_); a bare LOG_LEVEL
+      # is silently ignored.
       AZURE_LOG_LEVEL: INFO
     ports:
       - "8000:8000"
     volumes:
-      # REFACTOR-B (2026-05-06): src/shared was moved to src/backend/core,
-      # so the backend mount alone now covers what used to require two mounts.
+      # Mount the backend source for live reload.
       - ../src/backend:/app/src/backend
     depends_on:
       postgres:
@@ -92,7 +90,7 @@ services:
       dockerfile: docker/Dockerfile.functions
     image: cwyd-v2-functions:dev
     container_name: cwyd-v2-functions
-    # See backend service note on `required: false` + .env path (debt #Q5, CU-008a).
+    # See backend service note on `required: false` + .env path.
     env_file:
       - path: ../.env
         required: false

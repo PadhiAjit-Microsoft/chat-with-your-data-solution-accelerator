@@ -8,9 +8,7 @@
 //          serves the OpenAI-compatible endpoint used by LangGraph, so
 //          a single Project supports BOTH orchestrators.
 //
-//          Adapted from Microsoft Multi-Agent Custom Automation Engine
-//          (read-only architectural reference). No AVM module exists
-//          for projects/connections at the time of writing, so we
+//          No AVM module exists for Foundry projects/connections, so we
 //          declare the raw resources here.
 // ========================================================================
 

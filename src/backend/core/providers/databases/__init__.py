@@ -3,7 +3,7 @@
 Pillar: Stable Core
 Phase: 4
 
-Per Hard Rule #13 / development_plan §2.4: this `__init__.py` is a
+Per Hard Rule #13: this `__init__.py` is a
 package marker only. The `Registry[type[BaseDatabaseClient]]` instance
 + eager side-effect imports of concrete clients live in `registry.py`.
 Callers:
