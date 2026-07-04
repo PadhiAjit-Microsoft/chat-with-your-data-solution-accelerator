@@ -1,7 +1,7 @@
 """Speech-to-text router (mints AAD-bearer Speech tokens for the browser).
 
 Pillar: Stable Core
-Phase: 4 (S1 / SPEECH-MVP)
+Phase: 4
 
 Single endpoint: ``GET /api/speech`` returns
 ``{token, region, languages}`` for the

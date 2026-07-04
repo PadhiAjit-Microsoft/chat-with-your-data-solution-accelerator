@@ -499,7 +499,7 @@ def test_openai_embedding_dimensions_reads_env_prefix(
 
 
 # ---------------------------------------------------------------------------
-# SpeechSettings (S1 / SPEECH-MVP)
+# SpeechSettings
 # ---------------------------------------------------------------------------
 
 

@@ -37,6 +37,9 @@ Hard Rule #16 carve-out.
 * ``#35[a-z]\\b`` -- GitHub issue references (``#35d``, ``#35g``); the trailing
   word boundary keeps multi-character hex colors such as ``#35abcd`` from
   matching.
+* ``\\b[A-Z][A-Z0-9]*-MVP\\b`` -- MVP scenario codenames (``SPEECH-MVP``); the
+  hyphenated ``-MVP`` suffix keeps Azure SKU tier names (``S1``, ``S2``, ``S3``)
+  from matching, unlike a bare ``S\\d+`` pattern.
 
 **Per-line carve-outs** (applied to the source line containing the comment /
 docstring text -- a match inside any line below is ignored):
@@ -89,6 +92,7 @@ _FUTURE_TESTS_RE = re.compile(
 _ISO_DATE_RE = re.compile(r"\b20\d{2}-\d{2}-\d{2}\b(?!-)")
 _CU_ID_RE = re.compile(r"\bCU-\d+\w*")
 _ISSUE_35_RE = re.compile(r"#35[a-z]\b")
+_SCENARIO_MVP_RE = re.compile(r"\b[A-Z][A-Z0-9]*-MVP\b")
 
 # (regex, human-readable label) pairs. Order is presentation-only.
 _CHECKS: tuple[tuple[re.Pattern[str], str], ...] = (
@@ -101,6 +105,7 @@ _CHECKS: tuple[tuple[re.Pattern[str], str], ...] = (
     (_ISO_DATE_RE, "ISO date"),
     (_CU_ID_RE, "CU-### unit ID"),
     (_ISSUE_35_RE, "#35x issue ref"),
+    (_SCENARIO_MVP_RE, "MVP scenario codename"),
 )
 
 

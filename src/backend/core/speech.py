@@ -1,7 +1,7 @@
 """Azure Speech Service AAD token-mint helper.
 
 Pillar: Stable Core
-Phase: 4 (S1 / SPEECH-MVP)
+Phase: 4
 
 Builds the Microsoft Entra ID authorization token the browser Speech
 SDK (`microsoft-cognitiveservices-speech-sdk`) consumes -- without
