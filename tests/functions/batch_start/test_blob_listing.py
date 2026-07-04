@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 -- tests for src/functions/batch_start/blob_listing.py."""
+"""Tests for src/functions/batch_start/blob_listing.py."""
 
 import logging
 from collections.abc import AsyncIterator

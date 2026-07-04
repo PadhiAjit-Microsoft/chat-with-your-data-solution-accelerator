@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 7
- *
  * Vitest coverage for `<CitationPanel>` -- the v1-style reference block:
  * a collapsible "N references / 1 reference" toggle that reveals a row
  * of numbered reference chips. Clicking a chip calls `onSelectCitation`

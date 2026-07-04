@@ -1,4 +1,4 @@
-"""Tests for shared.registry.Registry. Pillar: Stable Core. Phase: 1."""
+"""Tests for shared.registry.Registry."""
 
 import pytest
 

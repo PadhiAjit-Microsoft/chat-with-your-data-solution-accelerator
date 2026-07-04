@@ -1,8 +1,4 @@
-"""Tests for `HtmlParser` (URL / `*.html` ingestion).
-
-Pillar: Stable Core
-Phase: 6
-"""
+"""Tests for `HtmlParser` (URL / `*.html` ingestion)."""
 
 import pytest
 
@@ -57,6 +53,4 @@ async def test_chunks_carry_deterministic_ids_and_source() -> None:
 async def test_empty_or_markup_only_input_yields_no_chunks() -> None:
     parser = HtmlParser()
     assert await parser.parse(b"", source="empty.html") == []
-    assert (
-        await parser.parse(b"<html><body></body></html>", source="blank.html") == []
-    )
+    assert await parser.parse(b"<html><body></body></html>", source="blank.html") == []

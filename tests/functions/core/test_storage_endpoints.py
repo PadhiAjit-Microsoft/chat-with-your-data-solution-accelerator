@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 -- tests for functions/core/storage_endpoints.py."""
+"""Tests for functions/core/storage_endpoints.py."""
 
 import pytest
 

@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 7
- *
  * Vitest assertions for the `Section` app-shell enum. Tests verify
  * member-to-string round-trip, full `Object.values` membership,
  * runtime equality with raw string literals, and the

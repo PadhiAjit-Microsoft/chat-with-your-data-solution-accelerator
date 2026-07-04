@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6, tests for src/functions/batch_start/blueprint.py.
+"""Tests for src/functions/batch_start/blueprint.py.
 
 The blueprint composes ``functions/core/`` helpers (resolve
 endpoints, storage_clients ctx manager, json_response, the

@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 -- tests for src/functions/add_url/blueprint.py.
+"""Tests for src/functions/add_url/blueprint.py.
 
 Mirrors ``tests/functions/batch_start/test_blueprint.py`` for the
 HTTP-trigger exception ladder + monkeypatch seam, and asserts the

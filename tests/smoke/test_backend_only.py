@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6
-
-Router-level smoke for the ``backend-only`` compose profile.
+"""Router-level smoke for the ``backend-only`` compose profile.
 
 Asserts the FastAPI app boots and serves all routes without the
 ``functions`` container as a peer -- the literal "backend works

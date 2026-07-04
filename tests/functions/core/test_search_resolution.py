@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
-Unit tests for :func:`functions.core.search_resolution.resolve_search_provider`.
+"""Unit tests for :func:`functions.core.search_resolution.resolve_search_provider`.
 
 Covers both registry-keyed paths plus the failure-cleanup contract:
 
@@ -61,9 +58,7 @@ class _RecordingSearch(BaseSearch):
         self._record = record
         self._fail_ensure = fail_ensure
 
-    async def search(
-        self, query: str, **_kwargs: object
-    ) -> Sequence[SearchResult]:
+    async def search(self, query: str, **_kwargs: object) -> Sequence[SearchResult]:
         return []
 
     async def delete_by_source(self, source: str) -> int:

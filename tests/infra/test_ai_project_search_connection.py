@@ -1,6 +1,4 @@
-"""Pillar: Stable Core / Phase: 8
-
-Param/output wiring guards for `modules/ai-project-search-connection.bicep`.
+"""Param/output wiring guards for `modules/ai-project-search-connection.bicep`.
 
 The module owns the Foundry Project -> Azure AI Search connection and is
 knowledge-base-aware: it accepts the KB name, records it on the

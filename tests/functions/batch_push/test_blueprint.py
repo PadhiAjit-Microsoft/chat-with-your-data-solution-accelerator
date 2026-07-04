@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 -- tests for src/functions/batch_push/blueprint.py.
+"""Tests for src/functions/batch_push/blueprint.py.
 
 Mirrors the structure of ``tests/functions/batch_start/test_blueprint.py``:
 the route body is exercised via the private ``_execute`` seam (which

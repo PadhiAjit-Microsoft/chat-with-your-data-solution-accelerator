@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 6
- *
  * Tests for the history-toggle wiring at the App level: the AppHeader
  * history button must drive ChatPage's `data-history-open` attribute,
  * and the sidebar must default to collapsed.

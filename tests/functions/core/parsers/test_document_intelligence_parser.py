@@ -1,8 +1,4 @@
-"""Tests for ``DocumentIntelligenceParser``.
-
-Pillar: Stable Core
-Phase: 7
-"""
+"""Tests for ``DocumentIntelligenceParser``."""
 
 import logging
 from types import SimpleNamespace
@@ -62,9 +58,7 @@ def _make_fake_client_with_result(result: Any) -> MagicMock:
 
 @pytest.mark.parametrize("key", ["pdf", "docx", "jpeg", "jpg", "png"])
 def test_document_intelligence_parser_is_registered_under_key(key: str) -> None:
-    assert (
-        ingestion_parsers_registry.registry.get(key) is DocumentIntelligenceParser
-    )
+    assert ingestion_parsers_registry.registry.get(key) is DocumentIntelligenceParser
 
 
 def test_document_intelligence_parser_is_a_baseparser_subclass() -> None:
@@ -209,7 +203,9 @@ def test_get_client_injected_seam_bypasses_endpoint_validation() -> None:
 
 
 @pytest.mark.asyncio
-async def test_parse_calls_begin_analyze_document_with_model_id_and_bytes_source() -> None:
+async def test_parse_calls_begin_analyze_document_with_model_id_and_bytes_source() -> (
+    None
+):
     fake_result = SimpleNamespace(pages=[_make_fake_page("page 1 content")])
     fake_client = _make_fake_client_with_result(fake_result)
     parser = DocumentIntelligenceParser(
@@ -281,7 +277,9 @@ async def test_parse_skips_pages_with_no_lines_or_whitespace_content() -> None:
 
 
 @pytest.mark.asyncio
-async def test_parse_returns_empty_list_when_result_has_no_pages_or_paragraphs() -> None:
+async def test_parse_returns_empty_list_when_result_has_no_pages_or_paragraphs() -> (
+    None
+):
     fake_client = _make_fake_client_with_result(
         SimpleNamespace(pages=None, paragraphs=None)
     )
@@ -377,7 +375,9 @@ async def test_parse_keeps_over_long_paragraph_as_whole_chunk(
 
 
 @pytest.mark.asyncio
-async def test_parse_prefers_pages_and_skips_paragraph_fallback_when_pages_have_text() -> None:
+async def test_parse_prefers_pages_and_skips_paragraph_fallback_when_pages_have_text() -> (
+    None
+):
     # PDF shape: both `pages[].lines` and `paragraphs` are populated. Chunks
     # must come from the page pass only; the paragraph fallback must not
     # fire, so page content is never duplicated by paragraph content.
@@ -420,7 +420,6 @@ async def test_parse_paragraph_fallback_skips_empty_and_keeps_indices_dense() ->
         BaseParser.make_chunk_id("sparse.docx", 0),
     ]
     assert [c.content for c in chunks] == ["real one\n\nreal two"]
-
 
 
 @pytest.mark.asyncio

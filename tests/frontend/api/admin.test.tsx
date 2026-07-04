@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 5
- *
  * Vitest suite for the admin REST client. Mocks global `fetch` with
  * JSON bodies so unit tests run offline.
  */

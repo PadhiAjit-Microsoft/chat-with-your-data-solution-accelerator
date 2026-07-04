@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 -- tests for src/functions/search_skill/handler.py."""
+"""Tests for src/functions/search_skill/handler.py."""
 
 import pytest
 

@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 7
- *
  * Vitest suite for the admin Configuration page. Mocks
  * `src/api/admin.tsx` so each scenario (loading / loaded / dirty /
  * saving / save success / save failure) is asserted against the

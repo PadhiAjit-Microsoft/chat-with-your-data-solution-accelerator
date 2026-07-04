@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 -- tests for functions/core/http.py."""
+"""Tests for functions/core/http.py."""
 
 import json
 from http import HTTPStatus

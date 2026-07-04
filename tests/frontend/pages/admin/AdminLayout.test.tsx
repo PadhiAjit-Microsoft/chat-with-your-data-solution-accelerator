@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 5
- *
  * Tests for <AdminLayout>: the shared admin chrome. Verifies the
  * secondary nav renders a link per admin page, the active link is
  * marked aria-current, the routed child renders through <Outlet/>,

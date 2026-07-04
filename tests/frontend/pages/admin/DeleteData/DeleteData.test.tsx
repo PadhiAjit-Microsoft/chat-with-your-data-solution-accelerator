@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 7
- *
  * Vitest suite for the admin Delete Data page. Mocks
  * `src/api/admin.tsx` so each scenario (loading / loaded / empty /
  * failed / per-row delete) is asserted against the typed client

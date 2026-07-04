@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 5
- *
  * App-level navigation tests: the header's gated admin entry must
  * appear only on a successful `getAdminStatus()` probe, the App must
  * route into the admin layout when that entry is clicked, and admin

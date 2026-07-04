@@ -1,8 +1,5 @@
 """Tests for shared.agents.definitions.
 
-Pillar: Stable Core
-Phase: 3
-
 Validates:
 
 * `AgentDefinition` is frozen and rejects unknown fields.

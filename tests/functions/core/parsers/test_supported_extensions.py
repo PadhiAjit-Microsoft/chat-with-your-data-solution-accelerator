@@ -1,8 +1,5 @@
 """v1 supported-file-type parity guard.
 
-Pillar: Stable Core
-Phase: 6
-
 v1 (`docs/supported_file_types.md`) shipped these out of the box:
 PDF, JPEG, JPG, PNG, TXT, HTML, MD, DOCX, JSON. This test asserts the
 v2 ingestion parser registry resolves every one of those extensions so
@@ -38,10 +35,9 @@ def test_v1_extension_is_registered_in_v2(extension: str) -> None:
 def test_registry_resolves_by_parser_key_member() -> None:
     # Registration used ParserKey members; a member lookup resolves the
     # same class a plain-string (blob-extension) lookup does.
-    assert (
-        ingestion_parsers_registry.registry.get(ParserKey.PDF)
-        is ingestion_parsers_registry.registry.get("pdf")
-    )
+    assert ingestion_parsers_registry.registry.get(
+        ParserKey.PDF
+    ) is ingestion_parsers_registry.registry.get("pdf")
 
 
 # Extensions whose parser routes through Azure AI Services (Document

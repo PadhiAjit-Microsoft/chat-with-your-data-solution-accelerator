@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 -- tests for src/functions/batch_push/blob_fetcher.py."""
+"""Tests for src/functions/batch_push/blob_fetcher.py."""
 
 import logging
 from typing import cast

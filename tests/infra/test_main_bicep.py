@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 1. Bicep regression tests.
+"""Bicep regression tests.
 
 The full Bicep contract is validated by `az bicep build`; these
 grep-style guards catch *symbol-level* regressions fast (no Bicep CLI

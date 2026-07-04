@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 7
- *
  * Tests for <ErrorBoundary>, the chat-surface render-failure net. A
  * descendant that throws during render must yield the recoverable
  * fallback (alert region + heading + message + retry) instead of

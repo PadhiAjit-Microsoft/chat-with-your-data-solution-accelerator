@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 7
- *
  * Vitest assertions for the shared admin/page status enums. Each
  * enum is an `as const` map; the tests verify member-to-string
  * round-trip, full membership via `Object.values`, and runtime

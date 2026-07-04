@@ -3,9 +3,6 @@ import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 
-// Pillar: Stable Core
-// Phase: 1
-//
 // Vitest config for the v2 frontend test tree. This package is a sibling
 // workspace member of cwyd-frontend; both hoist to node_modules, so a
 // bare import in a spec ("@testing-library/react", the auto-injected
