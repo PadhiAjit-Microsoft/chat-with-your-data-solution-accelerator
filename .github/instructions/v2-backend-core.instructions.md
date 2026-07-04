@@ -26,11 +26,7 @@ The generic `Registry[T]` lives in `src/backend/core/registry.py`. Per Hard Rule
 
 ```python
 # src/backend/core/providers/<domain>/__init__.py  -- MARKER ONLY
-"""<Domain> provider package.
-
-Pillar: Stable Core
-Phase: <n>
-"""
+"""<Domain> provider package."""
 ```
 
 ```python

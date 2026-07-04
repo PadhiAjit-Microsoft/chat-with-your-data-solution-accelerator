@@ -14,7 +14,7 @@ applyTo: "src/functions/**"
 ## Layout
 
 - `function_app.py` — sole registration entry; imports blueprints and `app.register_functions(bp)`.
-- `<name>/blueprint.py` — one trigger per file (queue, HTTP, or EventGrid). Sibling helpers under the same folder (`<name>/handler.py`, `<name>/<verb>_fetcher.py`, `<name>/queue_reader.py`, etc.) factor parse / fetch / dispatch logic so the trigger module stays thin. Blueprint folders in v2: `batch_start/`, `batch_push/`, `add_url/`, `search_skill/`. Every blueprint folder carries an `__init__.py` marker per Hard Rule #13 (docstring-only with `Pillar:` / `Phase:` header).
+- `<name>/blueprint.py` — one trigger per file (queue, HTTP, or EventGrid). Sibling helpers under the same folder (`<name>/handler.py`, `<name>/<verb>_fetcher.py`, `<name>/queue_reader.py`, etc.) factor parse / fetch / dispatch logic so the trigger module stays thin. Blueprint folders in v2: `batch_start/`, `batch_push/`, `add_url/`, `search_skill/`. Every blueprint folder carries an `__init__.py` marker per Hard Rule #13 (docstring-only).
 - Pluggable logic is consumed via the registries in `src/backend/core/providers/`. Specifically: parsers via `from backend.core.providers.parsers import registry as parsers_registry; parsers_registry.registry.get(ext)()`, embedders via `from backend.core.providers.embedders import registry as embedders_registry; embedders_registry.registry.get(key)(...)`, search via `from backend.core.providers.search import registry as search_registry; search_registry.registry.get(key)(...)`. Composition lives in `src/backend/core/pipelines/ingestion.py` — blueprints invoke the pipeline, they do not duplicate parse/chunk/embed logic.
 
 ## Rules

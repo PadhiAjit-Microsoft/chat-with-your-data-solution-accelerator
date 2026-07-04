@@ -41,19 +41,9 @@ This means every file under `functions/core/` should fall into one of three shap
 
 Storage-side primitives (`resolve_storage_endpoints()`, `storage_clients()` async context manager) do **not** live here — they land under `src/backend/core/providers/storage/` so backend can also consume them. Do not seed this folder with placeholder modules beyond the U7 set.
 
-## Pillar header (binding)
+## Pillar awareness (no docstring header)
 
-Every `.py` under `functions/core/` opens with the standard CWYD pillar header docstring:
-
-```
-"""<one-line module purpose>.
-
-Pillar: <Stable Core | Scenario Pack | Configuration Layer | Customization Layer>
-Phase: <6 or later>
-"""
-```
-
-Most files here will be **Stable Core** (the indexing pipeline is part of the always-needed-when-RAG-is-on layer); ingestion-side scenario customizations are **Scenario Pack**.
+Every `.py` under `functions/core/` opens with a one-line functional module docstring — **not** a `Pillar:` / `Phase:` header (that mandate is retired; see Hard Rule #3 in [.github/copilot-instructions.md](../copilot-instructions.md)). Still classify each file by pillar when reasoning about where it belongs: most files here will be **Stable Core** (the indexing pipeline is part of the always-needed-when-RAG-is-on layer); ingestion-side scenario customizations are **Scenario Pack**.
 
 ## Pyright strict (binding)
 

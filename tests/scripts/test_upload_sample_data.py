@@ -128,7 +128,6 @@ def test_both_wrappers_exist() -> None:
 
 def test_posix_wrapper_fails_fast_and_runs_uploader() -> None:
     body = _SH.read_text(encoding="utf-8")
-    assert "Pillar: Stable Core" in body
     assert "set -euo pipefail" in body
     assert "uv run python" in body
     assert "upload_sample_data.py" in body
@@ -136,7 +135,6 @@ def test_posix_wrapper_fails_fast_and_runs_uploader() -> None:
 
 def test_windows_wrapper_fails_fast_and_runs_uploader() -> None:
     body = _PS1.read_text(encoding="utf-8")
-    assert "Pillar: Stable Core" in body
     assert "$ErrorActionPreference = 'Stop'" in body
     assert "uv run python" in body
     assert "upload_sample_data.py" in body

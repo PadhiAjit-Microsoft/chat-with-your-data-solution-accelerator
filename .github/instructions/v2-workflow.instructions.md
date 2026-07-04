@@ -14,32 +14,14 @@ Before any reorganization, refactor, or error fix under the code tree, read the 
 ## The loop (per request)
 
 1. **Plan.** Identify the ONE class or ONE method to implement. Map it to a phase in [v2/docs/development_plan.md](../../v2/docs/development_plan.md) and to a pillar in [v2/docs/pillars_of_development.md](../../v2/docs/pillars_of_development.md). If the user's request implies multiple units, list them and implement only the first; report the rest as next steps.
-2. **Implement.** Write the unit. Add the pillar/phase docstring header. Keep public surface minimal.
+2. **Implement.** Write the unit. Keep public surface minimal.
 3. **Test.** In the same turn, add or extend a test file that exercises the new unit. The test must execute. Prefer failing-then-fixing over green-by-default.
 4. **Verify.** Run the relevant test (`uv run pytest <path>`, `npm test -- <pattern>`) and report the result.
 5. **Stop.** Do not proceed to the next unit until the user (or the orchestrating agent) approves.
 
-## Pillar header (required)
+## Pillar awareness (no docstring header)
 
-Every new file in `src/**` must start with one of:
-
-```python
-"""
-Pillar: Stable Core
-Phase: 1
-Purpose: <one sentence>
-"""
-```
-
-```ts
-/**
- * Pillar: Stable Core
- * Phase: 1
- * Purpose: <one sentence>
- */
-```
-
-Valid pillars: `Stable Core`, `Scenario Pack`, `Configuration Layer`, `Customization Layer`.
+Classify every new module/class by its pillar when reasoning about where it belongs — but do **not** emit a `Pillar:` / `Phase:` docstring header (that mandate is retired; see Hard Rule #3 in [.github/copilot-instructions.md](../copilot-instructions.md)). Valid pillars: `Stable Core`, `Scenario Pack`, `Configuration Layer`, `Customization Layer`.
 
 ## Plug-and-play rules
 

@@ -41,7 +41,7 @@ COPY src/functions/batch_start  ./functions/batch_start
 COPY src/functions/blob_event   ./functions/blob_event
 COPY src/functions/search_skill ./functions/search_skill
 COPY src/functions/core         ./functions/core
-RUN printf '"""Pillar: Stable Core\nPhase: 6 (Functions blueprints / modular RAG indexing pipeline)\n"""\n' > ./functions/__init__.py
+RUN printf '"""Azure Functions ingestion blueprints package."""\n' > ./functions/__init__.py
 
 # Shared backend tree so the blueprints' `from backend.core...` imports resolve.
 COPY src/backend ./backend

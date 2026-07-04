@@ -23,7 +23,6 @@ from fastapi import FastAPI
 from pydantic import ValidationError
 
 import backend.routers.admin as _admin_module
-import backend.services.admin as _services_admin
 from backend.core.agents.definitions import (
     CWYD_DEFAULT_BODY,
     CWYD_GUARDRAIL,
@@ -413,21 +412,6 @@ async def test_status_does_not_leak_sensitive_settings(
     async with _client(app) as ac:
         resp = await ac.get("/api/admin/status")
     assert marker not in resp.text
-
-
-# ---------------------------------------------------------------------------
-# Pillar declaration (Hard Rule #3)
-# ---------------------------------------------------------------------------
-
-
-def test_admin_router_module_declares_pillar_and_phase() -> None:
-    """Hard Rule #3: every new module under src/** opens with a
-    Pillar / Phase docstring header so reviewers and future agents
-    can map the file to the development plan.
-    """
-    doc = (_admin_module.__doc__ or "").lower()
-    assert "pillar:" in doc
-    assert "phase: 5" in doc
 
 
 # ---------------------------------------------------------------------------
@@ -2622,12 +2606,3 @@ async def test_patch_config_skips_rai_for_non_prompt_field(
     assert resp.status_code == 200
     assert rai_called is False
     db.upsert_runtime_config.assert_awaited_once()
-
-
-def test_admin_services_module_declares_pillar_and_phase() -> None:
-    """Hard Rule #3: `services/admin.py` is the home of the RAI helper;
-    its module docstring must carry the Pillar / Phase header so the
-    file maps to the development plan."""
-    doc = (_services_admin.__doc__ or "").lower()
-    assert "pillar:" in doc
-    assert "phase: 5" in doc
