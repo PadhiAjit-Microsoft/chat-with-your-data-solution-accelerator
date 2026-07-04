@@ -77,7 +77,7 @@ SEMANTIC_CONFIG_NAME = "default"
 # the existing chat index, and the knowledge base references that source
 # plus the Azure OpenAI chat model used for query planning. Created
 # once via the Search REST `knowledgesources` / `knowledgebases` endpoints
-# (api-version from SearchSettings) — never per-document. The two `kind`
+# (api-version from SearchSettings) -- never per-document. The two `kind`
 # discriminators below are the only values this script emits, so they are
 # pinned as single-value constants.
 KNOWLEDGE_SOURCE_KIND_SEARCH_INDEX = "searchIndex"
@@ -418,7 +418,7 @@ def _ensure_search_index(*, dry_run: bool, client_factory=None) -> str:
 
     Returns one of: ``"skipped"`` (no endpoint configured),
     ``"dry-run"``, ``"exists"``, ``"created"``. ``client_factory`` is
-    a test seam — production passes ``None`` and the function builds a
+    a test seam -- production passes ``None`` and the function builds a
     ``SearchIndexClient`` from the deployer's ``DefaultAzureCredential``.
     """
     endpoint = os.environ.get("AZURE_AI_SEARCH_ENDPOINT", "").strip()

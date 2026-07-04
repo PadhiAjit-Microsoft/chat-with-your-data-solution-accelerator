@@ -1,7 +1,7 @@
 // ========================================================================
 // Pillar:  Stable Core
 // Phase:   1 (Infrastructure + Project Skeleton)
-// Purpose: Microsoft Foundry Project — child of an AI Services account
+// Purpose: Microsoft Foundry Project -- child of an AI Services account
 //          with `allowProjectManagement=true`. The Project endpoint is
 //          what the Agent Framework orchestrator (and Foundry IQ
 //          knowledge bases) bind to. The same parent account also

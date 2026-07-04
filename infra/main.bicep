@@ -120,7 +120,7 @@ var useExistingStorage = !empty(existingStorageName)
 var useExistingEventGridTopic = !empty(existingEventGridTopicName)
 var useExistingOpenAi = !empty(existingOpenAiName)
 
-// Built-in role definition GUID: Cognitive Services OpenAI User —
+// Built-in role definition GUID: Cognitive Services OpenAI User --
 // grants inference on Cognitive Services / OpenAI account deployments.
 var cognitiveServicesOpenAiUserRoleId = '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
 
@@ -229,7 +229,7 @@ param createdBy string = contains(deployer(), 'userPrincipalName')
 // integration. The flag is the supported WAF-aligned topology and
 // requires no follow-up work to enable.
 
-// Deployer identity — used to grant the seed hook storage data-plane access.
+// Deployer identity -- used to grant the seed hook storage data-plane access.
 var deployerPrincipalId = deployer().objectId
 var deployerPrincipalType = contains(deployer(), 'userPrincipalName') ? 'User' : 'ServicePrincipal'
 
@@ -442,7 +442,7 @@ module avmPrivateDnsZones 'br/public:avm/res/network/private-dns-zone:0.8.1' = [
 ]
 
 // ----------------------------------------------------------------------
-// Azure Bastion (CONDITIONAL — enablePrivateNetworking only).
+// Azure Bastion (CONDITIONAL -- enablePrivateNetworking only).
 //
 // Operator access path into the private network. No jumpbox VM:
 // operators connect via the Azure portal's browser-based Bastion
@@ -636,7 +636,7 @@ resource existingOpenAiUamiRole 'Microsoft.Authorization/roleAssignments@2022-04
   name: guid(existingOpenAi!.id, userAssignedIdentity.name, cognitiveServicesOpenAiUserRoleId)
   scope: existingOpenAi
   properties: {
-    // Cognitive Services OpenAI User — grants inference on every
+    // Cognitive Services OpenAI User -- grants inference on every
     // deployment on the account (chat, embedding).
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', cognitiveServicesOpenAiUserRoleId)
     principalId: userAssignedIdentity.outputs.principalId
@@ -650,7 +650,7 @@ resource existingOpenAiUamiRole 'Microsoft.Authorization/roleAssignments@2022-04
 // v2 Foundry account endpoint where the deployments live.
 var effectiveOpenAiEndpoint = useExistingOpenAi ? 'https://${existingOpenAiName}.openai.azure.com/' : aiServices.outputs.endpoint
 
-// Foundry Project — child of the AI Services account. Hosts agents
+// Foundry Project -- child of the AI Services account. Hosts agents
 // (Agent Framework orchestrator) and knowledge bases (Foundry IQ).
 //
 // NOTE on Foundry Tools: Document Intelligence and
@@ -682,10 +682,10 @@ module aiProject 'modules/ai-project.bicep' = {
 // backend `mint_speech_token()` helper (src/backend/core/speech.py)
 // exchanges the UAMI's AAD token for a 10-minute Speech authorization
 // token via the regional `sts/v1.0/issueToken` endpoint, then the
-// browser SDK talks to Speech directly — no audio ever flows back
+// browser SDK talks to Speech directly -- no audio ever flows back
 // through this backend.
 //
-// Local auth disabled (Hard Rule #2 — no subscription keys, no Key
+// Local auth disabled (Hard Rule #2 -- no subscription keys, no Key
 // Vault). The UAMI gets `Cognitive Services Speech User`
 // (`f2dc8367-1007-4938-bd23-fe263f013447`) which is the data-plane
 // role required by the issueToken STS exchange.
@@ -721,7 +721,7 @@ module speechService 'br/public:avm/res/cognitive-services/account:0.13.0' = {
       {
         principalId: userAssignedIdentity.outputs.principalId
         principalType: 'ServicePrincipal'
-        // Cognitive Services Speech User — data-plane role for STS
+        // Cognitive Services Speech User -- data-plane role for STS
         // issueToken + Speech recognition / synthesis.
         roleDefinitionIdOrName: 'f2dc8367-1007-4938-bd23-fe263f013447'
       }
@@ -796,7 +796,7 @@ module cogContentSafety 'br/public:avm/res/cognitive-services/account:0.13.0' = 
       {
         principalId: userAssignedIdentity.outputs.principalId
         principalType: 'ServicePrincipal'
-        // Cognitive Services User — data-plane role for the AnalyzeText
+        // Cognitive Services User -- data-plane role for the AnalyzeText
         // call used by `ContentSafetyGuard.screen()`.
         roleDefinitionIdOrName: 'a97b65f3-24c7-4388-baec-2e87135dc908'
       }
@@ -823,7 +823,7 @@ module cogContentSafety 'br/public:avm/res/cognitive-services/account:0.13.0' = 
 }
 
 // ----------------------------------------------------------------------
-// Azure AI Search (CONDITIONAL — cosmosdb mode only).
+// Azure AI Search (CONDITIONAL -- cosmosdb mode only).
 // In postgresql mode the index store is pgvector inside the Postgres
 // Flexible Server, so Search is not deployed at all. RBAC grants the
 // workload UAMI both data-plane (index read/write) and control-plane
@@ -871,20 +871,20 @@ module aiSearch 'br/public:avm/res/search/search-service:0.12.0' = if (databaseT
       {
         principalId: aiProject.outputs.projectPrincipalId
         principalType: 'ServicePrincipal'
-        // Search Index Data Reader — lets the Foundry Project (and Foundry IQ) query indexes through the connection.
+        // Search Index Data Reader -- lets the Foundry Project (and Foundry IQ) query indexes through the connection.
         roleDefinitionIdOrName: '1407120a-92aa-4202-b7e9-c0e197c71c8f'
       }
       {
         principalId: aiProject.outputs.projectPrincipalId
         principalType: 'ServicePrincipal'
-        // Search Service Contributor — lets the Foundry Project (and Foundry IQ)
+        // Search Service Contributor -- lets the Foundry Project (and Foundry IQ)
         // manage indexes/indexers/skillsets through the Project-Search connection.
         roleDefinitionIdOrName: '7ca78c08-252a-4471-8644-bb5ff32d4ba0'
       }
       {
         principalId: deployerPrincipalId
         principalType: deployerPrincipalType
-        // Search Index Data Reader — deployer reads the index document count during the post-deploy seed self-check (disableLocalAuth is on, so the data plane is RBAC-only).
+        // Search Index Data Reader -- deployer reads the index document count during the post-deploy seed self-check (disableLocalAuth is on, so the data plane is RBAC-only).
         roleDefinitionIdOrName: '1407120a-92aa-4202-b7e9-c0e197c71c8f'
       }
     ]
@@ -965,7 +965,7 @@ resource existingSearchProjectIndexReader 'Microsoft.Authorization/roleAssignmen
 // (`useExistingOpenAi`); the principal is the new Search service's
 // system MI. Reusing an existing Search service (`useExistingSearch`)
 // is not covered here because v2 does not own that service's identity
-// configuration — grant Cognitive Services OpenAI User to the reused
+// configuration -- grant Cognitive Services OpenAI User to the reused
 // Search service's identity on the chat-model account manually.
 resource aiServicesAccount 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = if (databaseType == 'cosmosdb' && !useExistingSearch && !useExistingOpenAi) {
   name: aiServicesName
@@ -975,7 +975,7 @@ resource searchOpenAiUserOnFoundry 'Microsoft.Authorization/roleAssignments@2022
   name: guid(aiServicesAccount.id, 'srch-${solutionSuffix}', subscriptionResourceId('Microsoft.Authorization/roleDefinitions', cognitiveServicesOpenAiUserRoleId))
   scope: aiServicesAccount
   properties: {
-    // Cognitive Services OpenAI User — lets the Search MI call the KB
+    // Cognitive Services OpenAI User -- lets the Search MI call the KB
     // query-planning chat deployment on the Foundry account.
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', cognitiveServicesOpenAiUserRoleId)
     principalId: aiSearch!.outputs.systemAssignedMIPrincipalId!
@@ -987,7 +987,7 @@ resource searchOpenAiUserOnReusedOpenAi 'Microsoft.Authorization/roleAssignments
   name: guid(existingOpenAi!.id, 'srch-${solutionSuffix}', subscriptionResourceId('Microsoft.Authorization/roleDefinitions', cognitiveServicesOpenAiUserRoleId))
   scope: existingOpenAi
   properties: {
-    // Cognitive Services OpenAI User — lets the Search MI call the KB
+    // Cognitive Services OpenAI User -- lets the Search MI call the KB
     // query-planning chat deployment on the reused v1 OpenAI account.
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', cognitiveServicesOpenAiUserRoleId)
     principalId: aiSearch!.outputs.systemAssignedMIPrincipalId!
@@ -1232,7 +1232,7 @@ resource existingStorageQueueAddUrlPoison 'Microsoft.Storage/storageAccounts/que
   properties: {}
 }
 
-// Storage Blob Data Contributor — read/write uploaded documents
+// Storage Blob Data Contributor -- read/write uploaded documents
 resource existingStorageBlobContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (useExistingStorage) {
   name: guid(storageAccountExisting.id, userAssignedIdentity.name, 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
   scope: storageAccountExisting
@@ -1243,7 +1243,7 @@ resource existingStorageBlobContributor 'Microsoft.Authorization/roleAssignments
   }
 }
 
-// Storage Queue Data Contributor — enqueue + consume indexing messages
+// Storage Queue Data Contributor -- enqueue + consume indexing messages
 resource existingStorageQueueContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (useExistingStorage) {
   name: guid(storageAccountExisting.id, userAssignedIdentity.name, '974c5e8b-45b9-4653-ba55-5f855dd0fb88')
   scope: storageAccountExisting
@@ -1254,7 +1254,7 @@ resource existingStorageQueueContributor 'Microsoft.Authorization/roleAssignment
   }
 }
 
-// Storage Account Contributor — Function App host storage management
+// Storage Account Contributor -- Function App host storage management
 resource existingStorageAccountContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = if (useExistingStorage) {
   name: guid(storageAccountExisting.id, userAssignedIdentity.name, '17d1049b-9a84-46fb-8f53-869881c3d3ab')
   scope: storageAccountExisting
@@ -1270,11 +1270,11 @@ var effectiveStorageResourceId = useExistingStorage ? storageAccountExisting.id 
 var effectiveStorageBlobEndpoint = useExistingStorage ? storageAccountExisting.properties.primaryEndpoints.blob : storageAccount!.outputs.primaryBlobEndpoint
 
 // ----------------------------------------------------------------------
-// Cosmos DB (CONDITIONAL — cosmosdb mode only).
+// Cosmos DB (CONDITIONAL -- cosmosdb mode only).
 // Stores chat history, one item per message. Partitioned on `userId`
 // for high-cardinality even distribution; query patterns are
 // "all messages for user X in conversation Y" so userId is the hot path.
-// AAD-only (disableLocalAuth) — workload UAMI gets the built-in
+// AAD-only (disableLocalAuth) -- workload UAMI gets the built-in
 // Cosmos DB Built-in Data Contributor role at data-plane scope.
 //
 // Capacity model: Serverless by default (cheap, scale-to-zero). When
@@ -1397,9 +1397,9 @@ var effectiveCosmosName = useExistingCosmos ? existingCosmosName : (databaseType
 var effectiveCosmosEndpoint = useExistingCosmos ? existingCosmos!.properties.documentEndpoint : (databaseType == 'cosmosdb' ? cosmosDb!.outputs.endpoint : '')
 
 // ----------------------------------------------------------------------
-// PostgreSQL Flexible Server + pgvector (CONDITIONAL — postgresql mode).
+// PostgreSQL Flexible Server + pgvector (CONDITIONAL -- postgresql mode).
 // Single server hosts BOTH chat history (relational tables) AND the
-// vector index (pgvector extension). Auth is Entra-only — the workload
+// vector index (pgvector extension). Auth is Entra-only -- the workload
 // UAMI is the Entra admin, and the post-provision script
 // (`scripts/post-provision.sh`) connects via `psql` with
 // the deployer's az token to:
@@ -1670,7 +1670,7 @@ module caeDnsZone 'br/public:avm/res/network/private-dns-zone:0.8.1' = if (enabl
   }
 }
 
-// Container Registry — azd pushes backend + function images here.
+// Container Registry -- azd pushes backend + function images here.
 // AcrPull is granted to the v2 UAMI so the Container App pulls without
 // admin credentials. Output `AZURE_CONTAINER_REGISTRY_ENDPOINT` is read
 // by `azd deploy` to discover the push target.
@@ -1827,7 +1827,7 @@ module backendContainerApp 'br/public:avm/res/app/container-app:0.22.1' = {
             { name: 'AZURE_SPEECH_SERVICE_NAME', value: speechService.outputs.name }
             { name: 'AZURE_SPEECH_SERVICE_REGION', value: azureAiServiceLocation }
             { name: 'AZURE_SPEECH_ACCOUNT_RESOURCE_ID', value: speechService.outputs.resourceId }
-            // Content Safety — backend prompt-shielding guard. The
+            // Content Safety -- backend prompt-shielding guard. The
             // Cognitive Services account is always deployed, so ENABLED
             // is statically true at infra level; operators flip the guard
             // OFF per-request via the admin runtime override
@@ -1839,7 +1839,7 @@ module backendContainerApp 'br/public:avm/res/app/container-app:0.22.1' = {
             // pgvector deployments must ground app-side via langgraph;
             // agent_framework is the cosmosdb/Foundry-IQ default.
             { name: 'CWYD_ORCHESTRATOR_NAME', value: databaseType == 'postgresql' ? 'langgraph' : 'agent_framework' }
-            // Storage — the admin surface writes uploaded documents to the
+            // Storage -- the admin surface writes uploaded documents to the
             // blob container and enqueues each onto the doc-processing queue
             // for the ingestion pipeline; the files route streams blobs back
             // from the same container. The UAMI holds Storage Blob Data Owner
@@ -1896,7 +1896,7 @@ module backendContainerApp 'br/public:avm/res/app/container-app:0.22.1' = {
 // resolves it like the backend. The backend origin is injected at
 // runtime via the BACKEND_API_URL env var (the SPA fetches it from
 // /config on boot), so nothing is baked at build time. Easy Auth stays
-// off — the SPA is anonymous and the FastAPI backend owns auth.
+// off -- the SPA is anonymous and the FastAPI backend owns auth.
 //
 // A placeholder image boots the resource on a clean first provision
 // (before any image is pushed); `azd deploy` then builds + pushes the
@@ -1979,10 +1979,10 @@ module frontendContainerApp 'br/public:avm/res/app/container-app:0.22.1' = {
 // Function container app (Azure Functions on Azure Container Apps) +
 // Event Grid system topic.
 // The function hosts the modular RAG indexing pipeline:
-//   - batch_start  — list blobs in /documents/, enqueue per-blob messages
-//   - batch_push   — Storage Queue trigger; parse, chunk, embed, push to
+//   - batch_start  -- list blobs in /documents/, enqueue per-blob messages
+//   - batch_push   -- Storage Queue trigger; parse, chunk, embed, push to
 //                    the configured vector index (AI Search OR Postgres)
-//   - add_url      — HTTP trigger; fetch URL content, parse, embed
+//   - add_url      -- HTTP trigger; fetch URL content, parse, embed
 // Event Grid system topic on the Storage Account fans out BlobCreated
 // and BlobDeleted notifications under /documents/ to the blob-events
 // queue; the blob_event trigger turns a create into a doc-processing
@@ -2011,7 +2011,7 @@ var docProcessingQueueName = 'doc-processing'
 var blobEventsQueueName = 'blob-events'
 var documentsContainerName = 'documents'
 // Built-in role definition GUID used by this section.
-//   Storage Queue Data Message Sender — for Event Grid → Storage Queue
+//   Storage Queue Data Message Sender -- for Event Grid → Storage Queue
 var storageQueueDataMessageSenderRoleId = 'c6a89b2d-59bc-44d0-9896-0f6e12d7b80a'
 
 // ----------------------------------------------------------------------
@@ -2028,7 +2028,7 @@ var storageQueueDataMessageSenderRoleId = 'c6a89b2d-59bc-44d0-9896-0f6e12d7b80a'
 // Three host-specific settings differ from the backend container app:
 //   - FUNCTIONS_WORKER_RUNTIME=python is REQUIRED on Container Apps (Flex
 //     Consumption forbade it); the runtime version comes from the base image.
-//   - targetPort 80 — the Functions Python base image listens on 80.
+//   - targetPort 80 -- the Functions Python base image listens on 80.
 //   - minReplicas 1 keeps the batch_push + blob_event queue consumers warm;
 //     maxReplicas maps from the former Flex maximumInstanceCount (40 / 100).
 //
@@ -2057,7 +2057,7 @@ resource functionContainerApp 'Microsoft.App/containerApps@2024-10-02-preview' =
     configuration: {
       activeRevisionsMode: 'Single'
       // HTTP triggers (batch_start / add_url / search_skill) must be
-      // reachable — the AI Search indexer calls search_skill — and ingress
+      // reachable -- the AI Search indexer calls search_skill -- and ingress
       // is also required for KEDA scaling. Internal in the private profile,
       // resolved via the wildcard caeDnsZone A-record like the backend.
       ingress: {
@@ -2100,7 +2100,7 @@ resource functionContainerApp 'Microsoft.App/containerApps@2024-10-02-preview' =
           }
           env: union(
             [
-              // AAD-only AzureWebJobsStorage — no connection string, UAMI auth.
+              // AAD-only AzureWebJobsStorage -- no connection string, UAMI auth.
               { name: 'AzureWebJobsStorage__accountName', value: effectiveStorageName }
               { name: 'AzureWebJobsStorage__credential', value: 'managedidentity' }
               { name: 'AzureWebJobsStorage__clientId', value: userAssignedIdentity.outputs.clientId }
@@ -2172,7 +2172,7 @@ resource functionContainerApp 'Microsoft.App/containerApps@2024-10-02-preview' =
 // Existing-reference to the effective storage account (new or reused v1),
 // used as the scope for the Event Grid queue-sender role assignments below.
 // `existing` uses the *variable* (compile-time known), not the module
-// output (runtime-only) — required for roleAssignment scope/name to
+// output (runtime-only) -- required for roleAssignment scope/name to
 // satisfy BCP120.
 resource storageAccountExisting 'Microsoft.Storage/storageAccounts@2024-01-01' existing = {
   // BCP334: take(...) returns string 0..24 chars; storage account name
@@ -2251,7 +2251,7 @@ resource eventGridQueueSenderRole 'Microsoft.Authorization/roleAssignments@2022-
 // eventGridQueueSenderRole and only run its delivery-authorization
 // preflight AFTER the shared UAMI is granted Storage Queue Data Message
 // Sender. The `parent` is an `existing` reference to the
-// AVM-created topic — the same mechanism the reuse path uses
+// AVM-created topic -- the same mechanism the reuse path uses
 // (existingEventGridTopic → existingEventGridSubscription), because an AVM
 // module is not a resource symbol usable as `parent`.
 resource newEventGridTopic 'Microsoft.EventGrid/systemTopics@2024-12-15-preview' existing = if (!useExistingEventGridTopic) {
