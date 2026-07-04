@@ -1,6 +1,6 @@
 /*
  * Pillar: Stable Core
- * Phase: 7 (Testing + Documentation)
+ * Phase: 7
  *
  * CitationPanel styling. A lightweight collapsible reference block that
  * sits under the answer body and reads as secondary content. All colors
@@ -57,7 +57,7 @@
 }
 
 /* Each reference is a bordered, rounded chip the user can click to
- * open the source detail column — mirrors the v1 citation chip row. */
+ * open the source detail column. */
 .chip {
   display: inline-flex;
   align-items: center;

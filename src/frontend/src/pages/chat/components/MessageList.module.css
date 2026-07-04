@@ -1,14 +1,10 @@
 /*
  * Pillar: Stable Core
- * Phase: 6 (frontend polish, pulled forward for boss demo) +
- *        4 (reference-architecture re-skin — assistant: no bubble (full-width prose);
- *           user: brand-tinted right-aligned chip; Fluent tokens
- *           replace all `--color-*` / `--space-*` aliases removed in U8.)
+ * Phase: 6
  *
  * Chat surface layout. Color/spacing tokens come from Fluent v9 via
  * `<FluentProvider>`. The `cwydThink` keyframe stays defined here (it
- * doesn't ship in the Fluent token set; tokens.css will keep mirroring
- * a global copy until U8's tokens.css thinning).
+ * doesn't ship in the Fluent token set).
  */
 
 .empty {
@@ -134,7 +130,7 @@
 }
 
 /* Static, small, muted disclaimer rendered under a finished assistant
-   answer (above the reference block) — mirrors the v1 answer footer. */
+   answer (above the reference block). */
 .disclaimer {
   margin: 2px 0 0;
   font-size: var(--fontSizeBase200);
