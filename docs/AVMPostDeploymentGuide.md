@@ -23,7 +23,7 @@ The steps below confirm the deployment, secure it, and add your own content.
 ## Prerequisites
 
 * A successful `azd up` deployment. Run `azd env get-values` to see the outputs for your environment.
-* Permission to configure authentication on the web app and to assign the admin role.
+* Permission to configure the app's authentication and to grant admin-area access at the identity provider.
 
 ## Step 1: Confirm the deployment
 
@@ -46,7 +46,7 @@ Administration lives inside the web app; there is no separate admin site. The ad
 
 ## Step 3: Ingest your documents
 
-1. Sign in as a user with the `admin` role and open the admin area.
+1. Sign in as a user authorized to reach the admin area, then open it.
 2. On the **Ingest** page, upload documents or submit a URL. Sample documents are available under the `data/` directory of this repository.
 3. The ingestion worker parses, chunks, embeds, and indexes the content. For how the pipeline works, see [Document ingestion](document_ingestion.md); for accepted formats, see [Supported file types](supported_file_types.md).
 
