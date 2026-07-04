@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6, tests for src/functions/batch_push/handler.py."""
+"""Pillar: Stable Core / Phase: 6 -- tests for src/functions/batch_push/handler.py."""
 
 from typing import cast
 from unittest.mock import AsyncMock

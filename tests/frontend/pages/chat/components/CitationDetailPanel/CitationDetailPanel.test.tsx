@@ -2,7 +2,7 @@
  * Pillar: Stable Core
  * Phase: 7
  *
- * Vitest coverage for `<CitationDetailPanel>` — the right-side source
+ * Vitest coverage for `<CitationDetailPanel>` -- the right-side source
  * detail column. Verifies it stays unmounted with no active citation,
  * renders the title + deep-link + markdown reference text when a
  * citation is selected, escapes raw HTML in the snippet, and clears
@@ -166,7 +166,7 @@ describe("CitationDetailPanel", () => {
 
     const body = screen.getByTestId("citation-detail-body");
     // No rehype-raw: the `<b>` in the snippet must not become a real
-    // bold element — it is rendered as escaped literal text.
+    // bold element -- it is rendered as escaped literal text.
     expect(body.querySelector("b")).toBeNull();
     expect(body.textContent).toContain("<b>raw</b>");
   });

@@ -22,7 +22,7 @@ import {
   vi,
 } from "vitest";
 
-describe("FluentThemeBridge — DOM mounting", () => {
+describe("FluentThemeBridge -- DOM mounting", () => {
   beforeEach(() => {
     window.localStorage.clear();
     document.documentElement.removeAttribute("data-theme");
@@ -101,7 +101,7 @@ describe("FluentThemeBridge — DOM mounting", () => {
   });
 });
 
-describe("FluentThemeBridge — theme flip", () => {
+describe("FluentThemeBridge -- theme flip", () => {
   beforeEach(() => {
     window.localStorage.clear();
     document.documentElement.removeAttribute("data-theme");
@@ -162,7 +162,7 @@ describe("FluentThemeBridge — theme flip", () => {
       </ThemeProvider>,
     );
 
-    // Initial light render — last theme prop captured should be the
+    // Initial light render -- last theme prop captured should be the
     // light-theme sentinel from our mock.
     const initialTheme = themeProps.at(-1) as { __id?: string } | undefined;
     expect(initialTheme?.__id).toBe("teamsLightTheme");
@@ -176,7 +176,7 @@ describe("FluentThemeBridge — theme flip", () => {
   });
 });
 
-describe("FluentThemeBridge — Toaster mount", () => {
+describe("FluentThemeBridge -- Toaster mount", () => {
   beforeEach(() => {
     window.localStorage.clear();
     document.documentElement.removeAttribute("data-theme");

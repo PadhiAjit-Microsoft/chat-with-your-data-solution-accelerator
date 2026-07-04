@@ -4,7 +4,7 @@
  *
  * Vitest suite for `useSpeechRecognition`. We mock both the
  * `microsoft-cognitiveservices-speech-sdk` module and the
- * `getSpeechConfig` REST client so the hook is tested in isolation —
+ * `getSpeechConfig` REST client so the hook is tested in isolation --
  * no real audio device, no real backend.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -19,7 +19,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 //
 // `vi.mock` factories are hoisted ABOVE imports by vitest, so any
 // shared mutable state has to be created in `vi.hoisted` (also
-// hoisted) — top-level `const lastRecognizer = {...}` would crash
+// hoisted) -- top-level `const lastRecognizer = {...}` would crash
 // with "Cannot access ... before initialization". See
 // https://vitest.dev/api/vi.html#vi-hoisted
 

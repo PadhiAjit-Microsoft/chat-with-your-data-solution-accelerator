@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6, tests for src/functions/add_url/url_fetcher.py."""
+"""Pillar: Stable Core / Phase: 6 -- tests for src/functions/add_url/url_fetcher.py."""
 
 import logging
 

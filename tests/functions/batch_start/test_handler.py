@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6, tests for src/functions/batch_start/handler.py."""
+"""Pillar: Stable Core / Phase: 6 -- tests for src/functions/batch_start/handler.py."""
 
 from collections.abc import AsyncIterator
 from typing import cast

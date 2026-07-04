@@ -20,7 +20,7 @@ vi.mock("@/hooks/useSpeechRecognition", () => ({
 const streamChatMock = vi.mocked(streamChat);
 const useSpeechRecognitionMock = vi.mocked(useSpeechRecognition);
 
-// Default speech state — idle, no transcript, no error. Individual
+// Default speech state -- idle, no transcript, no error. Individual
 // tests can override via `useSpeechRecognitionMock.mockReturnValue(...)`
 // before the render call.
 const defaultSpeechStub = {

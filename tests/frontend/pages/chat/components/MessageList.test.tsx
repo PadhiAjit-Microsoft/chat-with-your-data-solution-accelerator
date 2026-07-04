@@ -519,7 +519,7 @@ describe("MessageList", () => {
     expect(probe.getByText("stream blew up")).toBeInTheDocument();
     probe.unmount();
 
-    // The inline <p role="alert"> is gone — surfaced via toast only.
+    // The inline <p role="alert"> is gone -- surfaced via toast only.
     expect(screen.queryByTestId("message-4-error")).toBeNull();
   });
 
@@ -827,7 +827,7 @@ describe("MessageList answer-token rendering", () => {
     fireEvent.click(screen.getByTestId("citations-toggle-c-order"));
 
     // [doc2] is cited first, so doc-beta becomes reference 1 and
-    // doc-alpha (cited via [doc1] second) becomes reference 2 — the
+    // doc-alpha (cited via [doc1] second) becomes reference 2 -- the
     // chip numbers follow first-appearance order, not the original
     // [docN] index.
     const chipBeta = screen.getByTestId("citation-c-order-doc-beta");

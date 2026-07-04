@@ -12,13 +12,13 @@ This test walks every `*__init__.py*` under `src/` and `tests/`
 (excluding `.venv/`, `__pycache__/`, and build artefacts) and asserts
 the AST body is one of:
 
-1. **Empty** — zero top-level nodes.
-2. **Docstring-only** — exactly one top-level node, of shape
+1. **Empty** -- zero top-level nodes.
+2. **Docstring-only** -- exactly one top-level node, of shape
    `ast.Expr(value=ast.Constant(value=str))`.
 
-Anything else — a stray `pass`, an `import`, an assignment, a class /
+Anything else -- a stray `pass`, an `import`, an assignment, a class /
 function definition, a `Registry(...)` instantiation, an `__all__`
-list — fails the test with the file path, offending node line, and
+list -- fails the test with the file path, offending node line, and
 the AST node type for diagnostic clarity.
 
 Displaced code goes to a sibling module: see dev_plan §2.4.4 ("Where

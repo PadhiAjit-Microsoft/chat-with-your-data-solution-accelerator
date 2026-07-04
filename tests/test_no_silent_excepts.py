@@ -1,7 +1,7 @@
 """AST invariant: no silent exception swallows in src/**.
 
 Pillar: Stable Core
-Phase: 5.5 (Phase C — Try/catch policy + sweep, sub-unit C1)
+Phase: 5.5 (Phase C -- Try/catch policy + sweep, sub-unit C1)
 
 Per [v2/docs/exception_handling_policy.md](../docs/exception_handling_policy.md)
 cross-cutting rules: silent swallow (`except <anything>: pass`) and
@@ -113,9 +113,9 @@ def _exception_handler_violations(
     """Return [(lineno, kind)] for every banned construct in the module.
 
     Kind is one of:
-    - "except BaseException" — a handler that catches BaseException
+    - "except BaseException" -- a handler that catches BaseException
       (bare or fully-qualified).
-    - "silent swallow" — a handler whose body is empty per
+    - "silent swallow" -- a handler whose body is empty per
       `_is_silent_swallow_body`.
 
     A single handler can produce both kinds; both are reported so the

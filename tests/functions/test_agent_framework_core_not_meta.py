@@ -5,7 +5,7 @@ Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
 
 The `agent-framework` umbrella meta-package depends on
 `agent-framework-hyperlight` (env marker `python_version < "3.14"`),
-which requires `hyperlight-sandbox-backend-wasm`, a dependency pip
+which requires `hyperlight-sandbox-backend-wasm` -- a dependency pip
 cannot resolve on the Functions host's Python 3.11 runtime. With the
 umbrella pinned, a remote pip build backtracks forever and the deploy
 never completes. The codebase only imports `agent_framework` (core) and

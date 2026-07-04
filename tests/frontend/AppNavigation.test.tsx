@@ -6,8 +6,8 @@
  * appear only on a successful `getAdminStatus()` probe, the App must
  * route into the admin layout when that entry is clicked, and admin
  * URLs must deep-link / redirect correctly. The header no longer
- * renders a primary admin nav — admin is reached solely via the gated
- * entry. The app header renders only on the chat route — admin routes
+ * renders a primary admin nav -- admin is reached solely via the gated
+ * entry. The app header renders only on the chat route -- admin routes
  * hide it so the AdminLayout chrome owns the admin frame.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";

@@ -1,7 +1,7 @@
 """AST invariant: all `import` / `from X import Y` at module top (no in-function, no conditional).
 
 Pillar: Stable Core
-Phase: 7 (debt — Hard Rule #17, IMPORTS-AT-TOP-DEBT)
+Phase: 7 (debt -- Hard Rule #17, IMPORTS-AT-TOP-DEBT)
 
 Per `.github/copilot-instructions.md` Hard Rule #17:
 

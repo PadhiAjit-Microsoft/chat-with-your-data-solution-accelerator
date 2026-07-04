@@ -2,7 +2,7 @@
  * Pillar: Stable Core
  * Phase: 5
  *
- * Vitest suite for `fetchConversation()` — the seam that loads one
+ * Vitest suite for `fetchConversation()` -- the seam that loads one
  * persisted conversation from `GET /api/history/conversations/{id}` and
  * maps the stored `MessageRecord[]` onto the frontend `ChatMessage[]`
  * transcript, rehydrating each assistant turn's persisted citations from

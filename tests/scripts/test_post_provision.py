@@ -53,7 +53,7 @@ class _FakeSearchIndexClient:
 
 
 def test_ensure_search_index_skips_when_endpoint_missing(monkeypatch, capsys):
-    # AZURE_AI_SEARCH_ENDPOINT not set — postgresql-mode deploy.
+    # AZURE_AI_SEARCH_ENDPOINT not set -- postgresql-mode deploy.
     sentinel = {"called": False}
 
     def factory():
@@ -108,7 +108,7 @@ def test_ensure_search_index_creates_when_missing(monkeypatch):
     assert result == "created"
     assert len(fake.created) == 1
     created = fake.created[0]
-    # SearchIndex object surface — name + a vector field of right dims.
+    # SearchIndex object surface -- name + a vector field of right dims.
     assert created.name == post_provision.DEFAULT_INDEX_NAME
     vector_field = next(f for f in created.fields if f.name == "content_vector")
     assert vector_field.vector_search_dimensions == 768

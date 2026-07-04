@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6, tests for src/functions/batch_start/models.py."""
+"""Pillar: Stable Core / Phase: 6 -- tests for src/functions/batch_start/models.py."""
 
 import pytest
 from pydantic import ValidationError

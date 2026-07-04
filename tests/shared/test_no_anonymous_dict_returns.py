@@ -8,23 +8,23 @@ a function returns a dict (or ``list[dict]``) whose keys are a *fixed,
 known-at-author-time* schema, the function must return a Pydantic v2
 ``BaseModel`` (frozen, ``extra="forbid"``) instead of ``dict[str, object]`` /
 ``dict[str, Any]``. Wire-shape conversion to ``Mapping[str, Any]`` happens at
-the SDK boundary via ``model.model_dump(...)`` — the model is the source of
+the SDK boundary via ``model.model_dump(...)`` -- the model is the source of
 truth for the schema, the dict is a transport detail.
 
-This gate walks every ``*.py`` under ``src/`` (tests excluded — capture
+This gate walks every ``*.py`` under ``src/`` (tests excluded -- capture
 buffers like ``captured: dict[str, object] = {}`` are local accumulators, not
 returns), inspects each ``FunctionDef`` / ``AsyncFunctionDef`` return
 annotation, and fails if any function returns a closed-set dict shape that
 isn't on the explicit boundary allow-list.
 
-**What the gate flags** (the heuristic — see Hard Rule #15 for the
+**What the gate flags** (the heuristic -- see Hard Rule #15 for the
 spec):
 
-* ``dict[str, *]`` (any value type) — the canonical struct-like return.
-* ``list[dict[str, *]]`` — list of structs (e.g. ingestion handlers).
-* ``dict[str, *] | None`` (and ``Optional[dict[str, *]]``) — optional struct
+* ``dict[str, *]`` (any value type) -- the canonical struct-like return.
+* ``list[dict[str, *]]`` -- list of structs (e.g. ingestion handlers).
+* ``dict[str, *] | None`` (and ``Optional[dict[str, *]]``) -- optional struct
   return.
-* ``Mapping[str, *]`` and its optional / list wrappers — same reasoning.
+* ``Mapping[str, *]`` and its optional / list wrappers -- same reasoning.
 
 **Boundary allow-list** (each entry justified inline; growth requires a
 ``v2/docs/development_plan.md`` §0.1 debt-queue row):
@@ -34,7 +34,7 @@ spec):
   contractually requires ``Mapping[str, object]``. Every caller spreads via
   ``**`` to add ad-hoc per-call fields, so wrapping in a model just to
   immediately ``model_dump`` would add noise without value.
-* ``backend.core.providers.databases.cosmosdb.CosmosDBClient._read_item`` —
+* ``backend.core.providers.databases.cosmosdb.CosmosDBClient._read_item`` --
   Hard Rule #15(a) + #11(a): returns a raw Azure Cosmos document. The Cosmos
   SDK contract is ``dict[str, Any]``; narrowing here would lie about the
   shape the SDK actually delivers.

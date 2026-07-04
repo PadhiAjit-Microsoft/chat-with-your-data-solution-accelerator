@@ -2,7 +2,7 @@
  * Pillar: Stable Core
  * Phase: 7
  *
- * Vitest coverage for `deriveDocumentHref` — the citation -> document
+ * Vitest coverage for `deriveDocumentHref` -- the citation -> document
  * link resolver. Exercises the blob-name, blob-URL, external-URL, and
  * empty cases plus the runtime `getBackendUrl()` absolute-prefix wiring
  * (the deployed `/config` origin, with the build-time `VITE_BACKEND_URL`

@@ -2,7 +2,7 @@
  * Pillar: Stable Core
  * Phase: 5
  *
- * Vitest suite for `getUserInfo()` — the seam that resolves the signed-in
+ * Vitest suite for `getUserInfo()` -- the seam that resolves the signed-in
  * user from Easy Auth `/.auth/me` and narrows the principal to its Entra
  * object-identifier claim. Global `fetch` is mocked so the tests exercise
  * the real URL (always the SPA-origin `/.auth/me`, never the backend),

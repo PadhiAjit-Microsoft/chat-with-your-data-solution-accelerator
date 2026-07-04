@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6, tests for src/functions/blob_event/blueprint.py.
+"""Pillar: Stable Core / Phase: 6 -- tests for src/functions/blob_event/blueprint.py.
 
 Mirrors ``tests/functions/batch_push/test_blueprint.py``: the trigger
 body is exercised via the private ``_execute`` seam (which tests
