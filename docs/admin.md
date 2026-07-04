@@ -18,7 +18,7 @@ Administration is part of the web app. There is no separate admin site to deploy
 
 ## Access control
 
-End users sign in interactively through the Container Apps built-in authentication (Easy Auth). The admin area is reached through the same app at `/admin`, and you control who can open it at the identity provider or ingress layer rather than with an in-app role check. See [App authentication setup](azure_app_service_auth_setup.md) for how to restrict admin access.
+End users sign in interactively through the Container Apps built-in authentication (Easy Auth). The admin area is reached through the same app at `/admin`, and you control who can open it at the identity provider or ingress layer rather than with an in-app role check. See [App authentication setup](authentication_setup.md) for how to restrict admin access.
 
 ## Admin pages
 
@@ -71,6 +71,6 @@ flowchart TD
 
 ## Related documentation
 
-* [App authentication setup](azure_app_service_auth_setup.md)
+* [App authentication setup](authentication_setup.md)
 * [Document ingestion](document_ingestion.md)
 * [Supported file types](supported_file_types.md)

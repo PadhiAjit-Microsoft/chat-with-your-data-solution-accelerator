@@ -40,7 +40,7 @@ Open the web app URL from the output in a browser. The chat page should load. If
 Restrict access so only authorized users can open the app.
 
 1. Enable the built-in authentication on the web app's container app.
-2. Follow [App authentication setup](azure_app_service_auth_setup.md) to configure the identity provider and restrict admin access to the people who manage content.
+2. Follow [App authentication setup](authentication_setup.md) to configure the identity provider and restrict admin access to the people who manage content.
 
 Administration lives inside the web app; there is no separate admin site. The admin area is served at `/admin` within the same app, and you control who can reach it at the identity provider or ingress layer rather than with an in-app role check. See [Admin and configuration](admin.md).
 

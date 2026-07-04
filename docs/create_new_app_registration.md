@@ -9,4 +9,4 @@ ms.topic: how-to
 
 ## Create an app registration
 
-The steps to register an application in Microsoft Entra ID are now part of [Set up authentication](azure_app_service_auth_setup.md), under **Step 1: Register an application in Microsoft Entra ID**.
+The steps to register an application in Microsoft Entra ID are now part of [Set up authentication](authentication_setup.md), under **Step 1: Register an application in Microsoft Entra ID**.

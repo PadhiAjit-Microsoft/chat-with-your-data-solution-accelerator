@@ -178,7 +178,7 @@ azd down
 | [Streaming responses](docs/streaming_responses.md) | How answers stream to the browser. |
 | [Chat history](docs/chat_history.md) | How conversations are stored and retrieved. |
 | [Managed identity and RBAC](docs/managed_identity.md) | The identity model and role assignments. |
-| [Authentication setup](docs/azure_app_service_auth_setup.md) | Add end-user sign-in to the web app. |
+| [Authentication setup](docs/authentication_setup.md) | Add end-user sign-in to the web app. |
 | [Model configuration](docs/model_configuration.md) | Configure models and prompts. |
 | [Model quota settings](docs/azure_openai_model_quota_settings.md) | Manage Azure AI Foundry model quota. |
 | [Quota check](docs/QuotaCheck.md) | Verify model capacity before deploying. |

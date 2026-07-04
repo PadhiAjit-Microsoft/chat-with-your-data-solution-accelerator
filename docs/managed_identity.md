@@ -51,5 +51,5 @@ The deployment supports optional security features that you can enable at deploy
 ## Related documentation
 
 * [Architecture overview](architecture.md)
-* [App authentication setup](azure_app_service_auth_setup.md)
+* [App authentication setup](authentication_setup.md)
 * [Customizing azd parameters](customizing_azd_parameters.md)
