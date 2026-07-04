@@ -32,7 +32,7 @@ Follow the [quota check guide](QuotaCheck.md) to confirm capacity by region befo
 2. Select **View all resources** and find the Azure AI Services resource for this deployment.
 3. Open **Quota** from the management section.
 4. Select the deployment type (for example, **GlobalStandard**) from the dropdown.
-5. Choose the model — the chat model (`gpt-5.1`) or the embedding model (`text-embedding-3-large`) — and the region where you deployed.
+5. Choose the model (the chat model `gpt-5.1` or the embedding model `text-embedding-3-large`) and the region where you deployed.
 6. Request more quota, or delete unused model deployments to free capacity.
 
 ## Adjust capacity through azd

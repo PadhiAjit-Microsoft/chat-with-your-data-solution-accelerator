@@ -11,14 +11,14 @@ ms.topic: how-to
 
 ## Overview
 
-Administration is part of the web app. There is no separate admin site to deploy or sign in to. When you have the admin role, an admin area appears in the same application under `/admin`, where you can ingest documents, remove them, and adjust application settings.
+Administration is part of the web app. There is no separate admin site to deploy or sign in to. The admin area appears in the same application under `/admin`, where you can ingest documents, remove them, and adjust application settings.
 
 > [!NOTE]
 > Replace the images below with screenshots of your deployment.
 
 ## Access control
 
-The admin pages are gated on an `admin` role claim from the platform authentication layer. On load, the web app makes a one-time status check to confirm the current user has the role. Users without the role never see the admin area, and the backend rejects admin requests from callers who lack the role. See [App authentication setup](azure_app_service_auth_setup.md) for how to assign the role.
+End users sign in interactively through the Container Apps built-in authentication (Easy Auth). The admin area is reached through the same app at `/admin`, and you control who can open it at the identity provider or ingress layer rather than with an in-app role check. See [App authentication setup](azure_app_service_auth_setup.md) for how to restrict admin access.
 
 ## Admin pages
 

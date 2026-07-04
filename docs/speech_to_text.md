@@ -11,7 +11,7 @@ ms.topic: overview
 
 ## Overview
 
-Many people are used to speech-to-text in their consumer apps. With hybrid work, voice input gives users a flexible way to chat with their data — at their computer or on the go with a mobile device. Chat with Your Data pairs speech recognition with the assistant so users can speak a question and get a grounded answer back.
+Many people are used to speech-to-text in their consumer apps. With hybrid work, voice input gives users a flexible way to chat with their data, at their computer or on the go with a mobile device. Chat with Your Data pairs speech recognition with the assistant so users can speak a question and get a grounded answer back.
 
 *(Replace this with a screenshot of the chat page and its microphone control in your deployment.)*
 
@@ -19,7 +19,7 @@ Many people are used to speech-to-text in their consumer apps. With hybrid work,
 
 Speech recognition runs in the browser with the Azure AI Speech SDK. The backend never streams audio. Instead, when the web app starts recognition, it calls the backend, which mints a short-lived (10-minute) authorization token from the Speech service and returns it along with the region and the configured languages. The browser uses that token to transcribe speech to text, which is then sent as a chat question.
 
-Because the backend authenticates to the Speech service with the workload's managed identity, the token is issued through Microsoft Entra — there is no Speech subscription key anywhere in the app. See [Managed identity and RBAC](managed_identity.md).
+Because the backend authenticates to the Speech service with the workload's managed identity, the token is issued through Microsoft Entra; there is no Speech subscription key anywhere in the app. See [Managed identity and RBAC](managed_identity.md).
 
 ## What is deployed
 

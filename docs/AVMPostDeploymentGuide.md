@@ -15,7 +15,7 @@ This guide covers what to do after you deploy Chat with Your Data. The infrastru
 
 By the time `azd up` finishes, two hooks have already run:
 
-* **Post-provision** prepares the data platform — for example, enabling the `pgvector` extension when you deploy in PostgreSQL mode.
+* **Post-provision** prepares the data platform, for example enabling the `pgvector` extension when you deploy in PostgreSQL mode.
 * **Post-deploy** optionally seeds a sample scenario so chat works out of the box.
 
 The steps below confirm the deployment, secure it, and add your own content.
@@ -40,9 +40,9 @@ Open the web app URL from the output in a browser. The chat page should load. If
 Restrict access so only authorized users can open the app.
 
 1. Enable the built-in authentication on the web app's container app.
-2. Follow [App authentication setup](azure_app_service_auth_setup.md) to configure the identity provider and assign the `admin` role to the people who manage content.
+2. Follow [App authentication setup](azure_app_service_auth_setup.md) to configure the identity provider and restrict admin access to the people who manage content.
 
-Administration lives inside the web app; there is no separate admin site. Users with the `admin` role see an admin area at `/admin`. See [Admin and configuration](admin.md).
+Administration lives inside the web app; there is no separate admin site. The admin area is served at `/admin` within the same app, and you control who can reach it at the identity provider or ingress layer rather than with an in-app role check. See [Admin and configuration](admin.md).
 
 ## Step 3: Ingest your documents
 
@@ -56,7 +56,7 @@ Open the chat page and ask a question about your uploaded content. The assistant
 
 ## Next steps
 
-* **[Document ingestion](document_ingestion.md)** — understand how documents are processed and indexed.
-* **[Admin and configuration](admin.md)** — ingest and manage documents from the built-in admin pages.
-* **[Speech-to-text](speech_to_text.md)** — add voice interaction.
-* **[Troubleshooting](TroubleShootingSteps.md)** — resolve common deployment errors.
+* **[Document ingestion](document_ingestion.md)**: understand how documents are processed and indexed.
+* **[Admin and configuration](admin.md)**: ingest and manage documents from the built-in admin pages.
+* **[Speech-to-text](speech_to_text.md)**: add voice interaction.
+* **[Troubleshooting](TroubleShootingSteps.md)**: resolve common deployment errors.

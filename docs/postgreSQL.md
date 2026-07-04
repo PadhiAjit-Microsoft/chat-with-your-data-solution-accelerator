@@ -56,8 +56,8 @@ Retrieval ranks chunks by cosine similarity over the embedding. When no query em
 
 The same server stores chat history in two tables, created on first use:
 
-* `conversations` — one row per conversation, keyed by a UUID and scoped to a user.
-* `messages` — one row per message, linked to its conversation with a foreign key and cascade delete, and carrying the citations for assistant turns.
+* `conversations`: one row per conversation, keyed by a UUID and scoped to a user.
+* `messages`: one row per message, linked to its conversation with a foreign key and cascade delete, and carrying the citations for assistant turns.
 
 For how users work with chat history, see [Chat history](chat_history.md).
 

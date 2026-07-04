@@ -11,7 +11,7 @@ ms.topic: reference
 
 ## Overview
 
-Chat with Your Data uses two Azure AI Foundry model deployments — a chat model and an embedding model — as its single inference surface. The backend calls Foundry with the workload's managed identity, so there are no model API keys to store. This guide lists the settings that control which models are deployed and how they are sized.
+Chat with Your Data uses two Azure AI Foundry model deployments (a chat model and an embedding model) as its single inference surface. The backend calls Foundry with the workload's managed identity, so there are no model API keys to store. This guide lists the settings that control which models are deployed and how they are sized.
 
 ## Available models
 

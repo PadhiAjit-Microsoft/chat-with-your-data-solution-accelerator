@@ -38,7 +38,7 @@ An app registration represents Chat with Your Data to Microsoft Entra ID. The bu
 
 To add or change the redirect URI later, open the app registration, go to **Authentication** > **Add a platform** > **Web**, enter the same callback URL, and select **Save**.
 
-Note the **Application (client) ID** and **Directory (tenant) ID** from the overview page — you need them in the next step. Treat these as environment-specific values and keep them out of source control.
+Note the **Application (client) ID** and **Directory (tenant) ID** from the overview page. You need them in the next step. Treat these as environment-specific values and keep them out of source control.
 
 ## Step 2: Turn on authentication for the web app
 
@@ -52,7 +52,7 @@ Visitors are now prompted to sign in with Microsoft Entra ID before the web app 
 
 ## Step 3: Choose who can reach the admin area
 
-Any signed-in user can open the chat experience and see only their own history. The admin pages — where documents are ingested, removed, and application settings are changed — are meant for a smaller group. Because the platform attests each caller's identity before the request reaches the app, you control admin access at the identity provider rather than inside the application. Choose one of these approaches:
+Any signed-in user can open the chat experience and see only their own history. The admin pages (where documents are ingested, removed, and application settings are changed) are meant for a smaller group. Because the platform attests each caller's identity before the request reaches the app, you control admin access at the identity provider rather than inside the application. Choose one of these approaches:
 
 - **Require an app role or group.** Define an app role (for example, `Admin`) on the app registration, assign it to your administrators, and require that role or a security group at the identity provider so only its members can sign in. Users who hold the admin role see the admin area; everyone else sees only chat.
 - **Restrict how the backend is reached.** Keep the backend reachable only from the web app's own origin or a private network, so the admin routes cannot be called directly by arbitrary clients.
@@ -61,4 +61,4 @@ Use either approach on its own or both together. Both keep the admin surface clo
 
 ## How sign-in works
 
-Once an identity provider is configured, the platform signs the user in and exposes the signed-in principal to the web app at the `/.auth/me` endpoint on the app's own origin. The app reads the user's stable identifier from that principal and forwards it on every API call, which is how each person's chat history stays isolated. That forwarded identifier is a partition key for history, not a security boundary — the real check is the identity provider at the platform, which attests and injects the caller's identity before any request reaches the app. When no identity provider is present, the app falls back to a shared default user, which is why local development needs no sign-in setup.
+Once an identity provider is configured, the platform signs the user in and exposes the signed-in principal to the web app at the `/.auth/me` endpoint on the app's own origin. The app reads the user's stable identifier from that principal and forwards it on every API call, which is how each person's chat history stays isolated. That forwarded identifier is a partition key for history, not a security boundary; the real check is the identity provider at the platform, which attests and injects the caller's identity before any request reaches the app. When no identity provider is present, the app falls back to a shared default user, which is why local development needs no sign-in setup.
