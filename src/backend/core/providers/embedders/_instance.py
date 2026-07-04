@@ -1,8 +1,5 @@
 """Registry instance + structural Protocols for the embedders provider domain.
 
-Pillar: Stable Core
-Phase: 6
-
 Holds the `Registry[SupportsEmbedderConstruction]` instance and the
 two `runtime_checkable` Protocols that describe its generic parameter
 (`EmbedderInstance` + `SupportsEmbedderConstruction`). Lives in a leaf

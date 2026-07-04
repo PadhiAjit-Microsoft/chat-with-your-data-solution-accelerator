@@ -1,8 +1,5 @@
 """Orchestrator provider registry.
 
-Pillar: Stable Core
-Phase: 3
-
 Holds the ``Registry[type[OrchestratorBase]]`` instance plus the eager
 side-effect imports of every concrete orchestrator. Imports fire each
 concrete's ``@registry.register("<key>")`` decorator at module-load

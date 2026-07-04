@@ -1,8 +1,5 @@
 """Speech-to-text router (mints AAD-bearer Speech tokens for the browser).
 
-Pillar: Stable Core
-Phase: 4
-
 Single endpoint: ``GET /api/speech`` returns
 ``{token, region, languages}`` for the
 ``microsoft-cognitiveservices-speech-sdk`` running in the browser.
@@ -28,7 +25,17 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/speech", tags=["speech"])
 
 
-@router.get("", response_model=SpeechConfig)
+@router.get(
+    "",
+    response_model=SpeechConfig,
+    summary="Get speech config + token",
+    description=(
+        "Return the Speech SDK configuration (region, language, voice) "
+        "along with a freshly minted, short-lived AAD bearer token for "
+        "browser-side speech-to-text. Responds 503 when the Speech service "
+        "is not configured and 502 when token minting fails."
+    ),
+)
 async def get_speech_config(
     settings: SettingsDep,
     credential_provider: CredentialProviderDep,

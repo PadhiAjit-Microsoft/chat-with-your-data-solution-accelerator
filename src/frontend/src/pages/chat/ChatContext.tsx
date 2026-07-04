@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 5
- *
  * Chat domain state. Single React Context + useReducer per the v2 frontend
  * conventions (no Zustand, no Redux). Consumers must wrap their tree in
  * <ChatProvider> and read state via useChat(); calling useChat() outside the

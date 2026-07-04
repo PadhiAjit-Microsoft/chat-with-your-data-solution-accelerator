@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 5
- *
  * Frontend identity resolution. `getUserInfo()` reads the signed-in user
  * from the Easy Auth `/.auth/me` endpoint on the SPA's own origin and
  * narrows the principal down to the Entra object-identifier claim, which

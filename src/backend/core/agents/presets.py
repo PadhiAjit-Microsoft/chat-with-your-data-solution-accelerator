@@ -1,7 +1,4 @@
-"""Pillar: Scenario Pack
-Phase: 7 (admin / configuration surface, assistant-type prompt presets, ADR 0030)
-
-Loads the assistant-type prompt presets from ``assistant_presets.json`` (sibling
+"""Loads the assistant-type prompt presets from ``assistant_presets.json`` (sibling
 file) once at import and exposes typed accessors. The JSON holds the
 operator-editable persona bodies (one per :class:`AssistantType`) plus the
 shared post-answering defaults; the fixed ``CWYD_GUARDRAIL`` is appended at

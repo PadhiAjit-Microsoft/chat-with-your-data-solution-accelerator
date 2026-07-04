@@ -1,8 +1,4 @@
-"""Admin router helpers.
-
-Pillar: Stable Core
-Phase: 5 (admin surface helpers)
-"""
+"""Admin router helpers."""
 
 import logging
 from datetime import UTC, datetime
@@ -80,9 +76,6 @@ _KNOWN_BUILTIN_PROMPTS: frozenset[str] = frozenset(
 
 class ConfigResolutionError(Exception):
     """Effective configuration is invalid or self-contradictory.
-
-    Pillar: Stable Core
-    Phase: 8 (agent_framework default + Foundry IQ Knowledge Base retrieval)
 
     Raised by ``resolve_effective_config`` -- the single choke point
     where every admin override is overlaid on the env / code defaults

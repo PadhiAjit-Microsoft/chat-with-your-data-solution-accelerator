@@ -1,8 +1,5 @@
 """Embedders provider registry (single plug-point).
 
-Pillar: Stable Core
-Phase: 6
-
 Holds the `Registry[SupportsEmbedderConstruction]` instance for the
 embedders domain. Concrete embedders self-register against this
 registry via `@registry.register("<key>")`.

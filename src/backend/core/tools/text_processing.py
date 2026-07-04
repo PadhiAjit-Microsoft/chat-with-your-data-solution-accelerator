@@ -1,8 +1,5 @@
 """Text processing helper.
 
-Pillar: Stable Core
-Phase: 3
-
 Light wrapper that runs an arbitrary text operation (summarize,
 translate, rewrite, ...) through the configured LLM provider. Mirrors
 the v1 `TextProcessingTool` intent (operation + text → answer) but

@@ -1,8 +1,5 @@
 """Search provider registry (single plug-point).
 
-Pillar: Stable Core
-Phase: 3
-
 Holds the `Registry[type[BaseSearch]]` instance + eager side-effect
 imports of `azure_search` and `pgvector` (which call
 `@registry.register(...)` at import time).

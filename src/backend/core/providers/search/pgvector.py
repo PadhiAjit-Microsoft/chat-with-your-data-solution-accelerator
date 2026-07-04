@@ -1,8 +1,5 @@
 """pgvector-backed search provider.
 
-Pillar: Stable Core
-Phase: 4
-
 Reads from / writes to a ``documents`` table whose schema is
 auto-created on first use by :meth:`PgVector.ensure_schema` (called
 by the backend lifespan and the Functions ingestion blueprints).

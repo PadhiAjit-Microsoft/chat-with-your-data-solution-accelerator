@@ -1,8 +1,4 @@
-"""Health-probe diagnostic helpers shared by the health router.
-
-Pillar: Stable Core
-Phase: 7 (router cleanup -- health-probe diagnostic helpers)
-"""
+"""Health-probe diagnostic helpers shared by the health router."""
 
 from backend.core.settings import AppSettings, DbType, IndexStore
 from backend.models.health import CheckStatus, DependencyCheck, HealthResponse, OverallStatus

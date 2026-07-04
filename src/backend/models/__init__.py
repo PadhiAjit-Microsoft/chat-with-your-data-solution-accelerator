@@ -1,5 +1,1 @@
-"""Backend response/request models.
-
-Pillar: Stable Core
-Phase: 2
-"""
+"""Backend response/request models."""

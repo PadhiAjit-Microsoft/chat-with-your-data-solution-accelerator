@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 7
- *
  * Admin "Configuration" page. Surfaces the runtime-toggle subset
  * of `AppSettings` plus `RuntimeConfig`-only fields (e.g. the
  * post-answering validator trio) and lets the operator patch any

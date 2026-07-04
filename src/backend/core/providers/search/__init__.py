@@ -1,8 +1,5 @@
 """Search provider domain (package marker only).
 
-Pillar: Stable Core
-Phase: 3
-
 Per Hard Rule #13: this `__init__.py` is a
 package marker only. The `Registry[type[BaseSearch]]` instance + eager
 side-effect imports of concrete providers live in `registry.py`.

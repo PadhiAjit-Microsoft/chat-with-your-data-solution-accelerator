@@ -1,7 +1,4 @@
 /*
- * Pillar: Stable Core
- * Phase: 5
- *
  * Layout chrome for the admin section: a secondary navigation bar
  * (back-home button + per-page links) stacked above the routed admin
  * page rendered through <Outlet/>. All colors / spacing / radii come

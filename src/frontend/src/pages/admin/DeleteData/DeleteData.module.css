@@ -1,7 +1,4 @@
 /*
- * Pillar: Stable Core
- * Phase: 7
- *
  * Page layout for the admin Delete Data view. One stacked section
  * hosting the source listing table, error/empty/loading states, and a
  * modal confirmation dialog. Shares spacing tokens with IngestData

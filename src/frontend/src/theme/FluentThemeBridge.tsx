@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 4
- *
  * Adapter that bridges our app-owned `<ThemeProvider>` (which persists
  * the active theme to `localStorage["cwyd.theme"]` and mirrors it to
  * `data-theme` on `<html>`) into Fluent UI v9's `<FluentProvider>`.

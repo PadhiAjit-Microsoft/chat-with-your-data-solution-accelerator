@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 5
- *
  * Auth state machine for the app shell. Owns the `AuthState`
  * (`userId` / `userInfo` / `phase`) and exposes a single
  * `resolve(userInfo)` action the shell calls once the Easy Auth

@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
-Queue reader for the ``batch_push`` blueprint.
+"""Queue reader for the ``batch_push`` blueprint.
 
 ``batch_push`` is the consumer side of the doc-processing queue that
 ``batch_start`` produces onto via

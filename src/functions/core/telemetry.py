@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
-Azure Monitor / OpenTelemetry export for the Functions worker.
+"""Azure Monitor / OpenTelemetry export for the Functions worker.
 
 The Functions host provides the App Insights connection string under the
 standard env var name ``APPLICATIONINSIGHTS_CONNECTION_STRING`` (the

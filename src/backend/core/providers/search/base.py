@@ -1,8 +1,5 @@
 '''Search provider ABC.
 
-Pillar: Stable Core
-Phase: 3
-
 Every concrete search provider (`azure_search`, `pgvector`,
 `integrated_vectorization` future) inherits from `BaseSearch`
 and self-registers via `@registry.register("<key>")`.

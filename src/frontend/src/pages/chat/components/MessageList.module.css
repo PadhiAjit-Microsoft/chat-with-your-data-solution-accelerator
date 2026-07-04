@@ -1,7 +1,4 @@
 /*
- * Pillar: Stable Core
- * Phase: 6
- *
  * Chat surface layout. Color/spacing tokens come from Fluent v9 via
  * `<FluentProvider>`. The `cwydThink` keyframe stays defined here (it
  * doesn't ship in the Fluent token set).

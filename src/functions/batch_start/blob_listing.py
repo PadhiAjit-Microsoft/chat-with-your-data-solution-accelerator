@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
-Blob listing helper for the ``batch_start`` blueprint.
+"""Blob listing helper for the ``batch_start`` blueprint.
 
 ``batch_start`` needs the set of blob names in a container (optionally
 filtered by prefix) so it can fan out one queue message per blob to

@@ -1,8 +1,5 @@
 """Registry instance for the orchestrators provider domain.
 
-Pillar: Stable Core
-Phase: 3
-
 Holds the `Registry[Callable[..., OrchestratorBase]]` instance in a
 leaf module so `registry.py` can be top-imports-only per Hard Rule
 #17. The public surface (eager concrete imports of `langgraph` +

@@ -1,8 +1,5 @@
 """Azure OpenAI embedder provider routed through Foundry IQ.
 
-Pillar: Stable Core
-Phase: 6
-
 Implements the `BaseEmbedder` contract for ingestion pipelines by
 converting `Chunk.content` values into embeddings via the LLM provider
 registry (`foundry_iq`).

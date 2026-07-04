@@ -1,8 +1,5 @@
 """Plug-and-play providers for v2.
 
-Pillar: Stable Core
-Phase: 2
-
 Each subdomain (`credentials/`, `llm/`, `embedders/`, `parsers/`,
 `search/`, `chat_history/`, `orchestrators/`) exposes a `Registry[T]`
 instance in its sibling `registry.py`; callers resolve a concrete

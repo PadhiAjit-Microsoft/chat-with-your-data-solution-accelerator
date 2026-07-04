@@ -1,8 +1,4 @@
-"""Embedder provider ABC.
-
-Pillar: Stable Core
-Phase: 6
-"""
+"""Embedder provider ABC."""
 
 from abc import ABC, abstractmethod
 

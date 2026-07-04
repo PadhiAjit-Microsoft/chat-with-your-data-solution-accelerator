@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
-Shared registry-first search-provider resolution for the Functions
+"""Shared registry-first search-provider resolution for the Functions
 ingestion blueprints (``batch_push``, ``add_url``, and the
 ``blob_event`` delete path).
 

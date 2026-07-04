@@ -1,8 +1,5 @@
 """Functions-only shared layer for the RAG indexing pipeline.
 
-Pillar: Stable Core
-Phase: 5.5 (Stable Core Refactor)
-
 This package is the home for code that loads only when the Azure
 Functions container spins up. Backend chat / history / admin runs
 end-to-end without it.

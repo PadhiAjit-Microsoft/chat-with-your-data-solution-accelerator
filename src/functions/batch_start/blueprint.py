@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
-HTTP blueprint that exposes the ``batch_start`` orchestrator from
+"""HTTP blueprint that exposes the ``batch_start`` orchestrator from
 :mod:`functions.batch_start.handler` as ``POST /api/batch_start``.
 
 Thin composition over the ``functions/core/`` helpers:

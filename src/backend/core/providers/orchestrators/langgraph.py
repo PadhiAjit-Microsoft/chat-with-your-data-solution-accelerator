@@ -1,8 +1,5 @@
 """LangGraph-backed orchestrator.
 
-Pillar: Stable Core
-Phase: 3
-
 Builds a `StateGraph` with a single LLM node, compiled once per
 orchestrator instance and re-used across requests (no mutable
 per-request state held on `self`). The graph is held for future

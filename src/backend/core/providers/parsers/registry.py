@@ -1,8 +1,5 @@
 """Parsers provider registry (single plug-point).
 
-Pillar: Stable Core
-Phase: 6
-
 Holds the `Registry[type[BaseParser]]` instance for the parsers
 domain. Concrete ingestion-only parsers (PDF/DOCX/MD/HTML/TXT) live
 under `src/functions/core/parsers/` and self-register against this

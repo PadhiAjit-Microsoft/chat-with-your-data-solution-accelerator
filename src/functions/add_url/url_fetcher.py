@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
-URL fetcher for the ``add_url`` blueprint.
+"""URL fetcher for the ``add_url`` blueprint.
 
 ``add_url`` is the HTTP-triggered counterpart to ``batch_push``:
 operators POST a URL, the blueprint downloads the page bytes, and

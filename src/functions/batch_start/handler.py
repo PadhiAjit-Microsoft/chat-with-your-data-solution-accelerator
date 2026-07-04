@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
-Pure orchestration handler for the ``batch_start`` blueprint.
+"""Pure orchestration handler for the ``batch_start`` blueprint.
 
 ``batch_start_handler`` composes the units --
 :func:`functions.batch_start.blob_listing.list_blobs` and

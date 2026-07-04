@@ -1,8 +1,5 @@
 """Entry-point discovery for third-party provider extensions.
 
-Pillar: Stable Core
-Phase: 4
-
 Loads `importlib.metadata.entry_points(group=...)` plugins at module
 import time so third-party packages can self-register against the
 shared `Registry[T]` primitive without editing core domain registries.

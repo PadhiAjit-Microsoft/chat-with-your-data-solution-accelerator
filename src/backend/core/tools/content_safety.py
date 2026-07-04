@@ -1,8 +1,5 @@
 """Content safety guardrail.
 
-Pillar: Stable Core
-Phase: 3
-
 Two parallel safety seams live in this module, by design:
 
 1. `ContentSafetyGuard` -- thin async wrapper around Azure AI Content

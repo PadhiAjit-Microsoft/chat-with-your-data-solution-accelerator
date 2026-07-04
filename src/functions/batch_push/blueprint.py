@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
-Queue-trigger blueprint that consumes ``batch_push`` messages and runs
+"""Queue-trigger blueprint that consumes ``batch_push`` messages and runs
 :func:`functions.batch_push.handler.batch_push_handler` once per
 message.
 

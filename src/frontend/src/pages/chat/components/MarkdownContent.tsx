@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 6
- *
  * Renders an assistant-supplied markdown string as HTML. Both the answer
  * body and the reasoning panel feed their text through here so the
  * model's markdown -- bold, lists, headings, fenced code, and the

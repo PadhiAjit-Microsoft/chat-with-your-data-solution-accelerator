@@ -1,8 +1,5 @@
 """Admin router.
 
-Pillar: Stable Core
-Phase: 5 (admin surface)
-
 Operator surface for the v2 backend. Exposes:
 
 * ``GET /api/admin/status`` -- sanitized snapshot of the running
@@ -101,7 +98,17 @@ router = APIRouter(prefix="/api/admin", tags=["admin"])
 # ---------------------------------------------------------------------------
 
 
-@router.get("/status", response_model=AdminStatus)
+@router.get(
+    "/status",
+    response_model=AdminStatus,
+    summary="Get runtime status",
+    description=(
+        "Return a sanitized runtime status snapshot: the effective "
+        "orchestrator (env default overlaid with any persisted override), "
+        "the configured database / index store, and enabled-feature flags. "
+        "Secrets are never surfaced."
+    ),
+)
 async def status_endpoint(
     settings: SettingsDep,
     overrides: RuntimeOverridesDep,
@@ -136,7 +143,16 @@ async def status_endpoint(
     )
 
 
-@router.get("/config", response_model=AdminConfig)
+@router.get(
+    "/config",
+    response_model=AdminConfig,
+    summary="Get runtime config defaults",
+    description=(
+        "Return the read-only, runtime-toggleable subset of application "
+        "settings (env / code defaults). Mutations go through "
+        "PATCH /api/admin/config."
+    ),
+)
 async def config_endpoint(
     settings: SettingsDep,
     _user: UserIdDep,
@@ -167,7 +183,16 @@ async def config_endpoint(
     )
 
 
-@router.get("/config/effective", response_model=EffectiveAdminConfig)
+@router.get(
+    "/config/effective",
+    response_model=EffectiveAdminConfig,
+    summary="Get effective runtime config",
+    description=(
+        "Return the effective runtime config: env defaults overlaid with "
+        "persisted overrides, plus per-field provenance (env vs override) "
+        "and audit metadata. Reflects saved PATCHes immediately."
+    ),
+)
 async def config_effective_endpoint(
     settings: SettingsDep,
     overrides: RuntimeOverridesDep,
@@ -247,7 +272,17 @@ async def config_effective_endpoint(
 # ---------------------------------------------------------------------------
 
 
-@router.patch("/config", response_model=RuntimeConfig)
+@router.patch(
+    "/config",
+    response_model=RuntimeConfig,
+    summary="Patch runtime config",
+    description=(
+        "Apply an RFC 7396 JSON Merge Patch to the persisted runtime "
+        "config and return the merged shape. An explicit null clears an "
+        "override (reverting the field to its env default); an unknown key "
+        "or wrong-type value responds 422."
+    ),
+)
 async def patch_config_endpoint(
     request: Request,
     db: DatabaseClientDep,
@@ -393,6 +428,13 @@ async def patch_config_endpoint(
     "/documents",
     response_model=ListDocumentsResponse,
     status_code=status.HTTP_200_OK,
+    summary="List indexed documents",
+    description=(
+        "List every distinct indexed source (filename or URL) with its "
+        "chunk count, sorted by source name. Returns an empty list when "
+        "nothing is indexed; responds 503 when no search backend is "
+        "configured."
+    ),
 )
 async def list_documents_endpoint(
     search: SearchProviderDep,
@@ -439,6 +481,12 @@ async def list_documents_endpoint(
     "/documents/{source:path}",
     response_model=DeleteDocumentResponse,
     status_code=status.HTTP_200_OK,
+    summary="Delete an indexed document",
+    description=(
+        "Remove a document's indexed chunks and its source blob so it "
+        "becomes fully unreachable. Responds 404 when neither existed and "
+        "503 when no search backend is configured."
+    ),
 )
 async def delete_document_endpoint(
     source: str,
@@ -521,6 +569,13 @@ async def delete_document_endpoint(
     "/documents/url",
     response_model=IngestUrlResponse,
     status_code=status.HTTP_200_OK,
+    summary="Ingest a document from a URL",
+    description=(
+        "Download the given URL, store its bytes as a blob, and index it "
+        "through the same pipeline as an uploaded file. Responds 422 on an "
+        "invalid URL and 503 when storage or the processing queue is not "
+        "configured."
+    ),
 )
 async def ingest_url_endpoint(
     body: IngestUrlRequest,
@@ -581,6 +636,12 @@ async def ingest_url_endpoint(
     "/documents",
     response_model=UploadResponse,
     status_code=status.HTTP_200_OK,
+    summary="Upload a document",
+    description=(
+        "Upload a single document (multipart) and enqueue it for indexing. "
+        "Responds 413 when too large, 415 for an unsupported file type, "
+        "and 503 when storage / the processing queue is not configured."
+    ),
 )
 async def upload_document_endpoint(
     settings: SettingsDep,
@@ -640,6 +701,13 @@ async def upload_document_endpoint(
     "/documents/reprocess",
     response_model=ReprocessResponse,
     status_code=status.HTTP_200_OK,
+    summary="Reprocess all documents",
+    description=(
+        "Re-fan every blob in the documents container onto the push queue "
+        "so all indexed documents are re-parsed, re-embedded, and "
+        "re-pushed. Responds 503 when storage / the processing queue is "
+        "not configured."
+    ),
 )
 async def reprocess_all_endpoint(
     settings: SettingsDep,

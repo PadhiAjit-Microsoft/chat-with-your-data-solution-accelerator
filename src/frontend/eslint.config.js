@@ -1,6 +1,3 @@
-// Pillar: Stable Core
-// Phase: 7
-//
 // Flat ESLint config for the v2 frontend. Pairs the
 // `@typescript-eslint/strict-type-checked` + `stylistic-type-checked`
 // presets (the type-aware ruleset that mirrors backend `pyright --strict`

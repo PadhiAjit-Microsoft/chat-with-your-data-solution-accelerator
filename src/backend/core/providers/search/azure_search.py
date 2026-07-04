@@ -1,8 +1,5 @@
 """Azure AI Search-backed provider.
 
-Pillar: Stable Core
-Phase: 3
-
 Wraps `azure.search.documents.aio.SearchClient`. Hybrid retrieval:
 free-text query is always sent; an optional `vector` enables
 hybrid (text + vector) scoring. Semantic re-ranking is enabled

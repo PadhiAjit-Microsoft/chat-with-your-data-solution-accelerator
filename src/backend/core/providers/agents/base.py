@@ -1,8 +1,5 @@
 """Agents provider ABC.
 
-Pillar: Stable Core
-Phase: 4
-
 Every concrete agents provider (`foundry`, future swap-ins) inherits
 from `BaseAgentsProvider` and self-registers via
 `@registry.register("<key>")`.

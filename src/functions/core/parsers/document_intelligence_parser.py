@@ -1,8 +1,5 @@
 """Document Intelligence parser routed through the unified Foundry AI Services endpoint.
 
-Pillar: Stable Core
-Phase: 7
-
 Self-registers under multiple file-extension keys (``"pdf"``, ``"docx"``,
 ``"jpeg"``, ``"jpg"``, ``"png"``) per the registration convention in
 ``base.py`` (lowercase file extension, no leading dot). Eager-imported from

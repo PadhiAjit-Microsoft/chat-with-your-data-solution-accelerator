@@ -1,8 +1,4 @@
-"""Credentials provider ABC.
-
-Pillar: Stable Core
-Phase: 2
-"""
+"""Credentials provider ABC."""
 
 from abc import ABC, abstractmethod
 

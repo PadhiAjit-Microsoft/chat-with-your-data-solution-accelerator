@@ -1,8 +1,5 @@
 """AgentDefinition + built-in agents.
 
-Pillar: Stable Core
-Phase: 3
-
 `AgentDefinition` is a frozen Pydantic model -- the BUILTIN_AGENTS
 instances become effectively immutable singletons. Providers consume
 these objects; they do not mutate them.

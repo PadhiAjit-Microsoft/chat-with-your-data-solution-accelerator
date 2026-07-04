@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 4
- *
  * Left navigation panel primitive. Mirrors the reference architecture's
  * `commonComponents/components/Layout/PanelLeft`: a vertical column
  * docked on the left edge of the `<CoralShellRow>`, raised above the

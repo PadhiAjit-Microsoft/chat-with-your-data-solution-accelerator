@@ -1,7 +1,4 @@
-/* Pillar: Stable Core
-   Phase: 4
-
-   Header CSS Module. Mirrors the reference architecture's
+/* Header CSS Module. Mirrors the reference architecture's
    `commonComponents/components/Header/Header.css`:
      - 64px tall, padded 16px
      - background: --colorNeutralBackgroundAlpha (translucent surface)

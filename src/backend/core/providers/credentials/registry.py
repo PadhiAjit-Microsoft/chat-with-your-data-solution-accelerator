@@ -1,8 +1,5 @@
 """Credentials provider registry (single plug-point).
 
-Pillar: Stable Core
-Phase: 2
-
 Holds the `Registry[type[BaseCredentialProvider]]` instance, the eager
 side-effect imports of concrete providers, and the `select_default`
 domain helper. Concrete providers (`cli`, `managed_identity`) call

@@ -1,8 +1,5 @@
 """Parsers provider domain (package marker only).
 
-Pillar: Stable Core
-Phase: 6
-
 Per Hard Rule #13: this `__init__.py` is a
 package marker only. The `Registry[type[BaseParser]]` instance and
 concrete-parser side-effect imports live in `registry.py`. Callers:

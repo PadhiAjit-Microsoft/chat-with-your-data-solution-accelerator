@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 4
- *
  * Outer Coral shell column. Mirrors the reference architecture's
  * `commonComponents/components/Layout/CoralShellColumn`: a full-viewport
  * vertical flex stack that hosts `<Header>` at the top plus a single

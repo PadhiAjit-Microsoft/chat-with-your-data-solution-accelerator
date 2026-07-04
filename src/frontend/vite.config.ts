@@ -2,9 +2,6 @@ import { fileURLToPath, URL } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
-// Pillar: Stable Core
-// Phase: 1
-//
 // Bare Vite scaffold for the v2 frontend. Backend URL is read at
 // runtime from `import.meta.env.VITE_BACKEND_URL` so the same build
 // boots against local docker-compose and against deployed Container

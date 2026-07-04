@@ -1,8 +1,5 @@
 """PostgreSQL Flexible Server-backed database client.
 
-Pillar: Stable Core
-Phase: 4
-
 Wraps an `asyncpg` connection pool. Two tables: `conversations` and
 `messages` (FK + ON DELETE CASCADE), both keyed by UUID. The schema
 is created lazily on first use (`CREATE TABLE IF NOT EXISTS`) so a

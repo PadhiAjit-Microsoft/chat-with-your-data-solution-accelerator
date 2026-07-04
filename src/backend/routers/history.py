@@ -1,8 +1,5 @@
 """Chat-history router.
 
-Pillar: Stable Core
-Phase: 4
-
 Thin REST surface over the registered ``BaseDatabaseClient``
 (``cosmosdb`` or ``postgresql`` -- selected at startup, see
 ``backend/app.py::_lifespan``). All routes are tenant-scoped: the
@@ -49,12 +46,28 @@ router = APIRouter(prefix="/api/history", tags=["history"])
 # ---------------------------------------------------------------------------
 
 
-@router.get("/status", response_model=HistoryStatus)
+@router.get(
+    "/status",
+    response_model=HistoryStatus,
+    summary="Get chat-history status",
+    description=(
+        "Report whether chat history is enabled for this deployment and "
+        "which chat-history store backs it (Cosmos DB or Postgres)."
+    ),
+)
 async def history_status(settings: SettingsDep) -> HistoryStatus:
     return HistoryStatus(enabled=True, db_type=settings.database.db_type)
 
 
-@router.get("/conversations", response_model=list[Conversation])
+@router.get(
+    "/conversations",
+    response_model=list[Conversation],
+    summary="List conversations",
+    description=(
+        "List every conversation belonging to the signed-in user, most "
+        "recent first."
+    ),
+)
 async def list_conversations(
     db: DatabaseClientDep, user_id: UserIdDep
 ) -> list[Conversation]:
@@ -65,6 +78,11 @@ async def list_conversations(
     "/conversations",
     response_model=Conversation,
     status_code=status.HTTP_201_CREATED,
+    summary="Create a conversation",
+    description=(
+        "Create a new, empty conversation for the signed-in user with an "
+        "optional title and return the created record."
+    ),
 )
 async def create_conversation(
     body: CreateConversationRequest,
@@ -75,7 +93,14 @@ async def create_conversation(
 
 
 @router.get(
-    "/conversations/{conversation_id}", response_model=ConversationDetail
+    "/conversations/{conversation_id}",
+    response_model=ConversationDetail,
+    summary="Get a conversation",
+    description=(
+        "Return a single conversation and its full ordered message list. "
+        "Responds 404 when the conversation does not exist or does not "
+        "belong to the signed-in user."
+    ),
 )
 async def get_conversation(
     conversation_id: str,
@@ -93,7 +118,14 @@ async def get_conversation(
 
 
 @router.patch(
-    "/conversations/{conversation_id}", response_model=Conversation
+    "/conversations/{conversation_id}",
+    response_model=Conversation,
+    summary="Rename a conversation",
+    description=(
+        "Rename a conversation. The new title is screened by the "
+        "content-safety guard when enabled (flagged titles are rejected "
+        "with 400) and responds 404 when the conversation is not found."
+    ),
 )
 async def rename_conversation(
     conversation_id: str,
@@ -130,6 +162,12 @@ async def rename_conversation(
 @router.delete(
     "/conversations/{conversation_id}",
     status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete a conversation",
+    description=(
+        "Delete a conversation and its messages for the signed-in user. "
+        "Idempotent: always responds 204 whether or not the conversation "
+        "existed."
+    ),
 )
 async def delete_conversation(
     conversation_id: str,
@@ -145,6 +183,11 @@ async def delete_conversation(
     "/conversations/{conversation_id}/messages",
     response_model=MessageRecord,
     status_code=status.HTTP_201_CREATED,
+    summary="Append a message",
+    description=(
+        "Append a message to an existing conversation and return the "
+        "stored record. Responds 404 when the conversation is not found."
+    ),
 )
 async def add_message(
     conversation_id: str,
@@ -168,6 +211,11 @@ async def add_message(
 @router.post(
     "/messages/{message_id}/feedback",
     status_code=status.HTTP_204_NO_CONTENT,
+    summary="Set message feedback",
+    description=(
+        "Record thumbs-up / thumbs-down feedback on a message for the "
+        "signed-in user. Responds 404 when the message is not found."
+    ),
 )
 async def set_feedback(
     message_id: str,

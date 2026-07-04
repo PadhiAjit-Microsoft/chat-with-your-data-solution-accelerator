@@ -1,8 +1,5 @@
 """Built-in agent definitions for CWYD v2 (package marker only).
 
-Pillar: Stable Core
-Phase: 3
-
 The `agents` package owns *what an agent is* -- a Pydantic-frozen
 declaration of name, instructions, deployment, and tools. It does not
 own *how an agent is created* -- that belongs to the registry-backed

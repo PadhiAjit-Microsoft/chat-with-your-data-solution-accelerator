@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 5
- *
  * Display-name + initials helpers for the header user badge. Kept in a
  * non-component module so <HeaderTools> exports only its component
  * (React Fast Refresh requires component-only exports).

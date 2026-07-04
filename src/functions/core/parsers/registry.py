@@ -1,8 +1,5 @@
 """Parsers provider registry (ingestion-only plug-point).
 
-Pillar: Stable Core
-Phase: 6
-
 Holds the `Registry[type[BaseParser]]` instance for ingestion-only parsers.
 Concrete implementations self-register via `@registry.register(ParserKey.<EXT>)`:
 `text_parser` (txt/md/json), `html_parser` (html), and

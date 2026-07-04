@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 7
- *
  * App-shell `Section` enum -- the closed set of primary pages the SPA
  * can render -- plus the `SectionPath` URL map and `pathToSection`
  * reverse lookup binding each section to its browser route. `Section`

@@ -1,6 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-Purpose: Shared path/extension helpers consumed by both the backend
+"""Shared path/extension helpers consumed by both the backend
 ingestion service and the Functions ingestion blueprints, kept as a
 ``backend.core`` leaf so ``functions.*`` can import it one-way.
 """

@@ -1,7 +1,4 @@
-/* Pillar: Stable Core
-   Phase: 4
-
-   CSS Modules for the Coral shell layout primitives. Mirrors the reference architecture's
+/* CSS Modules for the Coral shell layout primitives. Mirrors the reference architecture's
    commonComponents/Layout pattern verbatim:
 
    - .column   -- vertical stack, full viewport height, recessed shell bg.

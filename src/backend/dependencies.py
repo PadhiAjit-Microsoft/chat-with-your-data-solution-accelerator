@@ -1,8 +1,5 @@
 """FastAPI dependency-injection wiring.
 
-Pillar: Stable Core
-Phase: 2
-
 Single source of truth for how routers obtain settings, credentials,
 and providers. Routers MUST go through `Depends(...)` -- no module-
 level singletons, no env-var reads inside route handlers.

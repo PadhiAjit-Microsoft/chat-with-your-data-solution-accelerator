@@ -1,8 +1,4 @@
-"""SSE wire-format helpers shared across streaming routers.
-
-Pillar: Stable Core
-Phase: 7 (router cleanup -- conversation SSE helpers)
-"""
+"""SSE wire-format helpers shared across streaming routers."""
 
 import json
 import logging

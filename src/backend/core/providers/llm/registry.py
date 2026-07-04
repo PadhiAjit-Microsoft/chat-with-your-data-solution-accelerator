@@ -1,8 +1,5 @@
 """LLM provider registry (single plug-point).
 
-Pillar: Stable Core
-Phase: 2
-
 Holds the `Registry[type[BaseLLMProvider]]` instance and the eager
 side-effect import of `foundry_iq` (which calls
 `@registry.register("foundry_iq")` at import time).

@@ -1,8 +1,5 @@
 """FastAPI app factory.
 
-Pillar: Stable Core
-Phase: 2
-
 Backend must boot headless (no frontend dependency). Telemetry is
 configured to export *directly* to Application Insights when
 `ObservabilitySettings.app_insights_connection_string` is set;
@@ -233,6 +230,66 @@ def create_app() -> FastAPI:
     app = FastAPI(
         title="CWYD v2 backend",
         version="2.0.0",
+        description=(
+            "Backend API for Chat With Your Data v2: retrieval-augmented "
+            "chat over your own documents. Exposes health probes, the "
+            "streaming chat endpoint, conversation history, speech "
+            "configuration, RBAC-gated admin runtime config and document "
+            "ingestion, and source-file streaming."
+        ),
+        openapi_tags=[
+            {
+                "name": "health",
+                "description": (
+                    "Liveness and readiness probes for the backend. The "
+                    "diagnostic snapshot always returns 200; the readiness "
+                    "probe returns 503 when a required dependency is down, "
+                    "so orchestrators (ACA / AKS) can gate traffic."
+                ),
+            },
+            {
+                "name": "conversation",
+                "description": (
+                    "The chat endpoint. Runs the configured orchestrator "
+                    "over the request and either streams the reasoning / "
+                    "answer / citation feed as SSE or buffers a single JSON "
+                    "response, chosen by the request Accept header."
+                ),
+            },
+            {
+                "name": "history",
+                "description": (
+                    "Conversation history: list, create, rename, and delete "
+                    "conversations, append messages, and record per-message "
+                    "feedback for the signed-in user. Backed by the "
+                    "configured chat-history store (Cosmos DB or Postgres)."
+                ),
+            },
+            {
+                "name": "speech",
+                "description": (
+                    "Speech SDK configuration plus a freshly minted, "
+                    "short-lived AAD bearer token so the browser can run "
+                    "speech-to-text directly against Azure Speech."
+                ),
+            },
+            {
+                "name": "admin",
+                "description": (
+                    "RBAC-gated administration: read the runtime "
+                    "configuration and apply JSON Merge Patch overrides, and "
+                    "manage indexed documents (list, upload, URL ingest, "
+                    "delete, and reprocess-all)."
+                ),
+            },
+            {
+                "name": "files",
+                "description": (
+                    "Streams an indexed source-document blob back to the "
+                    "browser for inline rendering of citations."
+                ),
+            },
+        ],
         lifespan=_lifespan,
     )
 

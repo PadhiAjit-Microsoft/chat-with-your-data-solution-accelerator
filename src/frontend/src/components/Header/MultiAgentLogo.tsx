@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 4
- *
  * Multi-agent brand mark as an inline SVG component. This is the
  * interlocking glyph the reference architecture's multi-agent experience renders for its
  * brand badge (adapted from the reference architecture's logo

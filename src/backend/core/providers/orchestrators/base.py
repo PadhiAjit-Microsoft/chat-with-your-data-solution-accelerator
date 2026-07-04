@@ -1,8 +1,5 @@
 """Orchestrator ABC.
 
-Pillar: Stable Core
-Phase: 3
-
 Every concrete orchestrator (`langgraph`, `agent_framework`,
 future swap-ins) inherits from `OrchestratorBase` and
 self-registers via `@registry.register("<key>")`. Constructors take

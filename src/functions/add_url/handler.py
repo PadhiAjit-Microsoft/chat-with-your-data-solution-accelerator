@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
-Pure orchestration handler for the ``add_url`` blueprint.
+"""Pure orchestration handler for the ``add_url`` blueprint.
 
 ``add_url_handler`` composes :func:`functions.add_url.url_fetcher.fetch_url`
 with the :class:`backend.core.providers.parsers.base.BaseParser`

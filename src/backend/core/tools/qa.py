@@ -1,8 +1,5 @@
 """Question-answering helper (RAG composition).
 
-Pillar: Stable Core
-Phase: 3
-
 Composes a `BaseSearch` retriever and a `BaseLLMProvider` into a single
 async `answer()` call: query -> retrieve -> prompt -> answer + cited
 sources.

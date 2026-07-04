@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 6
- *
  * Shared citation-token utility for the two surfaces that render document
  * citations as superscripts: the answer body (`parseAnswer`) and the
  * reasoning panel (`superscriptReasoningCitations`). Both rewrite their

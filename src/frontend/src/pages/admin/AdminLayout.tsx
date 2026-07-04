@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 5
- *
  * Shared chrome for the admin section. Renders a secondary navigation
  * bar -- a "back to chat home" button plus one <NavLink> per admin page
  * (Ingest data, Delete data, Configuration) -- above an

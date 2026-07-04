@@ -1,8 +1,5 @@
 """Foundry-backed agents provider.
 
-Pillar: Stable Core
-Phase: 4
-
 Wraps `azure.ai.projects.aio.AIProjectClient` against the typed Foundry
 project endpoint (`AppSettings.foundry.project_endpoint`). Owns the
 hosted-agent control-plane surface -- create-if-missing for named

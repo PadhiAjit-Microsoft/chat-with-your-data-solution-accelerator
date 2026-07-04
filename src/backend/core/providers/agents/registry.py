@@ -1,8 +1,5 @@
 """Agents-SDK provider registry (single plug-point).
 
-Pillar: Stable Core
-Phase: 4
-
 Holds the `Registry[type[BaseAgentsProvider]]` instance and the eager
 side-effect import of `foundry` (which calls
 `@registry.register("foundry")` at import time).

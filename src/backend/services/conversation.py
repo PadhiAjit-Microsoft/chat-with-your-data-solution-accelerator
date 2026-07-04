@@ -1,8 +1,4 @@
-"""Conversation-response shaping helpers shared across routers.
-
-Pillar: Stable Core
-Phase: 7 (router cleanup -- conversation buffered-response helpers)
-"""
+"""Conversation-response shaping helpers shared across routers."""
 
 import json
 import logging

@@ -1,8 +1,5 @@
 """Conversation router.
 
-Pillar: Stable Core
-Phase: 3
-
 Single endpoint: ``POST /api/conversation``.
 
 Two response modes, content-negotiated by the ``Accept`` header:
@@ -60,6 +57,14 @@ router = APIRouter(prefix="/api", tags=["conversation"])
 @router.post(
     "/conversation",
     response_model=None,  # response shape depends on Accept header
+    summary="Run the chat orchestrator",
+    description=(
+        "Run the configured orchestrator over the request and return the "
+        "result. When the Accept header requests an event stream the "
+        "reasoning, tool, answer, citation, and error channels are streamed "
+        "as SSE; otherwise a single buffered JSON response is returned. The "
+        "active orchestrator honors any admin-saved runtime override."
+    ),
 )
 async def conversation(
     request: Request,

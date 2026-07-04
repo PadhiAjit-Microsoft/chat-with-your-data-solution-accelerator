@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
-Request payload model for the ``batch_start`` blueprint.
+"""Request payload model for the ``batch_start`` blueprint.
 
 The ``batch_start`` HTTP route kicks off (or re-kicks) ingestion for a
 blob-storage prefix by fanning work out onto a queue consumed by the

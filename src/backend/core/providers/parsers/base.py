@@ -1,8 +1,4 @@
-"""Parser provider ABC.
-
-Pillar: Stable Core
-Phase: 6
-"""
+"""Parser provider ABC."""
 
 import hashlib
 from abc import ABC, abstractmethod

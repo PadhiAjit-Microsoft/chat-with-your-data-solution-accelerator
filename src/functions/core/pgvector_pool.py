@@ -1,8 +1,5 @@
 """Functions-runtime cache for the pgvector ingestion asyncpg pool.
 
-Pillar: Stable Core
-Phase: 6
-
 Functions ingestion blueprints (``batch_push``, ``add_url``,
 ``search_skill``) share a single ``asyncpg.Pool`` per worker process
 via this helper. Mirrors the pool-creation half of

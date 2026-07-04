@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 5
- *
  * SSE client utility for `POST /api/conversation`. The backend emits
  * Server-Sent Events on the locked channel set defined in
  * `backend/core/types.py::OrchestratorChannel` (ADR 0007):

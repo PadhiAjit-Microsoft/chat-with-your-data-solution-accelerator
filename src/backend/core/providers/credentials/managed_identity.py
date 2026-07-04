@@ -1,8 +1,5 @@
 """Managed-identity credentials provider.
 
-Pillar: Stable Core
-Phase: 2
-
 Production default. Returns `azure.identity.aio.DefaultAzureCredential`,
 which on Azure transparently picks up the User-Assigned Managed Identity
 attached to the host (Container App / Function App / App Service) -- no

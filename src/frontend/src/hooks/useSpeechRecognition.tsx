@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 4
- *
  * React hook wrapping `microsoft-cognitiveservices-speech-sdk` for
  * browser-side multi-lingual speech-to-text. The backend (`/api/speech`)
  * mints a 10-minute AAD-bearer authorization token; the hook hands

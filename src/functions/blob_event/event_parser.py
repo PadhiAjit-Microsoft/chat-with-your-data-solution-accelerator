@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
-Event parser for the ``blob_event`` blueprint.
+"""Event parser for the ``blob_event`` blueprint.
 
 ``blob_event`` is the Event Grid trigger over Storage blob events on the
 documents container: a ``BlobCreated`` event (bulk drop, admin upload,

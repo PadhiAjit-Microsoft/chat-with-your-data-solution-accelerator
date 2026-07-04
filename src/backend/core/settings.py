@@ -1,8 +1,5 @@
 """Typed runtime configuration for the v2 stack.
 
-Pillar: Stable Core
-Phase: 2
-
 `AppSettings` composes ~9 small `BaseSettings` models, one per Azure
 subsystem, that read **only** the `AZURE_*` env vars emitted by
 `infra/main.bicep` outputs. The orchestrator namespace uses the

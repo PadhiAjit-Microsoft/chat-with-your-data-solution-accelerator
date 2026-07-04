@@ -1,7 +1,4 @@
 /**
- * Pillar: Scenario Pack
- * Phase: 4
- *
  * Conversation history side panel. Loads `/api/history/conversations`
  * on mount, lets the user select / rename / delete entries. The
  * selected conversation id is bubbled up via `onSelect` so the chat

@@ -1,10 +1,5 @@
 """Admin ingestion service helpers.
 
-Pillar: Stable Core
-Phase: 7 (Testing + Documentation -- admin-side ingestion surface so the
-FE can drive URL ingest / file upload / reprocess-all through FastAPI
-instead of reaching into the Functions host)
-
 The helpers in this module are the per-request seams the
 ``POST /api/admin/documents/*`` routes call into. They resolve
 collaborators from the existing provider registries (Hard Rule #4)

@@ -1,9 +1,6 @@
 """
 Generic in-process Registry primitive.
 
-Pillar: Stable Core
-Phase: 1
-
 Used by every shared/* domain (embedders, orchestrators, search, chat_history,
 llm, parsers, credentials) to register provider classes by string key. Providers
 self-register at import time via the @registry.register("key") decorator. Domain

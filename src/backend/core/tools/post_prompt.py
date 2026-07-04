@@ -1,8 +1,5 @@
 """Post-answering validator (groundedness check).
 
-Pillar: Stable Core
-Phase: 3
-
 Mirrors the v1 `PostPromptTool` intent: after the LLM produces an
 answer, ask the LLM a second time whether the answer is grounded in
 the retrieved sources. If not, swap the answer for a configurable

@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
-Queue-trigger blueprint that turns a Storage blob event into the right
+"""Queue-trigger blueprint that turns a Storage blob event into the right
 indexing action: a ``Microsoft.Storage.BlobCreated`` event becomes a
 doc-processing ingestion job (auto-ingested by the unchanged
 ``batch_push`` consumer), and a ``Microsoft.Storage.BlobDeleted`` event

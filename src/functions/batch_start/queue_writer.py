@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
-Queue writer for the ``batch_start`` blueprint.
+"""Queue writer for the ``batch_start`` blueprint.
 
 ``batch_start`` fans one blob -> one queue message of shape
 :class:`BatchPushQueueMessage` onto the storage queue consumed by

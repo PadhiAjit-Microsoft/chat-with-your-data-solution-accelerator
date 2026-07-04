@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
-HTTP blueprint that exposes the ``add_url`` ingestion path from
+"""HTTP blueprint that exposes the ``add_url`` ingestion path from
 :mod:`functions.add_url.handler` as ``POST /api/add_url``.
 
 Companion to :mod:`functions.batch_push.blueprint`. ``batch_push`` is

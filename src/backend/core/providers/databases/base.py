@@ -1,8 +1,5 @@
 """Database client ABC.
 
-Pillar: Stable Core
-Phase: 4
-
 Every concrete database client (`cosmosdb`, `postgres`, future
 swap-ins like Redis) inherits from `BaseDatabaseClient`
 and self-registers via `@registry.register("<key>")`.

@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 7
- *
  * Wire shapes for the `/api/speech` REST surface. The backend mints
  * a short-lived Azure Speech authorization token via AAD; this is the
  * payload the browser SDK consumes via

@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
-Per-event action handlers for the ``blob_event`` blueprint.
+"""Per-event action handlers for the ``blob_event`` blueprint.
 
 Two pure actions, one per blob event the trigger acts on. The blueprint
 :func:`functions.blob_event.blueprint._execute` classifies the event and

@@ -1,8 +1,4 @@
-"""Pydantic response models for health checks.
-
-Pillar: Stable Core
-Phase: 2
-"""
+"""Pydantic response models for health checks."""
 
 from enum import StrEnum
 

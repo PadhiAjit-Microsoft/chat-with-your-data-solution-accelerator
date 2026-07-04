@@ -1,8 +1,5 @@
 """Orchestrator provider domain (package marker only).
 
-Pillar: Stable Core
-Phase: 3
-
 Hard Rule #13: this file is a package marker only. The registry instance,
 the eager side-effect imports of concretes (``agent_framework``,
 ``langgraph``), and any genuine domain helpers live in the sibling

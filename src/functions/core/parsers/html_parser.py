@@ -1,8 +1,5 @@
 """HTML parser (`*.html`).
 
-Pillar: Stable Core
-Phase: 6
-
 Self-registers under key `"html"` per the registration convention in
 `base.py` (lowercase file extension, no leading dot). Eager-imported
 from `functions/core/parsers/registry.py` so the registration fires at

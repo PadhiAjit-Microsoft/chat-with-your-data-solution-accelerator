@@ -1,7 +1,4 @@
 /*
- * Pillar: Scenario Pack
- * Phase: 6
- *
  * Visual styling for HistoryPanel.tsx. The outer column primitive
  * (background, border-right, height) is owned by the parent
  * `<PanelLeft>` so this file just sizes the inner panel content

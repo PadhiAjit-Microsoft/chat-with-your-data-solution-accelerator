@@ -1,8 +1,5 @@
 """LLM provider ABC.
 
-Pillar: Stable Core
-Phase: 2
-
 Every concrete provider (`foundry_iq`, future swap-ins) inherits from
 `BaseLLMProvider` and self-registers via `@registry.register("<key>")`.
 Constructors take `AppSettings` + an `AsyncTokenCredential`; provider

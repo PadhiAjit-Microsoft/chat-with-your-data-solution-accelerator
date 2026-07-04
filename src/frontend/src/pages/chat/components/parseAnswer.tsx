@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 6
- *
  * Pure transform that prepares an assistant answer for v1-style
  * superscript citation rendering. The model emits citation markers as
  * bracketed plain text (`[doc1]`, `[doc2]`, …) positionally keyed to the

@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 5
- *
  * Controlled chat input wired to the backend SSE feed.
  *
  * On submit:

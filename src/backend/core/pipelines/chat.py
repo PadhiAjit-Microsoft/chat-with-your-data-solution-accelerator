@@ -1,8 +1,5 @@
 """Chat pipeline.
 
-Pillar: Stable Core
-Phase: 3
-
 Pure async generator that wraps the chat flow:
 
     user messages

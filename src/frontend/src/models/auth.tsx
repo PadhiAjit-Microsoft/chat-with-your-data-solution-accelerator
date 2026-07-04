@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 5
- *
  * Auth wire shapes + FE-owned identity state. The browser resolves the
  * signed-in user from the Easy Auth `/.auth/me` endpoint and makes it
  * available app-wide so every API call can forward an

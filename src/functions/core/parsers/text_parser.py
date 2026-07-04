@@ -1,8 +1,5 @@
 """Plain-text parser (`*.txt`, `*.md`, `*.json`).
 
-Pillar: Stable Core
-Phase: 6
-
 Self-registers under keys `"txt"`, `"md"`, and `"json"` per the
 registration convention in `base.py` (lowercase file extension, no
 leading dot) -- Markdown and JSON are UTF-8 text, so they index

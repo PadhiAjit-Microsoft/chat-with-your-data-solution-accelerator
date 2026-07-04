@@ -1,7 +1,4 @@
 /*
- * Pillar: Stable Core
- * Phase: 6
- *
  * Composer row (text input + send + mic). Sits inside the
  * .composerColumn from ChatPage.module.css, so it owns only the row's
  * internal layout, not the centering / max-width.

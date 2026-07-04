@@ -1,7 +1,4 @@
-/* Pillar: Stable Core
-   Phase: 7
-
-   Styles for the chat error-boundary fallback. Centered column with a
+/* Styles for the chat error-boundary fallback. Centered column with a
    heading, the error message, and a retry button. Fluent v9 design
    tokens only -- no raw colors, so the fallback themes light/dark for
    free. */

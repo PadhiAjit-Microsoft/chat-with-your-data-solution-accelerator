@@ -1,8 +1,5 @@
 """Azure Cosmos DB-backed database client.
 
-Pillar: Stable Core
-Phase: 4
-
 Wraps `azure.cosmos.aio.CosmosClient`. Single container holds both
 conversations and messages, differentiated by a `type` discriminator
 (per cosmosdb-best-practices `model-type-discriminator`). Partition

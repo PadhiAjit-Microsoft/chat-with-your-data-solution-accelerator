@@ -1,8 +1,5 @@
 """Document download + delete service.
 
-Pillar: Stable Core
-Phase: 7 (Testing + Documentation)
-
 Reads a single ingested document blob back out of the documents
 container so the chat UI can deep-link a citation to its source file,
 and deletes a document blob from that container so an admin delete

@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
-Pure orchestration handler for the ``search_skill`` HTTP blueprint.
+"""Pure orchestration handler for the ``search_skill`` HTTP blueprint.
 
 ``search_skill_handler`` takes a :class:`SearchSkillRequest` posted by
 an AI Search indexer (WebApiSkill envelope per

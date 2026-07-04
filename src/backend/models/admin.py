@@ -1,8 +1,4 @@
-"""Admin router request/response models.
-
-Pillar: Stable Core
-Phase: 5 (admin surface request/response models)
-"""
+"""Admin router request/response models."""
 
 from enum import StrEnum
 from uuid import uuid4

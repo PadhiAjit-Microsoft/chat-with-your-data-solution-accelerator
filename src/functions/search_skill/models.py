@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
-AI Search custom-skill request/response Pydantic models.
+"""AI Search custom-skill request/response Pydantic models.
 
 The ``search_skill`` HTTP route is invoked by an Azure Cognitive
 Search indexer as a WebApiSkill ("custom skill"). The wire

@@ -1,7 +1,4 @@
 /*
- * Pillar: Stable Core
- * Phase: 6
- *
  * Page layout for the chat shell. Header lives in App.tsx; this file
  * owns the body grid: optional history sidebar docked on the LEFT
  * (closed by default, toggled from the header history button) +

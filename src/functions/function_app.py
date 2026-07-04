@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
-Modular RAG indexing pipeline host. Registers the ingestion
+"""Modular RAG indexing pipeline host. Registers the ingestion
 blueprint set: :mod:`functions.batch_start`, :mod:`functions.batch_push`,
 :mod:`functions.add_url`, :mod:`functions.blob_event`, and
 :mod:`functions.search_skill`.

@@ -1,8 +1,5 @@
 """Shared Pydantic types used by providers and pipelines.
 
-Pillar: Stable Core
-Phase: 2
-
 Keep this file focused on **value types** (request/response shapes,
 domain objects) -- not behavior. Provider classes live under
 `providers/`. Cross-cutting helpers live under `shared/tools/`.

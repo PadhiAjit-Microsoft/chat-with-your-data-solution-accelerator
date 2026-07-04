@@ -1,8 +1,5 @@
 """Foundry IQ-backed LLM provider.
 
-Pillar: Stable Core
-Phase: 2
-
 Wraps `azure.ai.projects.aio.AIProjectClient`, which exposes an
 `AsyncOpenAI`-compatible client via the **async** `get_openai_client()`
 method (it returns `Awaitable[AsyncOpenAI]`, NOT the client directly --

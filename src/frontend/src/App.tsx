@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 1
- *
  * Router-driven app shell. `App` provides the theme + Fluent UI v9
  * bridge and a `<BrowserRouter>`; `AppShell` renders the routed view
  * plus the app header on the chat route only (admin routes hide the

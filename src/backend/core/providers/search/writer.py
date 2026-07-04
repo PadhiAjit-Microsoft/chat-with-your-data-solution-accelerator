@@ -1,8 +1,5 @@
 """Search write-side helper for ingestion pipelines.
 
-Pillar: Stable Core
-Phase: 6
-
 Provides a thin, typed wrapper over Azure AI Search document upserts
 for use by Functions ingestion handlers (`batch_push`, `add_url`,
 `search_skill`).

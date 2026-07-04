@@ -1,8 +1,5 @@
 """Storage endpoint URL resolution for Functions blueprints.
 
-Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
 Functions-only helper that derives ``(blob_endpoint, queue_endpoint)``
 URLs from :class:`StorageSettings`. Lives under ``functions/core/``
 because backend code never instantiates Blob or Queue SDK clients --

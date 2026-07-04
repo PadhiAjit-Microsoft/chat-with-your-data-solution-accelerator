@@ -1,8 +1,5 @@
 """Production frontend ASGI app: serve the Vite-built SPA.
 
-Pillar: Stable Core
-Phase: 1
-
 Single-runtime container: FastAPI serves the contents of `dist/`. A
 catch-all route returns the requested file when it exists on disk and
 falls back to `index.html` for every other path, so client-side

@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 7
- *
  * Resolve the "Open document" deep-link target for a citation.
  *
  * v2 ingestion records a document's blob name in `Citation.title` and

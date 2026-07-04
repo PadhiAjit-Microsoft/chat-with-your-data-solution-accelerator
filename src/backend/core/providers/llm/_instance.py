@@ -1,8 +1,5 @@
 """Registry instance for the LLM provider domain.
 
-Pillar: Stable Core
-Phase: 2
-
 Holds the `Registry[type[BaseLLMProvider]]` instance in a leaf module
 so `registry.py` can be top-imports-only per Hard Rule #17. The
 public surface (eager concrete import of `foundry_iq`) stays in

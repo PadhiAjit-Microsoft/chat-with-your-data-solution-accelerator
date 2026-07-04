@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 7
- *
  * Wire shapes for the v2 admin REST surface. Mirrors
  * `src/backend/models/admin.py`. Sanitized snapshot fields only --
  * no secrets cross the type boundary.

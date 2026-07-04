@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
-HTTP blueprint that exposes the ``search_skill`` embed-on-the-fly
+"""HTTP blueprint that exposes the ``search_skill`` embed-on-the-fly
 handler from :mod:`functions.search_skill.handler` as
 ``POST /api/search_skill``.
 

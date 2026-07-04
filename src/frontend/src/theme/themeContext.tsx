@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 6
- *
  * Light/dark theme primitive for the v2 frontend. Owns:
  *   - the active theme (`"light" | "dark"`),
  *   - localStorage persistence (key `cwyd.theme`),

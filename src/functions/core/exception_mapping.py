@@ -1,8 +1,5 @@
 """Exception-to-HTTP mapping decorator for Functions HTTP routes.
 
-Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
 Functions-only helper that owns the four-arm exception ladder every
 blueprint HTTP route would otherwise repeat inline (a single
 ``batch_start`` blueprint inlined ~60 lines of try/except). Applying

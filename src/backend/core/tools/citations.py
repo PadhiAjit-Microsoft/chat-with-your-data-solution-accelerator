@@ -1,8 +1,5 @@
 """Citation marker helper.
 
-Pillar: Stable Core
-Phase: 3
-
 Turns a list of :class:`SearchResult` hits into:
 
 * a numbered ``[doc1] / [doc2] / ...`` source block the orchestrator

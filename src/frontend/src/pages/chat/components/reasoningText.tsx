@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 6
- *
  * Pure formatter for the assistant reasoning feed. Both orchestrators
  * stream onto the same `reasoning` SSE channel but at different
  * granularities: `langgraph` emits char-level summary deltas from a

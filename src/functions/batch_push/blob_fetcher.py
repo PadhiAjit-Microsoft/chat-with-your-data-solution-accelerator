@@ -1,7 +1,4 @@
-"""Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
-Blob fetcher for the ``batch_push`` blueprint.
+"""Blob fetcher for the ``batch_push`` blueprint.
 
 After :func:`functions.batch_push.queue_reader.parse_push_message`
 hands the consumer a validated :class:`BatchPushQueueMessage`,

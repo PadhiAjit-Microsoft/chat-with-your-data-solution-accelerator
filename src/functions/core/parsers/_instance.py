@@ -1,8 +1,5 @@
 """Registry instance for the ingestion-only parsers provider domain.
 
-Pillar: Stable Core
-Phase: 6
-
 Holds the `Registry[type[BaseParser]]` instance in a leaf module so
 `registry.py` can be top-imports-only per Hard Rule #17. The public
 surface (eager concrete imports of ingestion parsers) stays in

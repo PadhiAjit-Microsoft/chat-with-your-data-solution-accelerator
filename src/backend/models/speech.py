@@ -1,8 +1,4 @@
-"""Speech-config response model.
-
-Pillar: Stable Core
-Phase: 4
-"""
+"""Speech-config response model."""
 
 from pydantic import BaseModel, Field
 

@@ -1,8 +1,4 @@
-"""Chat-history request/response models.
-
-Pillar: Stable Core
-Phase: 4
-"""
+"""Chat-history request/response models."""
 
 from pydantic import BaseModel, Field, field_validator
 

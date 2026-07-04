@@ -1,8 +1,5 @@
 """Microsoft Agent Framework (OSS) orchestrator.
 
-Pillar: Stable Core
-Phase: 3
-
 Invokes the CWYD agent through a client-side `agent_framework.Agent`
 composed by the agents provider's `build_agent` seam (see
 `backend.core.providers.agents.base.BaseAgentsProvider.build_agent`).

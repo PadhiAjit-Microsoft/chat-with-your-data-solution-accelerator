@@ -1,8 +1,5 @@
 """Health router.
 
-Pillar: Stable Core
-Phase: 2
-
 Two endpoints:
 
 - `GET /api/health` -- diagnostic. **Always** returns HTTP 200; the
@@ -35,6 +32,12 @@ router = APIRouter(prefix="/api", tags=["health"])
     "/health",
     response_model=HealthResponse,
     summary="Diagnostic health snapshot (always 200)",
+    description=(
+        "Return a full health snapshot of every checked dependency. "
+        "Always responds 200 regardless of individual check status, so it "
+        "can be scraped for diagnostics without tripping an orchestrator's "
+        "restart policy."
+    ),
 )
 async def health(settings: SettingsDep) -> HealthResponse:
     return run_health_checks(settings)
@@ -44,6 +47,11 @@ async def health(settings: SettingsDep) -> HealthResponse:
     "/health/ready",
     response_model=HealthResponse,
     summary="Readiness probe (503 on fail)",
+    description=(
+        "Readiness gate for load balancers and orchestrators. Returns the "
+        "same health snapshot, but responds 503 when the overall status is "
+        "FAIL so traffic is held back until required dependencies recover."
+    ),
 )
 async def ready(settings: SettingsDep, response: Response) -> HealthResponse:
     result = run_health_checks(settings)

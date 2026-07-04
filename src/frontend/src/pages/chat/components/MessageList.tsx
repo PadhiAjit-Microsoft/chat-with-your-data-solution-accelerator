@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 5
- *
  * Renders the chat transcript from ChatContext. Each message renders a
  * single <li> holding one flex `.row`: a 28x28 round avatar (Fluent
  * Person20Regular for user, Bot20Regular for assistant) at the row

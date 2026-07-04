@@ -1,8 +1,5 @@
 """Files router.
 
-Pillar: Stable Core
-Phase: 7 (Testing + Documentation)
-
 Single endpoint: ``GET /api/files/{filename}`` -- streams an ingested
 document blob back to the browser so a chat citation can deep-link to
 its source file.
@@ -39,7 +36,16 @@ from backend.services.files import download_document
 router = APIRouter(prefix="/api", tags=["files"])
 
 
-@router.get("/files/{filename}")
+@router.get(
+    "/files/{filename}",
+    summary="Stream a document blob",
+    description=(
+        "Stream a stored source-document blob by filename for inline "
+        "rendering in the browser (for example when opening a citation). "
+        "Responds 503 when document storage is not configured for the "
+        "deployment."
+    ),
+)
 async def get_file(
     filename: str,
     settings: SettingsDep,

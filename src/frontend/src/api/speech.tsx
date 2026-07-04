@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 4
- *
  * REST client for `GET /api/speech`. Mirrors the hand-rolled
  * `streamChat.ts` pattern -- no OpenAPI generator wired in v2 yet, so
  * the FE keeps a thin typed fetch wrapper per endpoint and pays the

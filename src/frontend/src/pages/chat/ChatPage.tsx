@@ -1,7 +1,4 @@
 /**
- * Pillar: Scenario Pack
- * Phase: 2
- *
  * Composes the chat shell: <ChatProvider> + <HistoryPanel> +
  * <MessageList> + <MessageInput>. The body is a CSS Modules grid: an
  * optional sidebar (driven by `historyOpen` from the parent App shell)
