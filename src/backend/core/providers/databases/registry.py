@@ -17,7 +17,7 @@ Caller pattern (Hard Rule #13):
 
 The registry key must match `settings.database.db_type`
 (`Literal["cosmosdb", "postgresql"]`) so dispatch is registry-only
-(Hard Rule #4 — no name-string translation in the caller).
+(Hard Rule #4, no name-string translation in the caller).
 """
 
 # pyright: reportUnusedImport=false

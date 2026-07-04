@@ -36,9 +36,9 @@ def test_bicep_does_not_declare_azure_ai_agent_id_param(bicep_text: str) -> None
     `agents` provider in `src/backend/core/agents/`, not env.
     """
     assert "azureAiAgentId" not in bicep_text, (
-        "azureAiAgentId Bicep param must remain absent (CU-009a reversal of "
-        "CU-001e). Agent identity is now DB-backed; see ADR 0008. To pin a "
-        "specific agent, use the registry-backed agents provider, not env."
+        "azureAiAgentId Bicep param must remain absent. Agent identity is "
+        "now DB-backed; see ADR 0008. To pin a specific agent, use the "
+        "registry-backed agents provider, not env."
     )
 
 
@@ -52,13 +52,13 @@ def test_backend_container_env_does_not_expose_agent_id(bicep_text: str) -> None
     dead-config drift this guard removes.
     """
     assert "'AZURE_AI_AGENT_ID'" not in bicep_text, (
-        "AZURE_AI_AGENT_ID env binding must remain absent (CU-009a reversal "
-        "of CU-001e). Agent identity is now DB-backed; see ADR 0008."
+        "AZURE_AI_AGENT_ID env binding must remain absent. Agent identity "
+        "is now DB-backed; see ADR 0008."
     )
     assert "AZURE_AI_AGENT_ID" not in bicep_text, (
         "AZURE_AI_AGENT_ID must not appear anywhere in main.bicep -- not as "
         "an env var, not in a comment that suggests operators should set it. "
-        "Use the registry-backed agents provider instead (CU-010a)."
+        "Use the registry-backed agents provider instead."
     )
 
 
@@ -162,7 +162,7 @@ def test_backend_aca_env_block_binds_required_phase4_settings(
     assert f"'{env_name}'" in backend_aca_slice, (
         f"{env_name} missing from backend Container App env block. "
         "Add it to the backend ACA `env: union([...])` array in main.bicep "
-        "so AppSettings can populate it at runtime. The Phase 4 output of "
+        "so AppSettings can populate it at runtime. The output of "
         "the same name already exists (lines ~1606-1661); only the "
         "container-app binding is missing."
     )
@@ -184,7 +184,7 @@ def test_backend_aca_env_drops_require_admin_auth_keeps_environment(
     """
     assert "AZURE_REQUIRE_ADMIN_AUTH" not in backend_aca_slice, (
         "AZURE_REQUIRE_ADMIN_AUTH must remain absent from the backend "
-        "Container App env block (BUG-0090). The require_admin_auth setting "
+        "Container App env block. The require_admin_auth setting "
         "and the Easy-Auth role gate were deleted; the runtime no longer "
         "reads this flag -- do not re-add it, not even in a comment."
     )
@@ -252,7 +252,7 @@ def test_function_container_app_stays_warm_for_queue_consumers(
         "minReplicas: 1 missing from the functionContainerApp `scale` block "
         "in main.bicep. The function hosts the batch_push + blob_event queue "
         "consumers; without a warm instance the first queue message after "
-        "idle-to-zero is dropped (BUG-0053). Keep `minReplicas: 1` (not "
+        "idle-to-zero is dropped. Keep `minReplicas: 1` (not "
         "`enableScalability ? 1 : 0`) so the queue triggers stay warm."
     )
 
@@ -269,15 +269,14 @@ def test_bicep_uses_container_apps_not_flex_or_appservice(bicep_text: str) -> No
     # Removed hosting resources must stay gone.
     assert "module appServicePlan " not in bicep_text, (
         "module appServicePlan re-introduced in main.bicep. The frontend "
-        "App Service was replaced by the frontendContainerApp Container App "
-        "(Phase 1); an App Service plan cannot host the ACR-built frontend "
+        "App Service was replaced by the frontendContainerApp Container App; "
+        "an App Service plan cannot host the ACR-built frontend "
         "image."
     )
     assert "module functionApp " not in bicep_text, (
         "module functionApp re-introduced in main.bicep. The Flex Consumption "
         "Function App was replaced by the raw functionContainerApp "
-        "(kind: 'functionapp') on the shared Container Apps Environment "
-        "(Phase 2)."
+        "(kind: 'functionapp') on the shared Container Apps Environment."
     )
     # New container-hosted resources must exist.
     assert "module frontendContainerApp " in bicep_text, (
@@ -313,13 +312,13 @@ def test_blob_event_subscription_targets_blob_events_queue(bicep_text: str) -> N
         "existing-topic reuse path) must pin their destination to "
         f"blobEventsQueueName ('blob-events') in main.bicep; found "
         f"{blob_events_pins} of 2. Repointing *either* subscription off "
-        "blob-events re-creates the BUG-0054 double-ingest: the backend "
+        "blob-events re-creates the double-ingest: the backend "
         "upload and the Event Grid fan-out would both enqueue the same "
         "document."
     )
     assert "queueName: docProcessingQueueName" not in bicep_text, (
         "An Event Grid blob subscription destination is pointed at "
-        "doc-processing in main.bicep. That is the exact BUG-0054 "
+        "doc-processing in main.bicep. That is the exact "
         "regression: the subscription must land on blob-events and let "
         "the blob_event trigger own the single doc-processing hand-off "
         "(ADR 0028), never enqueue doc-processing directly."
@@ -436,13 +435,12 @@ def test_application_insights_enables_local_auth(
         "applicationInsights AVM module must set `disableLocalAuth: false` so "
         "the connection-string-only telemetry exporter ingests via "
         "instrumentation key, matching MACAE's `avm/res/insights/component`. "
-        "With local auth disabled the app's ikey writes silently drop "
-        "(BUG-0055)."
+        "With local auth disabled the app's ikey writes silently drop."
     )
     assert "disableLocalAuth: true" not in application_insights_slice, (
         "applicationInsights AVM module must NOT set `disableLocalAuth: true` "
-        "-- Entra-only ingestion drops the app's connection-string writes "
-        "(BUG-0055). The retained `Monitoring Metrics Publisher` role keeps a "
+        "-- Entra-only ingestion drops the app's connection-string writes. "
+        "The retained `Monitoring Metrics Publisher` role keeps a "
         "one-line revert path back to Entra-only ingestion."
     )
 
@@ -482,7 +480,7 @@ def test_appinsights_connection_string_bound_to_workload(
         "Wire it inside an `enableMonitoring ? [...] : []` ternary sourced "
         "from `applicationInsights!.outputs.connectionString` so the "
         "workload telemetry exporter knows where to ingest telemetry "
-        "(ADR-0018, BUG-0055)."
+        "(ADR-0018)."
     )
     assert "applicationInsights!.outputs.connectionString" in module_slice, (
         f"{slice_fixture} must source the AppI connection string from "
@@ -840,20 +838,18 @@ def test_search_openai_role_assignments_use_idempotent_name(bicep_text: str) -> 
         "`guid(aiServicesAccount.id, 'srch-${solutionSuffix}', "
         "subscriptionResourceId('Microsoft.Authorization/roleDefinitions', "
         "cognitiveServicesOpenAiUserRoleId))` -- the full scope "
-        "id plus the real Search service name, not a static salt (BUG-0054 "
-        "Phase 2)."
+        "id plus the real Search service name, not a static salt."
     )
     assert reused_name in bicep_text, (
         "searchOpenAiUserOnReusedOpenAi must key its assignment name on "
         "`guid(existingOpenAi!.id, 'srch-${solutionSuffix}', "
         "subscriptionResourceId('Microsoft.Authorization/roleDefinitions', "
         "cognitiveServicesOpenAiUserRoleId))` -- the full scope "
-        "id plus the real Search service name, not a static salt (BUG-0054 "
-        "Phase 2)."
+        "id plus the real Search service name, not a static salt."
     )
     assert "'search-system-mi'" not in bicep_text, (
         "The static salt `'search-system-mi'` must not appear in main.bicep. "
         "It was a hand-coded token with no tie to the principal-owning "
-        "resource (BUG-0054 Phase 2); both names must key on `scope.id` plus "
+        "resource; both names must key on `scope.id` plus "
         "the real Search service name instead."
     )

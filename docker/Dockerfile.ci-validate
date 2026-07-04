@@ -1,4 +1,4 @@
-# CI validation image — runs Bicep build, what-if preview, pytest, frontend tests, lints.
+# CI validation image: runs Bicep build, what-if preview, pytest, frontend tests, lints.
 # Pillar: Stable Core
 # Phase: 1
 #
@@ -22,7 +22,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# Azure CLI (native Debian install) + bicep — puts `az` on PATH so the
+# Azure CLI (native Debian install) + bicep: puts `az` on PATH so the
 # ci-entrypoint `az bicep build` / `az deployment what-if` steps resolve.
 RUN curl -sL https://aka.ms/InstallAzureCLIDeb | bash \
     && az bicep install

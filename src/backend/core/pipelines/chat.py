@@ -51,7 +51,7 @@ Behavior contracts
   validated, then emitted as a single ``answer`` event whose content
   is either the original answer (grounded) or the validator's filter
   message (not grounded). Citations / reasoning / tool events stream
-  through as they arrive — only ``answer`` is buffered.
+  through as they arrive, only ``answer`` is buffered.
 * **No validator**: ``answer`` events stream through unchanged
   (sub-second perceived latency for the streaming client).
 """

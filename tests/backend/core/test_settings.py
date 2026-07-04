@@ -365,8 +365,8 @@ def test_orchestrator_settings_no_agent_id_field() -> None:
     provider, not via settings.
     """
     assert "agent_id" not in OrchestratorSettings.model_fields, (
-        "OrchestratorSettings.agent_id must remain absent (CU-009b reversal "
-        "of CU-001a). Foundry agent identity is now DB-backed via the agents "
+        "OrchestratorSettings.agent_id must remain absent. Foundry agent "
+        "identity is now DB-backed via the agents "
         "provider; see ADR 0008."
     )
 
@@ -822,9 +822,7 @@ _ENV_EXAMPLE_EXEMPTIONS: dict[str, str] = {
     # Consumed by NetworkSettings.cors_origins via validation_alias.
     # The round-trip helper only walks env_prefix+field_name
     # so alias-based fields stay listed here as documented exemptions.
-    "BACKEND_CORS_ORIGINS": (
-        "NetworkSettings.cors_origins via validation_alias (CU-002a)"
-    ),
+    "BACKEND_CORS_ORIGINS": ("NetworkSettings.cors_origins via validation_alias"),
     # The previous AZURE_AI_AGENT_ID
     # exemption was removed: the OrchestratorSettings.agent_id field that
     # consumed it via validation_alias was deleted per ADR 0008. Do not re-add

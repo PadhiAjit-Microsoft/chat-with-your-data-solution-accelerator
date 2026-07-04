@@ -16,6 +16,9 @@ audit-*.txt
 *.scratch.md
 /scratch/
 
+# Test-runner output captures written at repo root.
+vitest-out.txt
+
 # HVE task-tracking scratch (plans, details, research, changes, reviews).
 # Tooling-written working notes that can carry env-specific identifiers.
 .copilot-tracking/

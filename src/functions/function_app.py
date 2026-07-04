@@ -60,7 +60,7 @@ def _health_payload() -> HealthPayload:
 @app.function_name(name="health")
 @app.route(route="health", methods=["GET"])
 def health(req: func.HttpRequest) -> func.HttpResponse:
-    """GET /api/health — liveness probe for the Functions container."""
+    """GET /api/health: liveness probe for the Functions container."""
     return func.HttpResponse(
         body=_health_payload().model_dump_json(),
         status_code=200,

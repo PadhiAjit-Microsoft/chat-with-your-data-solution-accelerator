@@ -750,7 +750,7 @@ describe("MessageInput clear-conversation button", () => {
   });
 });
 
-describe("MessageInput mic button (S1 / SPEECH-MVP)", () => {
+describe("MessageInput mic button", () => {
   beforeEach(() => {
     streamChatMock.mockReturnValue(iterableOf([]));
   });

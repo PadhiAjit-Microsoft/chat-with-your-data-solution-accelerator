@@ -9,7 +9,7 @@ filtered by prefix) so it can fan out one queue message per blob to
 
 Hard Rule #14 (SDK boundary resilience): the SDK boundary is wrapped
 per the policy in [v2/docs/exception_handling_policy.md] §"Functions
-blueprints" — narrow catch of ``azure.core.exceptions.AzureError``
+blueprints", narrow catch of ``azure.core.exceptions.AzureError``
 with structured ``logger.exception`` extras, then re-raise so the
 Functions runtime applies its retry / poison-queue semantics.
 """

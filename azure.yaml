@@ -24,7 +24,7 @@ infra:
   module: main
 
 # ----------------------------------------------------------------------
-# Typed prompt block — surfaced by `azd up` / `azd provision`. Each
+# Typed prompt block: surfaced by `azd up` / `azd provision`. Each
 # answer is persisted in the azd env file under AZURE_ENV_<name> and
 # bound back to a Bicep parameter via infra/main.parameters.json.
 # ----------------------------------------------------------------------
@@ -82,7 +82,7 @@ parameters:
     default: false
 
 # ----------------------------------------------------------------------
-# Services — bound to Bicep resources by the `azd-service-name` tag in
+# Services: bound to Bicep resources by the `azd-service-name` tag in
 # infra/main.bicep:
 #   - backend  → Container App  (tag 'backend')
 #   - frontend → Container App  (tag 'frontend')

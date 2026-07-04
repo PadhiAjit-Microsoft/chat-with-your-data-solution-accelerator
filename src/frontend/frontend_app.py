@@ -27,7 +27,9 @@ from pydantic import BaseModel, ConfigDict, Field
 # Default resolves next to this module so it serves unchanged on App
 # Service (server + `dist/` co-located under the app root) and in the
 # Docker prod stage (both under `/usr/src/app`).
-_DIST_DIR = Path(os.environ.get("DIST_DIR", str(Path(__file__).resolve().parent / "dist")))
+_DIST_DIR = Path(
+    os.environ.get("DIST_DIR", str(Path(__file__).resolve().parent / "dist"))
+)
 
 app = FastAPI(title="cwyd-frontend")
 
@@ -58,7 +60,7 @@ def serve_spa(full_path: str) -> FileResponse:
 
     The on-disk file is returned only when the resolved candidate stays
     inside `dist/` (guards against `..` path traversal); every other
-    request — unknown client routes, deep links, refreshes — resolves
+    request (unknown client routes, deep links, refreshes) resolves
     to `index.html` so the browser-side router can take over.
     """
     dist_root = _DIST_DIR.resolve()

@@ -1,5 +1,5 @@
 """Pillar: Scenario Pack
-Phase: 7 (admin / configuration surface — assistant-type prompt presets, ADR 0030)
+Phase: 7 (admin / configuration surface, assistant-type prompt presets, ADR 0030)
 
 Loads the assistant-type prompt presets from ``assistant_presets.json`` (sibling
 file) once at import and exposes typed accessors. The JSON holds the
