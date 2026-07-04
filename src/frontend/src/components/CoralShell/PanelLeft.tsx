@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 4 (frontend polish — reference-architecture re-skin)
+ * Phase: 4
  *
  * Left navigation panel primitive. Mirrors the reference architecture's
  * `commonComponents/components/Layout/PanelLeft`: a vertical column

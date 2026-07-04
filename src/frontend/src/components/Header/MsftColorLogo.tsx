@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 4 (frontend polish — reference-architecture re-skin)
+ * Phase: 4
  *
  * Microsoft 4-square color logo as an inline SVG component. Mirrors
  * the reference architecture's color-logo component. Used as the

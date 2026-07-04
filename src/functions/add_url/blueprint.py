@@ -28,9 +28,9 @@ Registry-first collaborator wiring (Hard Rule #4):
 * Credentials provider via ``credentials_registry``.
 * Parser via ``ingestion_parsers_registry`` (key resolved from the
   URL path's file extension; see :func:`_parser_key_for_url`).
-* Embedder via ``embedders_registry`` -- post-Phase-6 default key
+* Embedder via ``embedders_registry`` -- default key
   ``"azure_openai"`` (single concrete embedder today; promoted to
-  settings when an alternate concrete lands).
+  settings if an alternate concrete is added).
 * Search provider via
   :func:`functions.core.search_resolution.resolve_search_provider`,
   which keys ``search_registry`` on ``settings.database.index_store``
@@ -65,9 +65,9 @@ from functions.core.search_resolution import resolve_search_provider
 bp = func.Blueprint()
 
 # When a URL has no path extension (e.g. ``https://example.com/article``)
-# we fall back to the text parser. Phase 6 ships only ``TextParser``;
-# later phases that add an HTML parser will replace this default with
-# the HTML key.
+# we fall back to the text parser -- ``TextParser`` is the only parser
+# registered today. An added HTML parser would replace this default
+# with the HTML key.
 _DEFAULT_PARSER_KEY = "txt"
 
 

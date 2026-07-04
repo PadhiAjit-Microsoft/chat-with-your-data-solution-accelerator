@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 5 (frontend — user identity)
+ * Phase: 5
  *
  * Auth state machine for the app shell. Owns the `AuthState`
  * (`userId` / `userInfo` / `phase`) and exposes a single

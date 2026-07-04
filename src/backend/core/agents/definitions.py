@@ -133,7 +133,7 @@ CWYD_AGENT = AgentDefinition(
 
 # Reference-architecture pattern: a dedicated Foundry agent acting as
 # a TRUE/FALSE classifier on its own deployment. Used by the RAI gate
-# (CU-011b) to filter unsafe prompts before they reach CWYD_AGENT.
+# to filter unsafe prompts before they reach CWYD_AGENT.
 RAI_AGENT = AgentDefinition(
     name="rai",
     description=(

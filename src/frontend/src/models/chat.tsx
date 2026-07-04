@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 7 (Testing + Documentation)
+ * Phase: 7
  *
  * Wire shapes + chat-domain state types. Mirrors the conversation /
  * history / SSE surfaces in `src/backend/`:

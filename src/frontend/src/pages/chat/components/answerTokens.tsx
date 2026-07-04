@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 7 (Testing + Documentation)
+ * Phase: 7
  *
  * Pure renderer that turns an assistant-answer string into a mix of
  * raw text spans and clickable `[docN]` citation tokens. The model

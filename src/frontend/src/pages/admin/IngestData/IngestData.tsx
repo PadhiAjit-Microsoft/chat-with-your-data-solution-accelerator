@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 5 (Admin + Frontend Merge)
+ * Phase: 5
  *
  * Admin "Ingest Data" page. Three independent sections share one
  * `useReducer` so per-entry status (pending / uploading / success /

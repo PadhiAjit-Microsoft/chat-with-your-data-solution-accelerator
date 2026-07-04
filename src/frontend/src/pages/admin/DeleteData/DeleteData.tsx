@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 7 (Testing + Documentation)
+ * Phase: 7
  *
  * Admin "Delete Data" page. Lists every distinct source currently
  * indexed and lets the operator remove every chunk attached to a

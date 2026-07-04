@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 5 (frontend — user identity)
+ * Phase: 5
  *
  * Display-name + initials helpers for the header user badge. Kept in a
  * non-component module so <HeaderTools> exports only its component

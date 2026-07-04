@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 4 (frontend polish — reference-architecture re-skin)
+ * Phase: 4
  *
  * Multi-agent brand mark as an inline SVG component. This is the
  * interlocking glyph the reference architecture's multi-agent experience renders for its

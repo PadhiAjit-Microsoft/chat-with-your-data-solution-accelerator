@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 7 (Testing + Documentation)
+ * Phase: 7
  *
  * Wire shapes for the `/api/speech` REST surface. The backend mints
  * a short-lived Azure Speech authorization token via AAD; this is the

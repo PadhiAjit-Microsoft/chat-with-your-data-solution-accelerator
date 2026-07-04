@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 4 (frontend polish — reference-architecture re-skin)
+ * Phase: 4
  *
  * Inner Coral shell row. Mirrors the reference architecture's
  * `commonComponents/components/Layout/CoralShellRow`: a horizontal flex

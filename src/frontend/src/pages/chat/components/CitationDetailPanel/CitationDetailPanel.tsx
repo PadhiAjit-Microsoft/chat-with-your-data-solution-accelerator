@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 7 (Testing + Documentation)
+ * Phase: 7
  *
  * Source detail column shown to the right of the chat transcript when
  * the user clicks a reference chip. Reads the selected citation from

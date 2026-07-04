@@ -3,7 +3,7 @@ Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
 
 Pure orchestration handler for the ``batch_push`` blueprint.
 
-``batch_push_handler`` composes the previously-landed Phase 6 units --
+``batch_push_handler`` composes the units --
 :func:`functions.batch_push.blob_fetcher.download_blob`, the
 :class:`backend.core.providers.parsers.base.BaseParser` registry, the
 :class:`backend.core.providers.embedders.base.BaseEmbedder` registry,

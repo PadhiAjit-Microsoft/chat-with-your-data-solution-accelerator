@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 6 (frontend polish, pulled forward for boss demo)
+ * Phase: 6
  *
  * Light/dark theme primitive for the v2 frontend. Owns:
  *   - the active theme (`"light" | "dark"`),
@@ -8,8 +8,6 @@
  *   - mirroring the value to `document.documentElement.dataset.theme`
  *     so `tokens.css` can switch CSS custom properties via the
  *     `[data-theme="dark"]` selector.
- *
- * v1 had no theme toggle; this is a deliberate v2 differentiator.
  */
 import {
   createContext,

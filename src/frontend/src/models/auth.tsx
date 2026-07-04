@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 5 (frontend — user identity)
+ * Phase: 5
  *
  * Auth wire shapes + FE-owned identity state. The browser resolves the
  * signed-in user from the Easy Auth `/.auth/me` endpoint and makes it

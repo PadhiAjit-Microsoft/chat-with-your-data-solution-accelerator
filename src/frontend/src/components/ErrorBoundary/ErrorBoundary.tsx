@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 7 (frontend — SSE resilience: contain render failures)
+ * Phase: 7
  *
  * React error boundary for the chat surface. A render-time throw in any
  * descendant (a malformed message, an unexpected stream / citation

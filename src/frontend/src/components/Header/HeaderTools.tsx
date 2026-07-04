@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 4 (frontend polish — reference-architecture re-skin)
+ * Phase: 4
  *
  * Header toolbar slot for the right side of <Header>. Owns the icon
  * buttons that wrap into the header chrome:

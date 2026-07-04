@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 5 (Admin + Frontend Merge)
+ * Phase: 5
  *
  * REST client for the v2 admin surface. Mirrors the hand-rolled
  * `speech.ts` + `streamChat.ts` pattern -- one typed fetch wrapper

@@ -3,7 +3,7 @@ Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
 
 Pure orchestration handler for the ``batch_start`` blueprint.
 
-``batch_start_handler`` composes the previously-landed units --
+``batch_start_handler`` composes the units --
 :func:`functions.batch_start.blob_listing.list_blobs` and
 :func:`functions.batch_start.queue_writer.enqueue_push_message` -- into
 the fan-out step: list blobs under a prefix, emit one
@@ -13,8 +13,8 @@ Design notes:
 
 * The handler accepts the ``ContainerClient`` and ``QueueClient`` as
   parameters (treat as DI). Credentials wiring, account URLs, and the
-  HTTP / Functions binding live in the next unit (function_app.py
-  blueprint registration). Keeping the handler client-injected makes
+  HTTP / Functions binding live in the function_app.py blueprint
+  registration. Keeping the handler client-injected makes
   it directly unit-testable without spinning up Azurite.
 * All blobs in one ``batch_start`` invocation share a single
   ``ingestion_job_id`` so downstream traces / search-index documents

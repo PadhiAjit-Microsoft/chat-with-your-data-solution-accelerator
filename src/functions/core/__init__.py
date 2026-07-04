@@ -1,7 +1,7 @@
 """Functions-only shared layer for the RAG indexing pipeline.
 
 Pillar: Stable Core
-Phase: 5.5 (Stable Core Refactor; broadened in Phase 6)
+Phase: 5.5 (Stable Core Refactor)
 
 This package is the home for code that loads only when the Azure
 Functions container spins up. Backend chat / history / admin runs
@@ -27,7 +27,7 @@ credentials, settings, registry primitives -- if backend can use it,
 it lives in ``backend.core`` and Functions imports it. There is no
 ``functions/_shared/``.
 
-The four "what lives where" rules (locked in for Phase 5.5):
+The four "what lives where" rules:
 
 | Rule                                         | Destination                  |
 |----------------------------------------------|------------------------------|

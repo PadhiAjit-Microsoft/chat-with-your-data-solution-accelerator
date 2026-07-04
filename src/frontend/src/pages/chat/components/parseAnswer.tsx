@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 6 (visual polish)
+ * Phase: 6
  *
  * Pure transform that prepares an assistant answer for v1-style
  * superscript citation rendering. The model emits citation markers as

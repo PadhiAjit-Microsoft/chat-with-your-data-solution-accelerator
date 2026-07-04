@@ -3,17 +3,16 @@
 Pillar: Stable Core
 Phase: 6
 
-First concrete `BaseParser` to land in v2.
 Self-registers under keys `"txt"`, `"md"`, and `"json"` per the
 registration convention in `base.py` (lowercase file extension, no
 leading dot) -- Markdown and JSON are UTF-8 text, so they index
 through the same paragraph chunking as plain text (matching v1, which
 supported all three). Eager-imported from
 `functions/core/parsers/registry.py` so the registration fires at
-process start (Option SE-1 in development_plan §2.4.5).
+process start.
 
-Chunking strategy — paragraph-based, blank-line separated. v2
-removed the chunker primitive (decision D2 in §4.6.1): parsers are
+Chunking strategy, paragraph-based, blank-line separated. There is
+no separate chunker primitive: parsers are
 expected to chunk in whatever way is appropriate for the format.
 For plain text, paragraphs are the natural semantic unit -- they
 match the v1 default, surface cleanly in downstream embedders, and
@@ -37,6 +36,7 @@ from backend.core.providers.parsers.base import BaseParser, ParserKey
 from .registry import registry
 
 _PARAGRAPH_SEPARATOR = re.compile(r"(?:\r?\n[ \t]*){2,}")
+
 
 @registry.register(ParserKey.TXT)
 @registry.register(ParserKey.MD)

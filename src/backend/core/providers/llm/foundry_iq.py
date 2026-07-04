@@ -43,11 +43,10 @@ from backend.core.types import (
 from .registry import registry
 from .base import BaseLLMProvider
 
-
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
-# Try/except policy (Phase C2d)
+# Try/except policy
 #
 # Per v2/docs/exception_handling_policy.md (Provider entry-points row), every
 # OpenAI / AIProjectClient call at a provider boundary catches a narrow SDK
@@ -139,10 +138,9 @@ class _Responses(Protocol):
     `reason()` calls `oai.responses.create(...)` (Responses API,
     `2025-04-01-preview` and later) instead of
     `oai.chat.completions.create(...)` because gpt-5's reasoning
-    *summary* deltas only stream through the Responses surface --
-    chat completions only ever returns `content` deltas for gpt-5
-    (verified empirically against api versions 2024-12-01 /
-    2025-04-01 / 2025-09-01 with reasoning_effort=medium).
+    *summary* deltas only stream through the Responses surface, not
+    chat completions (api versions 2024-12-01 / 2025-04-01 /
+    2025-09-01).
     """
 
     async def create(self, **kwargs: Any) -> Any: ...
@@ -165,9 +163,7 @@ class _ProjectClientView(Protocol):
     we don't care about the kwargs surface."
     """
 
-    def get_openai_client(
-        self, *, base_url: str | None = None
-    ) -> _OpenAIClient: ...
+    def get_openai_client(self, *, base_url: str | None = None) -> _OpenAIClient: ...
 
 
 class _ResponsesInputItem(BaseModel):
@@ -289,9 +285,7 @@ class FoundryIQ(BaseLLMProvider):
             base_url = f"{services_endpoint.rstrip('/')}/openai/v1"
             project = cast(_ProjectClientView, self._get_project_client())
             try:
-                self._embeddings_client = project.get_openai_client(
-                    base_url=base_url
-                )
+                self._embeddings_client = project.get_openai_client(base_url=base_url)
             except AzureError:
                 logger.exception(
                     "foundry_iq get_openai_client (embeddings) failed",
@@ -336,8 +330,7 @@ class FoundryIQ(BaseLLMProvider):
         # plain-string role so the Responses endpoint classifies it
         # unambiguously; `reason()` dumps these to the wire shape.
         return [
-            _ResponsesInputItem(role=m.role.value, content=m.content)
-            for m in messages
+            _ResponsesInputItem(role=m.role.value, content=m.content) for m in messages
         ]
 
     # ------------------------------------------------------------------
@@ -368,9 +361,7 @@ class FoundryIQ(BaseLLMProvider):
             # upper bound on generated tokens).
             kwargs["max_completion_tokens"] = max_tokens
         try:
-            response = cast(
-                _ChatResponse, await oai.chat.completions.create(**kwargs)
-            )
+            response = cast(_ChatResponse, await oai.chat.completions.create(**kwargs))
         except openai.APIError:
             logger.exception(
                 "foundry_iq chat completions.create failed",
@@ -485,16 +476,14 @@ class FoundryIQ(BaseLLMProvider):
         *summary* tokens and ``answer``-channel events for the final
         answer tokens (ADR 0007).
 
-        Implementation note: switched from
-        ``oai.chat.completions.create(..., stream=True)`` to
-        ``oai.responses.create(..., reasoning={"effort": "...",
-        "summary": "auto"}, stream=True)`` because gpt-5 (and other
-        modern reasoning models on Azure) **never** populate
-        ``delta.reasoning_content`` on chat-completions streams --
-        verified empirically against API versions ``2024-12-01-preview``,
-        ``2025-04-01-preview``, and ``2025-09-01-preview`` with
-        ``reasoning_effort=medium``. The reasoning summary surface is
-        only exposed through the Responses API. Stream events are
+        Uses ``oai.responses.create(..., reasoning={"effort": "...",
+        "summary": "auto"}, stream=True)`` rather than
+        ``oai.chat.completions.create(..., stream=True)`` because gpt-5
+        (and other modern reasoning models on Azure) **never** populate
+        ``delta.reasoning_content`` on chat-completions streams; the
+        reasoning summary surface is only exposed through the Responses
+        API (API versions ``2024-12-01-preview``, ``2025-04-01-preview``,
+        ``2025-09-01-preview``). Stream events are
         dispatched on the typed ``evt.type`` discriminator instead of
         the openai SDK class names so this module stays compliant with
         Hard Rule #7 (no openai-types imports in v2 runtime). The two
@@ -509,10 +498,7 @@ class FoundryIQ(BaseLLMProvider):
         oai = await self._get_openai_client()
         kwargs: dict[str, Any] = {
             "model": model,
-            "input": [
-                item.model_dump()
-                for item in self._to_responses_input(messages)
-            ],
+            "input": [item.model_dump() for item in self._to_responses_input(messages)],
             "reasoning": {"effort": "medium", "summary": "auto"},
             "stream": True,
         }
@@ -623,9 +609,7 @@ class FoundryIQ(BaseLLMProvider):
                 stream=False,
             )
         except (openai.APIError, AzureError) as exc:
-            if isinstance(exc, openai.APIError) and self._is_reasoning_unsupported(
-                exc
-            ):
+            if isinstance(exc, openai.APIError) and self._is_reasoning_unsupported(exc):
                 logger.info(
                     "foundry_iq deployment does not support reasoning summaries",
                     extra={

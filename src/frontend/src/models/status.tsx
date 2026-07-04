@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 7 (Testing + Documentation)
+ * Phase: 7
  *
  * Shared closed-set status discriminators for the admin + chat
  * pages. Each enum follows the `as const` + literal-union pattern

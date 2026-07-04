@@ -29,7 +29,7 @@ const SPEECH_URL = "/api/speech";
  * (Container App) are different origins. Without this, a relative
  * `/api/speech` resolves against the frontend host and hits the SPA
  * catch-all (`index.html`, 200), so the JSON parse throws and the mic
- * button never gets a token (BUG-0070). Mirrors the `backendUrl()` /
+ * button never gets a token. Mirrors the `backendUrl()` /
  * `apiUrl()` seam in `admin.tsx` / `conversationHistory.tsx`.
  */
 function backendUrl(): string {

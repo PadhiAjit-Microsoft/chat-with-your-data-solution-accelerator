@@ -8,7 +8,7 @@ hands the consumer a validated :class:`BatchPushQueueMessage`,
 ``batch_push`` needs the actual blob bytes to feed the parser /
 chunker / embedder pipeline. This module owns only the download
 call; credentials provisioning, container-client construction, and
-the parse/chunk/embed/push composition land in follow-up units.
+the parse/chunk/embed/push composition are owned by the blueprint.
 
 Why bytes (not a stream): v1 piped the blob through
 ``EmbedderFactory.embed_file(file_sas, file_name)`` which fetched

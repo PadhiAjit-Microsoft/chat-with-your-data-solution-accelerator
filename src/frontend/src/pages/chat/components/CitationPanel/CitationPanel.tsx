@@ -1,6 +1,6 @@
 /**
  * Pillar: Stable Core
- * Phase: 7 (Testing + Documentation)
+ * Phase: 7
  *
  * Source references surfaced under a finished assistant message.
  * Renders a collapsible reference block that mirrors the v1 chat

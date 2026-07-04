@@ -220,8 +220,7 @@ export function MessageInput() {
             }
             break;
           }
-          // tool channel is intentionally dropped — tool-step
-          // visualization is a separate FE backlog item.
+          // tool channel is intentionally dropped.
         }
       }
       dispatch({ type: "finish_stream", id: assistantId });
