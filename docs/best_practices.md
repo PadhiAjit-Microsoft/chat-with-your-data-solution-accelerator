@@ -1,7 +1,19 @@
+---
+title: Best practices
+description: Retrieval, chunking, and production guidance for Chat with Your Data across its Azure AI Search and PostgreSQL storage backends.
+ms.date: 2026-07-03
+ms.topic: concept
+---
+
 [Back to *Chat with your data* README](../README.md)
 
 ![Supporting documentation](images/supportingDocuments.png)
-# Best practices
+
+## Overview
+
+These practices help you get reliable, grounded answers from Chat with Your Data. They apply across both storage backends: Azure AI Search and PostgreSQL with the `pgvector` extension. Two orchestrators ship with the application. In `cosmosdb` mode, `agent_framework` grounds through the Azure AI Foundry knowledge base (Foundry IQ), while `langgraph` and the `pgvector` backend use app-side retrieval. For how the orchestrators differ, see [Architecture overview](architecture.md#orchestrators).
+
+## Best practices
 
 **Evaluate your data first**
 It is important that you evaluate the retrieval/search and the generation of the answers for your data and tune these configurations accordingly before you use this repo in production. For a starting point to understand and perform RAG evaluations, we encourage you to look into the [RAG Experiment Accelerator](https://github.com/microsoft/rag-experiment-accelerator).
@@ -52,12 +64,11 @@ Moreover, optimizing the data in the index also enhances the efficiency, the spe
 - Follow the [Responsible AI best practices](https://www.microsoft.com/en-us/ai/tools-practices).
 - Understand the [levels of access of your users and application](https://techcommunity.microsoft.com/t5/azure-ai-services-blog/access-control-in-generative-ai-applications-with-azure/ba-p/3956408).
 
-**Chunking: Importance for RAG and strategies implemented as part of this repo**
+**Chunking: automatic and format-driven**
 
-Chunking is essential for managing large data sets, optimizing relevance, preserving context, integrating workflows, and enhancing the user experience. See [How to chunk documents](https://learn.microsoft.com/en-us/azure/search/vector-search-how-to-chunk-documents) for more information.
+Chunking is essential for managing large data sets, optimizing relevance, preserving context, and enhancing the user experience. See [How to chunk documents](https://learn.microsoft.com/en-us/azure/search/vector-search-how-to-chunk-documents) for background.
 
-These are the chunking strategy options you can choose from:
-- **Layout**: An AI approach to determine a good chunking strategy.
--  **Page**: This strategy involves breaking down long documents into pages.
-- **Fixed-Size Overlap**: This strategy involves defining a fixed size that’s sufficient for semantically meaningful paragraphs (for example, 250 words) and allows for some overlap (for example, 10-25% of the content). This usually helps creating good inputs for embedding vector models. Overlapping a small amount of text between chunks can help preserve the semantic context.
--  **Paragraph**: This strategy allows breaking down a difficult text into more manageable pieces and rewrite these “chunks” with a summarization of all of them.
+In this accelerator, chunking is automatic and driven by document format during ingestion, so there is no chunking strategy to select. Each parser applies the approach that fits its content:
+- Paragraph chunking groups semantically related paragraphs for text, Markdown, JSON, and HTML sources.
+- Page chunking splits PDFs and images into pages, using Azure AI Document Intelligence to read layout and text.
+- A fixed-size grouping fallback handles Office formats by grouping content up to a target size, with no overlap between chunks.

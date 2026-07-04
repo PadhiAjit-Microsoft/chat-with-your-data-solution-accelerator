@@ -1,8 +1,21 @@
+---
+title: Check quota availability
+description: Verify Azure OpenAI model quota in Azure AI Foundry before deploying Chat with Your Data.
+ms.date: 2026-07-03
+ms.topic: how-to
+---
+
+[Back to *Chat with your data* README](../README.md)
+
+![Supporting documentation](images/supportingDocuments.png)
+
 ## Check Quota Availability Before Deployment
 
 Before deploying the accelerator, **ensure sufficient quota availability** for the Azure OpenAI model deployed to Azure AI Foundry.
 
 > **For Global Standard GPT-5.1, ensure at least 150k tokens of capacity post-deployment for optimal performance.**
+
+The quota-check script (`quota_check_params.sh`) is provided by the upstream [chat-with-your-data-solution-accelerator](https://github.com/Azure-Samples/chat-with-your-data-solution-accelerator/blob/main/scripts/quota_check_params.sh) repository. This fork does not vendor a local copy, so the steps below download it before running.
 
 ### Login if you have not done so already
 ```
@@ -100,4 +113,10 @@ The final table lists regions with available quota. You can select any of these 
     ```
 6. Rerun the script after installing Azure CLI.
 
-> **Note:** The solution is restricted to these specific regions to ensure compatibility with paired regions and data redundancy requirements: australiaeast, eastus2, japaneast, uksouth.
+> **Note:** The regions listed above (australiaeast, eastus2, japaneast, uksouth) are the defaults the quota-check script inspects. They are examples, not a hard restriction, and were chosen because they commonly support the required models and paired-region data redundancy. Model and capacity availability can vary by region, so verify current availability for your subscription and pass your own `--regions` values if you want to deploy elsewhere.
+
+## Related documentation
+
+* [Deploy with azd](LOCAL_DEPLOYMENT.md)
+* [Azure OpenAI model quota settings](azure_openai_model_quota_settings.md)
+* [Troubleshooting](TroubleShootingSteps.md)

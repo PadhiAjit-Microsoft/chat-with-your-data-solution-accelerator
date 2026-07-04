@@ -1,3 +1,14 @@
+---
+title: Employee Assistant
+description: Configure and use the employee (HR) assistant persona in Chat with Your Data.
+ms.date: 2026-07-03
+ms.topic: how-to
+---
+
+[Back to *Chat with your data* README](../README.md)
+
+![Supporting documentation](images/supportingDocuments.png)
+
 # Chat With Your Employee Assistant
 
 ## Overview
@@ -47,3 +58,9 @@ We have added sample employee data in the [data](../data) folder. This data can 
 
 ## Conclusion
 This guide provides an overview of the Chat With Your Data Employee Assistant, how to select its persona from the admin Configuration page, and where the persona is defined. Review the persona and update it per your organizational guidance to maintain consistency and accuracy in responses.
+
+## Related documentation
+
+* [Contract Review and Summarization Assistant](contract_assistance.md)
+* [Admin and configuration](admin.md)
+* [Supported file types](supported_file_types.md)

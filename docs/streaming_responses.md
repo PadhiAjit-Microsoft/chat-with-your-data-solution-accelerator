@@ -19,6 +19,12 @@ Answers stream into the web app as they are generated, so users see a response t
 * A collapsible progress panel shows what the assistant is doing while it retrieves context and composes the answer. It stays out of the way and never mixes into the answer text.
 * Source citations appear with the answer and point to the documents each claim came from, so users can verify every statement.
 
+## How the stream is produced
+
+The active orchestrator produces the stream. Either `agent_framework` or `langgraph` runs retrieval and generation, and it emits typed server-sent events on a reasoning channel as it works. The channel carries five event types: `reasoning`, `tool`, `answer`, `citation`, and `error`. Answer tokens arrive on `answer`, source references on `citation`, and any failure on `error`.
+
+The collapsible progress panel renders the `reasoning` channel, so the assistant's intermediate thinking, including o-series reasoning output, stays in the panel and never mixes into the answer text. For how the two orchestrators differ and how the deployment default is chosen, see [Architecture overview](architecture.md#orchestrators).
+
 ## Request flow
 
 ```mermaid

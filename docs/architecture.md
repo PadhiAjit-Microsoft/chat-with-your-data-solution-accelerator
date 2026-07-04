@@ -93,7 +93,7 @@ Chat answers are produced by an orchestrator. Two ship with the application, and
 
 | Orchestrator | Retrieval approach |
 |--------------|--------------------|
-| `agent_framework` | Delegates to an Azure AI Foundry agent. In `cosmosdb` mode it grounds through an Azure AI Foundry knowledge base over the Azure AI Search index; in `postgresql` mode it grounds app-side over the `pgvector` index. |
+| `agent_framework` | Delegates to an Azure AI Foundry agent. In `cosmosdb` mode it grounds through the Azure AI Foundry knowledge base (Foundry IQ) over the Azure AI Search index; in `postgresql` mode it grounds app-side over the `pgvector` index. |
 | `langgraph` | Runs an application-owned retrieval pipeline and works the same way on either index store. |
 
 Either orchestrator runs against either data mode. Switching the orchestrator is a runtime decision, and the switch is served on whichever index store the deployment uses.

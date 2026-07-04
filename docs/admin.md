@@ -48,6 +48,27 @@ The selector offers the two orchestrators, `agent_framework` and `langgraph`. Sw
 
 ![Admin site](images/admin-site.png)
 
+The store is fixed at deployment and is not an admin-page choice. The orchestrator, by contrast, is the runtime setting you change on this page. The two together decide the retrieval path: in `cosmosdb` mode the `agent_framework` orchestrator grounds through the Azure AI Foundry knowledge base (Foundry IQ), while every other combination retrieves with app-side search (`BaseSearch.search`). The following diagram traces that flow.
+
+```mermaid
+flowchart TD
+    Deploy["Deploy time: databaseType / AZURE_ENV_DATABASE_TYPE<br/>fixes the store, cosmosdb or postgresql.<br/>Not selectable on the admin page."]
+    Default["Deploy-time default orchestrator, databaseType-derived:<br/>postgresql starts on langgraph, cosmosdb starts on agent_framework"]
+    Admin["Admin Configuration page:<br/>select the orchestrator at runtime, no redeploy"]
+    Request["Chat request routed to the selected orchestrator"]
+    OrchDecision{"Selected orchestrator?"}
+    StoreDecision{"Deployed store?"}
+    Foundry["Azure AI Foundry knowledge base (Foundry IQ)"]
+    AppSearchAF["App-side search, BaseSearch.search"]
+    AppSearchLG["App-side search, BaseSearch.search"]
+
+    Deploy --> Default --> Admin --> Request --> OrchDecision
+    OrchDecision -->|agent_framework| StoreDecision
+    OrchDecision -->|langgraph, either store| AppSearchLG
+    StoreDecision -->|cosmosdb| Foundry
+    StoreDecision -->|postgresql, pgvector| AppSearchAF
+```
+
 ## Related documentation
 
 * [App authentication setup](azure_app_service_auth_setup.md)
