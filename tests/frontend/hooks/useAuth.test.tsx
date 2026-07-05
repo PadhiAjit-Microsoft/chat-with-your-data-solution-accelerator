@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 5
- *
  * Vitest suite for the `useAuth` shell state machine. Drives the hook
  * through its `resolve(...)` action and asserts both the React state
  * transitions and the side effect on the `api/auth.tsx` resolved-id

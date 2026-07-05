@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 5 (admin surface) -- admin router tests.
+"""Admin router tests.
 
 Covers the read-only ``GET /api/admin/status`` endpoint, the
 ``GET /api/admin/config`` runtime-toggle subset, the

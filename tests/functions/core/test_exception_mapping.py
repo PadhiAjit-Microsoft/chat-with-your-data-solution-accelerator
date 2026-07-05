@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 -- tests for functions/core/exception_mapping.py."""
+"""Tests for functions/core/exception_mapping.py."""
 
 import json
 import logging
@@ -13,6 +13,7 @@ from functions.core.exception_mapping import (
     log_queue_errors,
     map_function_exceptions,
 )
+from functions.core.http import ErrorEnvelope, ErrorType
 
 
 class _SampleBody(BaseModel):
@@ -55,6 +56,9 @@ async def test_decorator_maps_validation_error_to_422_with_details() -> None:
     assert body["details"][0]["loc"] == ["name"]
     # input field is excluded per include_input=False to avoid leaking raw bodies.
     assert "input" not in body["details"][0]
+    envelope = ErrorEnvelope.model_validate(body)
+    assert envelope.error is ErrorType.VALIDATION_ERROR
+    assert envelope.details is not None and envelope.details[0]["loc"] == ["name"]
 
 
 @pytest.mark.asyncio

@@ -1,8 +1,5 @@
 """Guard: the function service deploys as a container image (Functions-on-ACA).
 
-Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
 The function ships as a Docker image built + pushed to the shared ACR (like the
 backend and frontend), so azure.yaml pins ``host: containerapp`` with a
 ``docker:`` block pointing at ``Dockerfile.functions``. The Dockerfile

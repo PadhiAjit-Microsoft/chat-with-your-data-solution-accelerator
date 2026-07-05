@@ -1,6 +1,3 @@
-// Pillar: Stable Core
-// Phase: 1
-//
 // Flat ESLint config for the v2 frontend Vitest tree. Mirrors the
 // frontend's type-aware preset (`strict-type-checked` +
 // `stylistic-type-checked`) but relaxes the mock/test-double rules

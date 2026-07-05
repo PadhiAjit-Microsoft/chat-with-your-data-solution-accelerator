@@ -30,7 +30,7 @@ import azure.functions as func
 from backend.core.providers.credentials import registry as credentials_registry
 from backend.core.settings import AppSettings, get_settings
 from functions.batch_start.handler import batch_start_handler
-from functions.batch_start.models import BatchStartRequest
+from functions.batch_start.models import BatchStartRequest, BatchStartResponse
 from functions.core.contracts import BatchPushQueueMessage
 from functions.core.exception_mapping import map_function_exceptions
 from functions.core.http import json_response
@@ -85,10 +85,10 @@ async def batch_start(req: func.HttpRequest) -> func.HttpResponse:
     messages = await _execute(request, get_settings())
     job_id = messages[0].ingestion_job_id if messages else None
     return json_response(
-        {
-            "ingestion_job_id": job_id,
-            "enqueued_count": len(messages),
-            "filenames": [m.filename for m in messages],
-        },
+        BatchStartResponse(
+            ingestion_job_id=job_id,
+            enqueued_count=len(messages),
+            filenames=[m.filename for m in messages],
+        ).model_dump(),
         HTTPStatus.OK,
     )

@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 5
- *
  * Vitest suite for the SSE client utility `streamChat()`. The util is
  * the only piece that talks to `POST /api/conversation` over
  * `text/event-stream`; everything in the chat UI consumes the typed

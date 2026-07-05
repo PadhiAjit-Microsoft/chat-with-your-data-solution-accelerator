@@ -107,9 +107,7 @@ class LangGraphOrchestrator(OrchestratorBase):
         self._openai_max_tokens = openai_max_tokens
         self._graph = self._build_graph()
 
-    # ------------------------------------------------------------------
     # Graph construction
-    # ------------------------------------------------------------------
 
     def _build_graph(self) -> Any:
         # `StateGraph[_GraphState]` would be the precise generic, but
@@ -129,9 +127,7 @@ class LangGraphOrchestrator(OrchestratorBase):
         # `messages` appends it to the existing log.
         return {"messages": [reply]}
 
-    # ------------------------------------------------------------------
     # OrchestratorBase implementation
-    # ------------------------------------------------------------------
 
     @staticmethod
     def _latest_user_text(messages: Sequence[ChatMessage]) -> str:

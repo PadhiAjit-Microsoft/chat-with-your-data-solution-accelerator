@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 4
- *
  * Tests for `<PanelLeft>`, the left-rail layout primitive.
  */
 import { render, screen } from "@testing-library/react";

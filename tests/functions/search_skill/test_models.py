@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 -- tests for src/functions/search_skill/models.py.
+"""Tests for src/functions/search_skill/models.py.
 
 Validates the AI Search WebApiSkill request/response envelope
 contract: camelCase ``recordId`` wire field maps to Python

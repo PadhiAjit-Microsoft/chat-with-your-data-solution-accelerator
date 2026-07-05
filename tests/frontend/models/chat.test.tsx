@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 7
- *
  * Vitest type-shape assertions for the `Citation` model. Type-only
  * checks would silently pass if the interface drifted; this suite
  * mounts a literal of the canonical wire shape and a literal of the

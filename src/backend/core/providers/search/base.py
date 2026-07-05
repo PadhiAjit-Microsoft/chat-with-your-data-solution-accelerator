@@ -1,4 +1,4 @@
-'''Search provider ABC.
+"""Search provider ABC.
 
 Every concrete search provider (`azure_search`, `pgvector`,
 `integrated_vectorization` future) inherits from `BaseSearch`
@@ -22,13 +22,13 @@ with their native upsert (Azure Search SDK call / Postgres ON
 CONFLICT UPDATE / etc.); the default body raises
 `NotImplementedError` so a provider that forgets to implement fails
 loudly at the ingestion call site rather than silently no-oping.
-'''
+"""
 
 from abc import ABC, abstractmethod
 from typing import Any, Sequence
 
 from azure.core.credentials_async import AsyncTokenCredential
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from backend.core.settings import AppSettings
 from backend.core.types import SearchDocument, SearchResult
@@ -54,9 +54,15 @@ class SourceListing(BaseModel):
 
     model_config = ConfigDict(frozen=True, extra="forbid")
 
-    source: str
-    chunk_count: int
-    last_modified: str | None = None
+    source: str = Field(description="Filename or URL the chunks were ingested under.")
+    chunk_count: int = Field(description="Number of indexed chunks for this source.")
+    last_modified: str | None = Field(
+        default=None,
+        description=(
+            "ISO-8601 timestamp of the most recent chunk, or null when the "
+            "provider does not track per-chunk timestamps."
+        ),
+    )
 
 
 class BaseSearch(ABC):

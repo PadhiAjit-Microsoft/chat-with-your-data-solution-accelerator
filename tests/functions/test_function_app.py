@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 1, tests for src/functions/function_app.py."""
+"""Tests for src/functions/function_app.py."""
 
 import json
 

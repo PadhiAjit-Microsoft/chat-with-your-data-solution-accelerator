@@ -29,21 +29,32 @@ asyncpg) directly, keeping the surface registry-only (Hard Rule #4).
 """
 
 import logging
-from typing import cast
+from typing import Annotated, cast
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Path, status
 
 from backend.core.types import ChatMessage, ChatRole, Conversation, MessageRecord
-from backend.dependencies import ContentSafetyGuardDep, DatabaseClientDep, SettingsDep, UserIdDep
-from backend.models.history import AddMessageRequest, ConversationDetail, CreateConversationRequest, HistoryStatus, RenameConversationRequest, SetFeedbackRequest
+from backend.dependencies import (
+    ContentSafetyGuardDep,
+    DatabaseClientDep,
+    SettingsDep,
+    UserIdDep,
+)
+from backend.models.errors import ErrorResponse
+from backend.models.history import (
+    AddMessageRequest,
+    ConversationDetail,
+    CreateConversationRequest,
+    HistoryStatus,
+    RenameConversationRequest,
+    SetFeedbackRequest,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/history", tags=["history"])
 
 
-# ---------------------------------------------------------------------------
 # Routes
-# ---------------------------------------------------------------------------
 
 
 @router.get(
@@ -64,8 +75,7 @@ async def history_status(settings: SettingsDep) -> HistoryStatus:
     response_model=list[Conversation],
     summary="List conversations",
     description=(
-        "List every conversation belonging to the signed-in user, most "
-        "recent first."
+        "List every conversation belonging to the signed-in user, most " "recent first."
     ),
 )
 async def list_conversations(
@@ -101,9 +111,14 @@ async def create_conversation(
         "Responds 404 when the conversation does not exist or does not "
         "belong to the signed-in user."
     ),
+    responses={
+        404: {"model": ErrorResponse, "description": "Conversation not found."},
+    },
 )
 async def get_conversation(
-    conversation_id: str,
+    conversation_id: Annotated[
+        str, Path(description="Identifier of the conversation to fetch.")
+    ],
     db: DatabaseClientDep,
     user_id: UserIdDep,
 ) -> ConversationDetail:
@@ -126,9 +141,18 @@ async def get_conversation(
         "content-safety guard when enabled (flagged titles are rejected "
         "with 400) and responds 404 when the conversation is not found."
     ),
+    responses={
+        400: {
+            "model": ErrorResponse,
+            "description": "Title blocked by the content-safety guard.",
+        },
+        404: {"model": ErrorResponse, "description": "Conversation not found."},
+    },
 )
 async def rename_conversation(
-    conversation_id: str,
+    conversation_id: Annotated[
+        str, Path(description="Identifier of the conversation to rename.")
+    ],
     body: RenameConversationRequest,
     db: DatabaseClientDep,
     user_id: UserIdDep,
@@ -149,9 +173,7 @@ async def rename_conversation(
                 detail="Title was blocked by the content safety guard.",
             )
     try:
-        return await db.rename_conversation(
-            conversation_id, user_id, body.title
-        )
+        return await db.rename_conversation(conversation_id, user_id, body.title)
     except KeyError as exc:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -170,7 +192,9 @@ async def rename_conversation(
     ),
 )
 async def delete_conversation(
-    conversation_id: str,
+    conversation_id: Annotated[
+        str, Path(description="Identifier of the conversation to delete.")
+    ],
     db: DatabaseClientDep,
     user_id: UserIdDep,
 ) -> None:
@@ -188,9 +212,14 @@ async def delete_conversation(
         "Append a message to an existing conversation and return the "
         "stored record. Responds 404 when the conversation is not found."
     ),
+    responses={
+        404: {"model": ErrorResponse, "description": "Conversation not found."},
+    },
 )
 async def add_message(
-    conversation_id: str,
+    conversation_id: Annotated[
+        str, Path(description="Identifier of the conversation to append to.")
+    ],
     body: AddMessageRequest,
     db: DatabaseClientDep,
     user_id: UserIdDep,
@@ -216,9 +245,14 @@ async def add_message(
         "Record thumbs-up / thumbs-down feedback on a message for the "
         "signed-in user. Responds 404 when the message is not found."
     ),
+    responses={
+        404: {"model": ErrorResponse, "description": "Message not found."},
+    },
 )
 async def set_feedback(
-    message_id: str,
+    message_id: Annotated[
+        str, Path(description="Identifier of the message to set feedback on.")
+    ],
     body: SetFeedbackRequest,
     db: DatabaseClientDep,
     user_id: UserIdDep,

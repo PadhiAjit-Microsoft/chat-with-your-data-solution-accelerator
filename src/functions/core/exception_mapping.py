@@ -49,7 +49,7 @@ import azure.functions as func
 from azure.core.exceptions import AzureError
 from pydantic import ValidationError
 
-from functions.core.http import ErrorType, json_response
+from functions.core.http import ErrorEnvelope, ErrorType, json_response
 
 logger = logging.getLogger(__name__)
 
@@ -90,10 +90,10 @@ def map_function_exceptions(
                     },
                 )
                 return json_response(
-                    {
-                        "error": ErrorType.VALIDATION_ERROR,
-                        "details": exc.errors(include_input=False),
-                    },
+                    ErrorEnvelope(
+                        error=ErrorType.VALIDATION_ERROR,
+                        details=exc.errors(include_input=False),
+                    ).model_dump(exclude_none=True),
                     status,
                 )
             except AzureError:
@@ -108,7 +108,7 @@ def map_function_exceptions(
                     },
                 )
                 return json_response(
-                    {"error": ErrorType.UPSTREAM_STORAGE_ERROR},
+                    ErrorEnvelope(error=ErrorType.UPSTREAM_STORAGE_ERROR).model_dump(exclude_none=True),
                     status,
                 )
             except Exception:  # noqa: BLE001 -- final safety net for HTTP route
@@ -123,7 +123,7 @@ def map_function_exceptions(
                     },
                 )
                 return json_response(
-                    {"error": ErrorType.INTERNAL_SERVER_ERROR},
+                    ErrorEnvelope(error=ErrorType.INTERNAL_SERVER_ERROR).model_dump(exclude_none=True),
                     status,
                 )
 

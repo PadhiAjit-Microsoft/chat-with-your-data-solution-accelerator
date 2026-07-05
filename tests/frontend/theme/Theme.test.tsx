@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 7
- *
  * Enum-contract tests for the frontend theme discriminator.
  */
 import { describe, expect, expectTypeOf, it } from "vitest";

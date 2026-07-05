@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 7
- *
  * Focused enum-contract tests for the DeleteData page reducer action
  * discriminator map.
  */

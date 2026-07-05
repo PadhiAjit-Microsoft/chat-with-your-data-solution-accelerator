@@ -1,8 +1,5 @@
 """Guard: the function image stages every functions package.
 
-Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
 Dockerfile.functions copies an explicit list of blueprint subpackages into the
 deploy layout (``COPY src/functions/<sub> ./functions/<sub>``) -- listed
 explicitly rather than globbed so a stray dir never ships. The inverse failure

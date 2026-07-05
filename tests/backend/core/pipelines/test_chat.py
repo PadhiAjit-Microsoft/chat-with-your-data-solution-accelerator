@@ -1,7 +1,4 @@
-"""Pillar: Stable Core / Phase: 3
-
-Tests for src/backend/core/pipelines/chat.py.
-"""
+"""Tests for src/backend/core/pipelines/chat.py."""
 
 from typing import Any, AsyncIterator, Sequence
 

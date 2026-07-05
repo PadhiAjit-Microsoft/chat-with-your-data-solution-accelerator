@@ -3,7 +3,7 @@
 Wraps `azure.ai.projects.aio.AIProjectClient`, which exposes an
 `AsyncOpenAI`-compatible client via the **async** `get_openai_client()`
 method (it returns `Awaitable[AsyncOpenAI]`, NOT the client directly --
-a recurring foot-gun the Q14a fix corrected once and cached).
+a recurring foot-gun: always `await` it before use).
 Foundry IQ routes the call to the right Azure OpenAI deployment under
 the project account -- no per-deployment endpoints, no per-deployment
 keys.
@@ -14,7 +14,7 @@ client object returned by Foundry, but never import its type, so the
 ban is structurally enforced (grep stays clean). We DO declare narrow
 `Protocol` shapes locally for the response objects we read so pyright
 `--strict` can verify our access pattern without coupling to the
-openai stubs (Q14a).
+openai stubs.
 """
 
 from typing import Any, AsyncIterator, Protocol, Sequence, cast
@@ -42,7 +42,6 @@ from .base import BaseLLMProvider
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
 # Try/except policy
 #
 # Per v2/docs/exception_handling_policy.md (Provider entry-points row), every
@@ -67,17 +66,14 @@ logger = logging.getLogger(__name__)
 # - `aclose()` shutdown path catches `(AzureError, OSError)` and
 #   `logger.warning`-then-swallows: shutdown is best-effort per the
 #   policy doc Lifespan row.
-# ---------------------------------------------------------------------------
 
 
-# ---------------------------------------------------------------------------
 # Narrow Protocols for the openai-compatible response shapes we consume.
 # Defined locally (not imported from `openai`) per Hard Rule #7. These
 # describe ONLY the attributes this module reads; the actual SDK objects
 # carry many more fields. Annotated `Any` for sub-fields the openai
 # stubs themselves leave under-typed (Foundry IQ surfaces vendor
 # extensions like `reasoning_content` that aren't in the public stubs).
-# ---------------------------------------------------------------------------
 
 
 class _ChatMessageView(Protocol):
@@ -210,9 +206,7 @@ class FoundryIQ(BaseLLMProvider):
         # only for capable models -- no configuration flag.
         self._reasoning_support: dict[str, bool] = {}
 
-    # ------------------------------------------------------------------
     # Internals
-    # ------------------------------------------------------------------
 
     def _get_project_client(self) -> AIProjectClient:
         if self._project_client is not None:
@@ -330,9 +324,7 @@ class FoundryIQ(BaseLLMProvider):
             _ResponsesInputItem(role=m.role.value, content=m.content) for m in messages
         ]
 
-    # ------------------------------------------------------------------
     # BaseLLMProvider implementation
-    # ------------------------------------------------------------------
 
     async def chat(
         self,

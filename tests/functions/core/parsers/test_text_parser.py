@@ -1,8 +1,4 @@
-"""Tests for `TextParser`.
-
-Pillar: Stable Core
-Phase: 6
-"""
+"""Tests for `TextParser`."""
 
 from unittest.mock import Mock
 

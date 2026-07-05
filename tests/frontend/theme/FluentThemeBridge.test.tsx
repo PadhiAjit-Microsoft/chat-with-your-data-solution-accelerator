@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 4
- *
  * Tests for FluentThemeBridge: verifies it (1) actually mounts a
  * Fluent v9 `<FluentProvider>` around its children (which carries a
  * `fui-FluentProvider*` className from Fluent's griffel runtime) and

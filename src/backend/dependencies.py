@@ -201,7 +201,6 @@ ContentSafetyGuardDep = Annotated[
 ]
 
 
-# ---------------------------------------------------------------------------
 # Live-reload runtime overrides
 #
 # Lifespan loads the persisted ``RuntimeConfig`` from the database
@@ -218,7 +217,6 @@ ContentSafetyGuardDep = Annotated[
 # (effective config = env defaults + overrides) lands separately in
 # ``GET /api/admin/config/effective`` so the persistence + merge
 # concerns stay split.
-# ---------------------------------------------------------------------------
 
 
 def get_runtime_overrides(request: Request) -> RuntimeConfig | None:

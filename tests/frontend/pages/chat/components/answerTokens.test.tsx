@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 7
- *
  * Vitest coverage for `renderAnswerTokens()`.
  */
 import { describe, expect, it, vi } from "vitest";

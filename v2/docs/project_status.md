@@ -55,7 +55,7 @@ Re-run baselines via [qa_review_plan.md](qa_review_plan.md) Phase B (validation 
 | 0 | Step 0 — sync agent guidance before any change | ✅ enforced procedurally |
 | 1 | One unit per turn (class or method) | ✅ enforced procedurally |
 | 2 | Test-first contract | ✅ enforced procedurally |
-| 3 | `Pillar:` / `Phase:` docstring header | ✅ AST gate `test_pillar_phase_header.py` |
+| 3 | Pillar awareness (no docstring header) | ✅ enforced procedurally (header mandate retired; gate `test_pillar_phase_header.py` removed) |
 | 4 | Plug-and-play via registry | ✅ 8 domain registries under `backend/core/providers/<domain>/registry.py` |
 | 5 | Multi-agent ready (shared `OrchestratorBase` + typed reasoning channel) | ✅ contracted |
 | 6 | Reasoning feed on dedicated SSE channels | ✅ `OrchestratorEvent` typed contract |

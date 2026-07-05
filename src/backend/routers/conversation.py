@@ -20,6 +20,7 @@ content-safety / post-prompt guards once they are exposed via DI.
 """
 
 import logging
+from typing import Annotated
 
 from fastapi import APIRouter, Header, Request
 from fastapi.responses import StreamingResponse
@@ -65,6 +66,16 @@ router = APIRouter(prefix="/api", tags=["conversation"])
         "as SSE; otherwise a single buffered JSON response is returned. The "
         "active orchestrator honors any admin-saved runtime override."
     ),
+    responses={
+        200: {
+            "model": ConversationResponse,
+            "description": (
+                "Buffered JSON answer or an SSE reasoning stream depending "
+                "on Accept."
+            ),
+            "content": {"text/event-stream": {}},
+        },
+    },
 )
 async def conversation(
     request: Request,
@@ -79,7 +90,16 @@ async def conversation(
     content_safety: ContentSafetyGuardDep,
     post_prompt: PostPromptValidatorDep,
     overrides: RuntimeOverridesDep,
-    accept: str | None = Header(default=None),
+    accept: Annotated[
+        str | None,
+        Header(
+            description=(
+                "Response negotiation: 'text/event-stream' streams SSE "
+                "reasoning frames; otherwise a buffered JSON "
+                "ConversationResponse is returned."
+            ),
+        ),
+    ] = None,
 ) -> ConversationResponse | StreamingResponse:
     """Run the configured orchestrator and stream / buffer the result."""
     # Orchestrator selection honors the admin-saved override:
@@ -117,9 +137,7 @@ async def conversation(
     #     sampling knobs both orchestrators forward to the model
     #     (`langgraph` via `complete()`, `agent_framework` via
     #     `ChatOptions`).
-    orchestrator = orchestrators_registry.registry.get(
-        orchestrator_name
-    )(
+    orchestrator = orchestrators_registry.registry.get(orchestrator_name)(
         settings=settings,
         llm=llm,
         search=search,
@@ -196,7 +214,9 @@ async def conversation(
                 answer=response.content,
                 citations=response.citations,
             )
-        except Exception:  # noqa: BLE001 -- answer already collected; never fail the turn on a storage error
+        except (
+            Exception
+        ):  # noqa: BLE001 -- answer already collected; never fail the turn on a storage error
             logger.exception(
                 "Failed to persist conversation turn.",
                 extra={

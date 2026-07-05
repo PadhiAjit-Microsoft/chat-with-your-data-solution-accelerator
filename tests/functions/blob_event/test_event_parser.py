@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 -- tests for src/functions/blob_event/event_parser.py."""
+"""Tests for src/functions/blob_event/event_parser.py."""
 
 import base64
 import json

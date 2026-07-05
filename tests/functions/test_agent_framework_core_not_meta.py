@@ -1,8 +1,5 @@
 """Guard: the Agent Framework dependency must be the *core* distribution.
 
-Pillar: Stable Core
-Phase: 6 (Functions blueprints / modular RAG indexing pipeline)
-
 The `agent-framework` umbrella meta-package depends on
 `agent-framework-hyperlight` (env marker `python_version < "3.14"`),
 which requires `hyperlight-sandbox-backend-wasm` -- a dependency pip

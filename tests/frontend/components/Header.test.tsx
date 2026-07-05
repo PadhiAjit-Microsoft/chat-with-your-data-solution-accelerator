@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 4
- *
  * Tests for the Coral <Header> component. Same behavioural contract
  * as the prior <AppHeader> (preserved verbatim accessible names, the
  * `data-testid="app-header"` discriminator, the same callback wiring)

@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 -- tests for src/functions/batch_push/queue_reader.py."""
+"""Tests for src/functions/batch_push/queue_reader.py."""
 
 from typing import cast
 

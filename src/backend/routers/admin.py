@@ -36,6 +36,7 @@ from fastapi import (
     Body,
     File,
     HTTPException,
+    Path,
     Request,
     UploadFile,
     status,
@@ -74,6 +75,7 @@ from backend.models.admin import (
     UploadResponse,
     WRITABLE_FIELDS,
 )
+from backend.models.errors import ErrorResponse
 from backend.services.admin import (
     host_only,
     resolve_effective_config,
@@ -93,9 +95,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/admin", tags=["admin"])
 
 
-# ---------------------------------------------------------------------------
 # Routes
-# ---------------------------------------------------------------------------
 
 
 @router.get(
@@ -258,7 +258,6 @@ async def config_effective_endpoint(
     )
 
 
-# ---------------------------------------------------------------------------
 # PATCH /api/admin/config -- runtime overrides
 #
 # RFC 7396 JSON Merge Patch over the same 6-field surface as GET. The
@@ -269,7 +268,6 @@ async def config_effective_endpoint(
 # place. Live-reload of `app.state.settings` is **deliberately
 # deferred**. Operators observe their PATCHes immediately in the
 # response body and on the next container restart.
-# ---------------------------------------------------------------------------
 
 
 @router.patch(
@@ -282,6 +280,12 @@ async def config_effective_endpoint(
         "override (reverting the field to its env default); an unknown key "
         "or wrong-type value responds 422."
     ),
+    responses={
+        422: {
+            "model": ErrorResponse,
+            "description": ("Unknown field, wrong-type value, or RAI-rejected prompt."),
+        },
+    },
 )
 async def patch_config_endpoint(
     request: Request,
@@ -309,7 +313,7 @@ async def patch_config_endpoint(
     Pydantic-bound body would silently coerce both into `None`,
     breaking the 'undo my override' UX.
     """
-    # --- Allow-list lock-in (rejects unknown fields with 422) -------------
+    # Allow-list lock-in (rejects unknown fields with 422)
     unknown = set(payload) - WRITABLE_FIELDS
     if unknown:
         raise HTTPException(
@@ -321,7 +325,7 @@ async def patch_config_endpoint(
             },
         )
 
-    # --- RAI safety gate on operator-authored prompts. Runs BEFORE the
+    # RAI safety gate on operator-authored prompts. Runs BEFORE the
     # merge / type validation / upsert / live-reload / audit chain so a
     # rejected payload never lands in storage and never triggers an audit
     # row (matches the 422-validation precedent below). Only fields keyed
@@ -349,7 +353,7 @@ async def patch_config_endpoint(
                 },
             )
 
-    # --- Read current overrides; default to a fresh RuntimeConfig on cold
+    # Read current overrides; default to a fresh RuntimeConfig on cold
     # start so the first-ever PATCH still goes through the merge path.
     # `before` keeps the raw fetch (None on first-ever PATCH) so the
     # audit row can distinguish 'no prior override' from
@@ -358,18 +362,18 @@ async def patch_config_endpoint(
     current = before or RuntimeConfig()
     merged_data: dict[str, Any] = current.model_dump()
 
-    # --- Apply the patch (overwrites None when key is `null`, sets when
+    # Apply the patch (overwrites None when key is `null`, sets when
     # key carries a value, leaves field untouched when key is absent).
     for key, value in payload.items():
         merged_data[key] = value
 
-    # --- Server-set audit fields -- always overwritten on every PATCH so
+    # Server-set audit fields -- always overwritten on every PATCH so
     # an operator probing 'what's the latest override state?' can sort
     # by `updated_at` deterministically.
     merged_data["updated_at"] = utcnow_iso()
     merged_data["updated_by"] = user_id
 
-    # --- Type validation on the merged shape (turns wrong-type values
+    # Type validation on the merged shape (turns wrong-type values
     # into 422 with Pydantic's structured error detail).
     try:
         merged = RuntimeConfig.model_validate(merged_data)
@@ -418,10 +422,8 @@ async def patch_config_endpoint(
     return merged
 
 
-# ---------------------------------------------------------------------------
 # GET /api/admin/documents -- list every distinct source currently indexed,
 # with the chunk count per source. Feeds the admin UI's Delete Data grid.
-# ---------------------------------------------------------------------------
 
 
 @router.get(
@@ -435,6 +437,12 @@ async def patch_config_endpoint(
         "nothing is indexed; responds 503 when no search backend is "
         "configured."
     ),
+    responses={
+        503: {
+            "model": ErrorResponse,
+            "description": "Search backend not configured.",
+        },
+    },
 )
 async def list_documents_endpoint(
     search: SearchProviderDep,
@@ -471,10 +479,8 @@ async def list_documents_endpoint(
     )
 
 
-# ---------------------------------------------------------------------------
 # DELETE /api/admin/documents/{source} -- remove every indexed chunk attached
 # to the given source (filename or URL set at ingestion time).
-# ---------------------------------------------------------------------------
 
 
 @router.delete(
@@ -487,9 +493,21 @@ async def list_documents_endpoint(
         "becomes fully unreachable. Responds 404 when neither existed and "
         "503 when no search backend is configured."
     ),
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "No indexed chunks or source blob found.",
+        },
+        503: {
+            "model": ErrorResponse,
+            "description": "Search backend not configured.",
+        },
+    },
 )
 async def delete_document_endpoint(
-    source: str,
+    source: Annotated[
+        str, Path(description="Blob source path to de-index and delete.")
+    ],
     settings: SettingsDep,
     credential: CredentialDep,
     search: SearchProviderDep,
@@ -557,12 +575,10 @@ async def delete_document_endpoint(
     return DeleteDocumentResponse(deleted=deleted, blob_deleted=blob_deleted)
 
 
-# ---------------------------------------------------------------------------
 # POST /api/admin/documents/url -- download one URL, store it as a blob, and
 # ingest it like an uploaded file (the same store -> batch_push pipeline).
 # FE-facing entry point so the admin UI can drive URL ingest through FastAPI
 # instead of reaching into the Functions HTTP trigger.
-# ---------------------------------------------------------------------------
 
 
 @router.post(
@@ -576,6 +592,13 @@ async def delete_document_endpoint(
         "invalid URL and 503 when storage or the processing queue is not "
         "configured."
     ),
+    responses={
+        422: {"model": ErrorResponse, "description": "Invalid URL."},
+        503: {
+            "model": ErrorResponse,
+            "description": "Storage or processing queue not configured.",
+        },
+    },
 )
 async def ingest_url_endpoint(
     body: IngestUrlRequest,
@@ -624,12 +647,10 @@ async def ingest_url_endpoint(
     )
 
 
-# ---------------------------------------------------------------------------
 # POST /api/admin/documents -- multipart file upload. Writes to the source
 # blob container and enqueues a push message so the existing ``batch_push``
 # queue consumer runs the same parse + embed + push pipeline used by
 # ``batch_start``.
-# ---------------------------------------------------------------------------
 
 
 @router.post(
@@ -642,6 +663,24 @@ async def ingest_url_endpoint(
         "Responds 413 when too large, 415 for an unsupported file type, "
         "and 503 when storage / the processing queue is not configured."
     ),
+    responses={
+        413: {"model": ErrorResponse, "description": "Uploaded file too large."},
+        415: {
+            "model": ErrorResponse,
+            "description": "Unsupported file type.",
+        },
+        422: {
+            "model": ErrorResponse,
+            "description": "Missing file part or empty filename.",
+        },
+        503: {
+            "model": ErrorResponse,
+            "description": (
+                "Storage / processing queue not configured, or Document "
+                "Intelligence not configured for this file type."
+            ),
+        },
+    },
 )
 async def upload_document_endpoint(
     settings: SettingsDep,
@@ -689,12 +728,10 @@ async def upload_document_endpoint(
     )
 
 
-# ---------------------------------------------------------------------------
 # POST /api/admin/documents/reprocess -- re-fan every blob in the documents
 # container onto the push queue so every existing document is re-parsed,
 # re-embedded, and re-pushed through the same pipeline a freshly-uploaded
 # file traverses. Single ``batch_start_handler`` invocation under the hood.
-# ---------------------------------------------------------------------------
 
 
 @router.post(
@@ -708,6 +745,12 @@ async def upload_document_endpoint(
         "re-pushed. Responds 503 when storage / the processing queue is "
         "not configured."
     ),
+    responses={
+        503: {
+            "model": ErrorResponse,
+            "description": "Storage or processing queue not configured.",
+        },
+    },
 )
 async def reprocess_all_endpoint(
     settings: SettingsDep,

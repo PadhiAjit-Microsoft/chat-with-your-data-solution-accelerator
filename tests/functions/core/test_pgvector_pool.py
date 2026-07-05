@@ -1,8 +1,4 @@
-"""Tests for the Functions-runtime pgvector pool helper.
-
-Pillar: Stable Core
-Phase: 6
-"""
+"""Tests for the Functions-runtime pgvector pool helper."""
 
 import asyncio
 from typing import Any
@@ -13,7 +9,6 @@ import pytest
 
 from backend.core.settings import AppSettings, DatabaseSettings
 from functions.core.pgvector_pool import PgVectorPool
-
 
 _PGVECTOR_POOL_LOGGER_NAME = "functions.core.pgvector_pool"
 
@@ -78,9 +73,7 @@ async def test_acquire_lazily_creates_pool_with_dsn_user_and_password_provider(
     created: MagicMock = MagicMock()
     create_pool = AsyncMock(return_value=created)
     monkeypatch.setattr(asyncpg, "create_pool", create_pool)
-    helper = PgVectorPool(
-        settings=_make_settings(), credential=AsyncMock()
-    )
+    helper = PgVectorPool(settings=_make_settings(), credential=AsyncMock())
 
     result = await helper.acquire()
 
@@ -102,9 +95,7 @@ async def test_acquire_caches_pool_across_calls(
 ) -> None:
     create_pool = AsyncMock(return_value=MagicMock())
     monkeypatch.setattr(asyncpg, "create_pool", create_pool)
-    helper = PgVectorPool(
-        settings=_make_settings(), credential=AsyncMock()
-    )
+    helper = PgVectorPool(settings=_make_settings(), credential=AsyncMock())
 
     first = await helper.acquire()
     second = await helper.acquire()
@@ -131,9 +122,7 @@ async def test_acquire_serializes_concurrent_first_use_callers(
 
     create_pool = AsyncMock(side_effect=slow_create)
     monkeypatch.setattr(asyncpg, "create_pool", create_pool)
-    helper = PgVectorPool(
-        settings=_make_settings(), credential=AsyncMock()
-    )
+    helper = PgVectorPool(settings=_make_settings(), credential=AsyncMock())
 
     task_a = asyncio.create_task(helper.acquire())
     task_b = asyncio.create_task(helper.acquire())
@@ -153,9 +142,7 @@ async def test_acquire_raises_when_endpoint_missing(
     create_pool = AsyncMock()
     monkeypatch.setattr(asyncpg, "create_pool", create_pool)
     helper = PgVectorPool(
-        settings=_make_settings_with_mock_db(
-            endpoint="", user="id-cwyd001"
-        ),
+        settings=_make_settings_with_mock_db(endpoint="", user="id-cwyd001"),
         credential=AsyncMock(),
     )
 
@@ -188,13 +175,9 @@ async def test_acquire_logs_and_reraises_on_create_pool_failure(
     monkeypatch: pytest.MonkeyPatch,
     caplog: pytest.LogCaptureFixture,
 ) -> None:
-    create_pool = AsyncMock(
-        side_effect=asyncpg.PostgresError("AAD token rejected")
-    )
+    create_pool = AsyncMock(side_effect=asyncpg.PostgresError("AAD token rejected"))
     monkeypatch.setattr(asyncpg, "create_pool", create_pool)
-    helper = PgVectorPool(
-        settings=_make_settings(), credential=AsyncMock()
-    )
+    helper = PgVectorPool(settings=_make_settings(), credential=AsyncMock())
 
     with caplog.at_level("ERROR", logger=_PGVECTOR_POOL_LOGGER_NAME):
         with pytest.raises(asyncpg.PostgresError):
@@ -238,9 +221,7 @@ async def test_aclose_is_noop_when_pool_never_created() -> None:
 async def test_aclose_closes_pool_and_clears_cache() -> None:
     pool = MagicMock()
     pool.close = AsyncMock()
-    helper = PgVectorPool(
-        settings=_make_settings(), credential=AsyncMock(), pool=pool
-    )
+    helper = PgVectorPool(settings=_make_settings(), credential=AsyncMock(), pool=pool)
 
     await helper.aclose()
 
@@ -254,12 +235,8 @@ async def test_aclose_swallows_close_failure_and_warns(
     caplog: pytest.LogCaptureFixture,
 ) -> None:
     pool = MagicMock()
-    pool.close = AsyncMock(
-        side_effect=asyncpg.PostgresError("socket already closed")
-    )
-    helper = PgVectorPool(
-        settings=_make_settings(), credential=AsyncMock(), pool=pool
-    )
+    pool.close = AsyncMock(side_effect=asyncpg.PostgresError("socket already closed"))
+    helper = PgVectorPool(settings=_make_settings(), credential=AsyncMock(), pool=pool)
 
     with caplog.at_level("WARNING", logger=_PGVECTOR_POOL_LOGGER_NAME):
         await helper.aclose()  # MUST NOT raise

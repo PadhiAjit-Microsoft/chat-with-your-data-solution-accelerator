@@ -28,9 +28,7 @@ import json
 from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
-# ---------------------------------------------------------------------------
 # Cross-cutting enums
-# ---------------------------------------------------------------------------
 
 
 class Environment(StrEnum):
@@ -123,9 +121,7 @@ class IngestionTrigger(StrEnum):
     EVENT_GRID = "event_grid"
 
 
-# ---------------------------------------------------------------------------
 # Per-subsystem settings
-# ---------------------------------------------------------------------------
 
 
 class IdentitySettings(BaseSettings):
@@ -174,9 +170,9 @@ class OpenAISettings(BaseSettings):
 class DatabaseSettings(BaseSettings):
     """Selects the chat-history backend AND the vector index store.
 
-    `db_type` is the registry key passed to
-    `providers.databases.create(...)`; `index_store` is passed to
-    `providers.search.create(...)` / `providers.embedders.create(...)`.
+    `db_type` is the registry key resolved via
+    `databases_registry.registry.get(...)`; `index_store` selects the
+    vector search handler via `search_registry.registry.get(...)`.
 
     Note: the `databases` provider domain owns chat-history CRUD plus
     any future DB-backed concerns (vector-store metadata, config
@@ -206,8 +202,8 @@ class DatabaseSettings(BaseSettings):
     def _enforce_mode_consistency(self) -> "DatabaseSettings":
         # Pydantic config-consistency validator. Not provider dispatch (no
         # class instantiation, no behavior branch); registry callers always
-        # go through `databases.create(db_type, ...)` / `search.create(
-        # index_store, ...)` per Hard Rule #4.
+        # go through `databases_registry.registry.get(db_type)` /
+        # `search_registry.registry.get(index_store)` per Hard Rule #4.
         if self.db_type == DbType.COSMOSDB:
             if not self.cosmos_endpoint:
                 raise ValueError(
@@ -487,9 +483,7 @@ class DocumentIntelligenceSettings(BaseSettings):
     model_id: str = "prebuilt-layout"
 
 
-# ---------------------------------------------------------------------------
 # Root settings
-# ---------------------------------------------------------------------------
 
 
 class AppSettings(BaseSettings):
@@ -533,9 +527,7 @@ class AppSettings(BaseSettings):
     )
 
 
-# ---------------------------------------------------------------------------
 # Cached accessor (FastAPI Depends-friendly)
-# ---------------------------------------------------------------------------
 
 
 @lru_cache(maxsize=1)

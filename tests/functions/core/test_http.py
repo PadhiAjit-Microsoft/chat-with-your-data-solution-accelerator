@@ -1,11 +1,13 @@
-"""Pillar: Stable Core / Phase: 6 -- tests for functions/core/http.py."""
+"""Tests for functions/core/http.py."""
 
 import json
 from http import HTTPStatus
 
 import azure.functions as func
+import pytest
+from pydantic import ValidationError
 
-from functions.core.http import ErrorType, json_response
+from functions.core.http import ErrorEnvelope, ErrorType, json_response
 
 
 def test_error_type_members_are_wire_strings() -> None:
@@ -70,3 +72,43 @@ def test_json_response_handles_each_blueprint_status_code() -> None:
     ):
         resp = json_response({"ok": True}, status)
         assert resp.status_code == int(status)
+
+
+def test_error_envelope_upstream_storage_omits_details() -> None:
+    # No details supplied -> exclude_none drops the key entirely, matching
+    # the {"error": "upstream_storage_error"} wire body.
+    envelope = ErrorEnvelope(error=ErrorType.UPSTREAM_STORAGE_ERROR)
+    assert envelope.model_dump(exclude_none=True) == {"error": "upstream_storage_error"}
+
+
+def test_error_envelope_internal_server_omits_details() -> None:
+    envelope = ErrorEnvelope(error=ErrorType.INTERNAL_SERVER_ERROR)
+    assert envelope.model_dump(exclude_none=True) == {"error": "internal_server_error"}
+
+
+def test_error_envelope_validation_error_carries_details() -> None:
+    envelope = ErrorEnvelope(
+        error=ErrorType.VALIDATION_ERROR,
+        details=[{"loc": ["name"], "msg": "field required", "type": "missing"}],
+    )
+    assert envelope.model_dump(exclude_none=True) == {
+        "error": "validation_error",
+        "details": [{"loc": ["name"], "msg": "field required", "type": "missing"}],
+    }
+
+
+def test_error_envelope_details_defaults_to_none() -> None:
+    envelope = ErrorEnvelope(error=ErrorType.VALIDATION_ERROR)
+    assert envelope.details is None
+
+
+def test_error_envelope_is_frozen() -> None:
+    envelope = ErrorEnvelope(error=ErrorType.VALIDATION_ERROR)
+    with pytest.raises(ValidationError):
+        envelope.error = ErrorType.INTERNAL_SERVER_ERROR
+
+
+def test_error_envelope_forbids_extras() -> None:
+    with pytest.raises(ValidationError):
+        ErrorEnvelope(error=ErrorType.VALIDATION_ERROR, extra="x")
+

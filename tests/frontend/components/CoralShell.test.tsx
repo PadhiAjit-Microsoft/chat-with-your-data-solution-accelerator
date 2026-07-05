@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 4
- *
  * Tests for the Coral shell layout primitives. Verifies:
  *   1. Children render inside a `<CoralShellColumn>`.
  *   2. Children render inside a `<CoralShellRow>`.

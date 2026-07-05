@@ -19,6 +19,7 @@ from fastapi import APIRouter, HTTPException, status
 
 from backend.core.speech import mint_speech_token
 from backend.dependencies import CredentialProviderDep, SettingsDep
+from backend.models.errors import ErrorResponse
 from backend.models.speech import SpeechConfig
 
 logger = logging.getLogger(__name__)
@@ -35,6 +36,16 @@ router = APIRouter(prefix="/api/speech", tags=["speech"])
         "browser-side speech-to-text. Responds 503 when the Speech service "
         "is not configured and 502 when token minting fails."
     ),
+    responses={
+        502: {
+            "model": ErrorResponse,
+            "description": "Speech token mint failed.",
+        },
+        503: {
+            "model": ErrorResponse,
+            "description": "Speech service not configured.",
+        },
+    },
 )
 async def get_speech_config(
     settings: SettingsDep,

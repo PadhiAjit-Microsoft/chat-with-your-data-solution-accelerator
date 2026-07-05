@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 5
- *
  * Tests for <HeaderTools>: the right-side header toolbar. Covers the
  * always-on new-chat / history / theme buttons plus the admin entry
  * button, which only renders when the caller reports

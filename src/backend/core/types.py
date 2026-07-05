@@ -94,10 +94,20 @@ class ChatMessage(BaseModel):
     content=...)` is unaffected.
     """
 
-    role: ChatRole
-    content: str
-    name: str | None = None
-    metadata: dict[str, Any] = Field(default_factory=dict)
+    role: ChatRole = Field(
+        description="Author role of the turn (system, user, assistant, or tool)."
+    )
+    content: str = Field(description="Text content of the turn.")
+    name: str | None = Field(
+        default=None, description="Optional author name for the turn."
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        description=(
+            "Provider-agnostic extras that travel with the turn into storage "
+            "(e.g. citations surfaced alongside an assistant answer)."
+        ),
+    )
 
 
 class ChatChunk(BaseModel):
@@ -173,12 +183,31 @@ class Citation(BaseModel):
     expose one. Frontend dedupes by `id`.
     """
 
-    id: str
-    title: str = ""
-    url: str = ""
-    snippet: str = ""
-    score: float | None = None
-    metadata: dict[str, Any] = Field(default_factory=dict)
+    id: str = Field(
+        description=(
+            "Source document or chunk id (provider-specific); the frontend "
+            "dedupes citations by this value."
+        )
+    )
+    title: str = Field(default="", description="Display title of the source.")
+    url: str = Field(
+        default="",
+        description="Renderable link to the source (blob SAS URL, external page URL).",
+    )
+    snippet: str = Field(
+        default="",
+        description="Short excerpt of the source text supporting the answer.",
+    )
+    score: float | None = Field(
+        default=None,
+        description=(
+            "Search relevance normalized 0..1 when the provider exposes one; "
+            "null otherwise."
+        ),
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Provider-specific extra fields."
+    )
 
 
 class SearchResult(BaseModel):
@@ -239,12 +268,18 @@ class Conversation(BaseModel):
     wire shape is stable across Cosmos DB and PostgreSQL.
     """
 
-    id: str
-    user_id: str
-    title: str = ""
-    created_at: str = ""
-    updated_at: str = ""
-    metadata: dict[str, Any] = Field(default_factory=dict)
+    id: str = Field(description="Unique conversation id.")
+    user_id: str = Field(description="Id of the user who owns the conversation.")
+    title: str = Field(default="", description="Display title of the conversation.")
+    created_at: str = Field(
+        default="", description="ISO-8601 timestamp when the conversation was created."
+    )
+    updated_at: str = Field(
+        default="", description="ISO-8601 timestamp of the most recent update."
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Provider-specific extra fields."
+    )
 
 
 class MessageRecord(BaseModel):
@@ -255,13 +290,25 @@ class MessageRecord(BaseModel):
     thumbs-up/down indicator.
     """
 
-    id: str
-    conversation_id: str
-    role: ChatRole
-    content: str
-    created_at: str = ""
-    feedback: str | None = None
-    metadata: dict[str, Any] = Field(default_factory=dict)
+    id: str = Field(description="Unique message id.")
+    conversation_id: str = Field(
+        description="Id of the conversation this message belongs to."
+    )
+    role: ChatRole = Field(description="Author role of the message.")
+    content: str = Field(description="Message text.")
+    created_at: str = Field(
+        default="", description="ISO-8601 timestamp when the message was stored."
+    )
+    feedback: str | None = Field(
+        default=None,
+        description=(
+            "User feedback marker rendered as a thumbs-up/down indicator; null "
+            "when no feedback was given."
+        ),
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict, description="Provider-specific extra fields."
+    )
 
 
 class RuntimeConfig(BaseModel):
@@ -319,20 +366,92 @@ class RuntimeConfig(BaseModel):
     temperature to 0.7?'.
     """
 
-    orchestrator_name: str | None = None
-    openai_temperature: float | None = None
-    openai_max_tokens: int | None = None
-    search_use_semantic_search: bool | None = None
-    search_top_k: int | None = None
-    log_level: str | None = None
-    content_safety_enabled: bool | None = None
-    cwyd_agent_instructions: str | None = None
-    ai_assistant_type: AssistantType | None = None
-    post_answering_prompt: str | None = None
-    post_answering_enabled: bool | None = None
-    post_answering_filter_message: str | None = None
-    updated_at: str = ""
-    updated_by: str = ""
+    orchestrator_name: str | None = Field(
+        default=None,
+        description=(
+            "Override for the active orchestrator provider key; null falls "
+            "through to the deployed default."
+        ),
+    )
+    openai_temperature: float | None = Field(
+        default=None,
+        description=(
+            "Override for the chat sampling temperature; null falls through to "
+            "the deployed default."
+        ),
+    )
+    openai_max_tokens: int | None = Field(
+        default=None,
+        description=(
+            "Override for the maximum tokens per completion; null falls through "
+            "to the deployed default."
+        ),
+    )
+    search_use_semantic_search: bool | None = Field(
+        default=None,
+        description=(
+            "Override for the semantic-search toggle; null falls through to the "
+            "deployed default."
+        ),
+    )
+    search_top_k: int | None = Field(
+        default=None,
+        description=(
+            "Override for the number of retrieved search results; null falls "
+            "through to the deployed default."
+        ),
+    )
+    log_level: str | None = Field(
+        default=None,
+        description=(
+            "Override for the log verbosity; null falls through to the deployed "
+            "default."
+        ),
+    )
+    content_safety_enabled: bool | None = Field(
+        default=None,
+        description=(
+            "Override for the content-safety toggle; null falls through to the "
+            "deployed default."
+        ),
+    )
+    cwyd_agent_instructions: str | None = Field(
+        default=None,
+        description=(
+            "Override for the primary agent's system prompt; null falls through "
+            "to the built-in instructions."
+        ),
+    )
+    ai_assistant_type: AssistantType | None = Field(
+        default=None,
+        description=(
+            "Override for the selected prompt preset persona; null falls "
+            "through to the default type."
+        ),
+    )
+    post_answering_prompt: str | None = Field(
+        default=None,
+        description="Override for the post-answering validation prompt; null leaves it unset.",
+    )
+    post_answering_enabled: bool | None = Field(
+        default=None,
+        description="Override for the post-answering validation toggle; null leaves it unset.",
+    )
+    post_answering_filter_message: str | None = Field(
+        default=None,
+        description=(
+            "Override for the message shown when post-answering validation "
+            "rejects an answer; null leaves it unset."
+        ),
+    )
+    updated_at: str = Field(
+        default="",
+        description="ISO-8601 timestamp of the last override write; empty when never written.",
+    )
+    updated_by: str = Field(
+        default="",
+        description="User id of the last override author; empty when never written.",
+    )
 
 
 class AdminAuditEntry(BaseModel):

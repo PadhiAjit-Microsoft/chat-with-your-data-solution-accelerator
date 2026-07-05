@@ -1,4 +1,4 @@
-"""Pillar: Stable Core / Phase: 6 -- tests for functions/core/storage_clients.py."""
+"""Tests for functions/core/storage_clients.py."""
 
 from typing import Any
 from unittest.mock import patch

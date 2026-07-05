@@ -26,11 +26,13 @@ Status surface:
 """
 
 import mimetypes
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Path, status
 from fastapi.responses import Response
 
 from backend.dependencies import CredentialDep, SettingsDep
+from backend.models.errors import ErrorResponse
 from backend.services.files import download_document
 
 router = APIRouter(prefix="/api", tags=["files"])
@@ -45,9 +47,17 @@ router = APIRouter(prefix="/api", tags=["files"])
         "Responds 503 when document storage is not configured for the "
         "deployment."
     ),
+    responses={
+        400: {"model": ErrorResponse, "description": "Invalid filename."},
+        404: {"model": ErrorResponse, "description": "Blob not found."},
+        503: {
+            "model": ErrorResponse,
+            "description": "Storage temporarily unavailable.",
+        },
+    },
 )
 async def get_file(
-    filename: str,
+    filename: Annotated[str, Path(description="Stored blob filename to stream.")],
     settings: SettingsDep,
     credential: CredentialDep,
 ) -> Response:

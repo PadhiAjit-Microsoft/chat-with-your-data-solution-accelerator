@@ -1,7 +1,4 @@
 /**
- * Pillar: Stable Core
- * Phase: 4
- *
  * Tests for the <MultiAgentLogo> brand mark: it renders as an
  * accessible <svg role="img"> labelled "Multi-agent", honours the
  * `size` prop, and fills with the brand foreground design token.
