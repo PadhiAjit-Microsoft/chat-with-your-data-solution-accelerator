@@ -36,6 +36,7 @@ from fastapi import (
     Body,
     File,
     HTTPException,
+    Path,
     Request,
     UploadFile,
     status,
@@ -74,6 +75,7 @@ from backend.models.admin import (
     UploadResponse,
     WRITABLE_FIELDS,
 )
+from backend.models.errors import ErrorResponse
 from backend.services.admin import (
     host_only,
     resolve_effective_config,
@@ -278,6 +280,12 @@ async def config_effective_endpoint(
         "override (reverting the field to its env default); an unknown key "
         "or wrong-type value responds 422."
     ),
+    responses={
+        422: {
+            "model": ErrorResponse,
+            "description": ("Unknown field, wrong-type value, or RAI-rejected prompt."),
+        },
+    },
 )
 async def patch_config_endpoint(
     request: Request,
@@ -429,6 +437,12 @@ async def patch_config_endpoint(
         "nothing is indexed; responds 503 when no search backend is "
         "configured."
     ),
+    responses={
+        503: {
+            "model": ErrorResponse,
+            "description": "Search backend not configured.",
+        },
+    },
 )
 async def list_documents_endpoint(
     search: SearchProviderDep,
@@ -479,9 +493,21 @@ async def list_documents_endpoint(
         "becomes fully unreachable. Responds 404 when neither existed and "
         "503 when no search backend is configured."
     ),
+    responses={
+        404: {
+            "model": ErrorResponse,
+            "description": "No indexed chunks or source blob found.",
+        },
+        503: {
+            "model": ErrorResponse,
+            "description": "Search backend not configured.",
+        },
+    },
 )
 async def delete_document_endpoint(
-    source: str,
+    source: Annotated[
+        str, Path(description="Blob source path to de-index and delete.")
+    ],
     settings: SettingsDep,
     credential: CredentialDep,
     search: SearchProviderDep,
@@ -566,6 +592,13 @@ async def delete_document_endpoint(
         "invalid URL and 503 when storage or the processing queue is not "
         "configured."
     ),
+    responses={
+        422: {"model": ErrorResponse, "description": "Invalid URL."},
+        503: {
+            "model": ErrorResponse,
+            "description": "Storage or processing queue not configured.",
+        },
+    },
 )
 async def ingest_url_endpoint(
     body: IngestUrlRequest,
@@ -630,6 +663,24 @@ async def ingest_url_endpoint(
         "Responds 413 when too large, 415 for an unsupported file type, "
         "and 503 when storage / the processing queue is not configured."
     ),
+    responses={
+        413: {"model": ErrorResponse, "description": "Uploaded file too large."},
+        415: {
+            "model": ErrorResponse,
+            "description": "Unsupported file type.",
+        },
+        422: {
+            "model": ErrorResponse,
+            "description": "Missing file part or empty filename.",
+        },
+        503: {
+            "model": ErrorResponse,
+            "description": (
+                "Storage / processing queue not configured, or Document "
+                "Intelligence not configured for this file type."
+            ),
+        },
+    },
 )
 async def upload_document_endpoint(
     settings: SettingsDep,
@@ -694,6 +745,12 @@ async def upload_document_endpoint(
         "re-pushed. Responds 503 when storage / the processing queue is "
         "not configured."
     ),
+    responses={
+        503: {
+            "model": ErrorResponse,
+            "description": "Storage or processing queue not configured.",
+        },
+    },
 )
 async def reprocess_all_endpoint(
     settings: SettingsDep,

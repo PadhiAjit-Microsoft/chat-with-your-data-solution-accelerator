@@ -84,6 +84,26 @@ class AddUrlRequest(BaseModel):
     ingestion_job_id: str = Field(default_factory=lambda: str(uuid4()), min_length=1)
 
 
+class AddUrlResponse(BaseModel):
+    """Typed response contract for the ``add_url`` HTTP trigger.
+
+    Summarizes a single URL ingestion: the correlation id for the
+    request, the URL that was fetched, and how many search documents
+    were written to the index. Frozen + ``extra="forbid"`` so the wire
+    shape stays a fixed, three-field contract.
+    """
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    ingestion_job_id: str = Field(
+        description="Correlation id for this URL ingestion request."
+    )
+    url: str = Field(description="The URL that was fetched and ingested.")
+    document_count: int = Field(
+        description="Number of search documents written to the index for this URL."
+    )
+
+
 def _build_document(chunk: Chunk, vector: list[float]) -> SearchDocument:
     """Map a parsed chunk + its vector into a :class:`SearchDocument`.
 

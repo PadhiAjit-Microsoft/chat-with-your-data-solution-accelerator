@@ -54,18 +54,51 @@ class AdminConfig(BaseModel):
     ``test_config_does_not_leak_sensitive_settings``.
     """
 
-    orchestrator_name: str
-    openai_temperature: float
-    openai_max_tokens: int
-    search_use_semantic_search: bool
-    search_top_k: int
-    log_level: str
-    content_safety_enabled: bool
-    cwyd_agent_instructions: str
-    ai_assistant_type: AssistantType
-    post_answering_prompt: str
-    post_answering_enabled: bool
-    post_answering_filter_message: str
+    orchestrator_name: str = Field(
+        description=(
+            "Key of the active orchestrator provider (e.g. langgraph or "
+            "agent_framework)."
+        )
+    )
+    openai_temperature: float = Field(
+        description="Sampling temperature applied to chat completions (higher is more random)."
+    )
+    openai_max_tokens: int = Field(
+        description="Maximum number of tokens generated per chat completion."
+    )
+    search_use_semantic_search: bool = Field(
+        description="Whether retrieval applies semantic ranking over the search results."
+    )
+    search_top_k: int = Field(
+        description="Number of top search results retrieved to ground each answer."
+    )
+    log_level: str = Field(
+        description="Application log verbosity (e.g. INFO or DEBUG)."
+    )
+    content_safety_enabled: bool = Field(
+        description="Whether inbound and outbound content-safety screening is applied."
+    )
+    cwyd_agent_instructions: str = Field(
+        description="Operator-editable system prompt for the primary answering agent."
+    )
+    ai_assistant_type: AssistantType = Field(
+        description=(
+            "Selected prompt preset persona (default, contract assistant, or "
+            "employee assistant)."
+        )
+    )
+    post_answering_prompt: str = Field(
+        description="Optional prompt used to validate a composed answer before returning it."
+    )
+    post_answering_enabled: bool = Field(
+        description="Whether the post-answering validation step runs after each answer."
+    )
+    post_answering_filter_message: str = Field(
+        description=(
+            "Message returned to the user when post-answering validation "
+            "rejects an answer."
+        )
+    )
 
 
 # Allow-list of writable `RuntimeConfig` fields (the mutable subset --
@@ -103,17 +136,34 @@ class AdminStatus(BaseModel):
     ``test_status_does_not_leak_sensitive_settings``.
     """
 
-    orchestrator_name: str
-    db_type: str
-    index_store: str
-    environment: str
-    foundry_project_endpoint_host: str
-    gpt_deployment: str
-    embedding_deployment: str
-    search_enabled: bool
-    app_insights_enabled: bool
-    cors_origins: list[str] = Field(default_factory=list[str])
-    version: str
+    orchestrator_name: str = Field(
+        description="Key of the active orchestrator provider."
+    )
+    db_type: str = Field(description="Configured chat-history backend identifier.")
+    index_store: str = Field(description="Configured search index backend identifier.")
+    environment: str = Field(
+        description="Deployment environment name (e.g. local or production)."
+    )
+    foundry_project_endpoint_host: str = Field(
+        description="Hostname of the Foundry project endpoint in use."
+    )
+    gpt_deployment: str = Field(
+        description="Name of the deployed chat/completion model."
+    )
+    embedding_deployment: str = Field(
+        description="Name of the deployed embedding model."
+    )
+    search_enabled: bool = Field(
+        description="Whether document search and retrieval is enabled."
+    )
+    app_insights_enabled: bool = Field(
+        description="Whether Application Insights telemetry is enabled."
+    )
+    cors_origins: list[str] = Field(
+        default_factory=list[str],
+        description="Allowed CORS origins for browser clients.",
+    )
+    version: str = Field(description="Backend application version.")
 
 
 class DeleteDocumentResponse(BaseModel):
@@ -321,15 +371,34 @@ class EffectiveAdminConfig(BaseModel):
     has been persisted yet.
     """
 
-    values: AdminConfig
-    sources: dict[str, ConfigSource]
-    #: Read-only ``{assistant_type: persona body}`` map (ADR 0030) the
-    #: frontend dropdown loads into the answering-prompt field on
-    #: selection. Not an override-able field -- pure reference data, so
-    #: it carries no ``ConfigSource`` provenance entry.
-    assistant_type_presets: dict[str, str]
-    updated_at: str | None = None
-    updated_by: str | None = None
+    values: AdminConfig = Field(description="Resolved effective configuration values.")
+    sources: dict[str, ConfigSource] = Field(
+        description=(
+            "Per-field provenance: env when tracking the deployed default, "
+            "override when held by a persisted runtime override."
+        )
+    )
+    assistant_type_presets: dict[str, str] = Field(
+        description=(
+            "Read-only map of assistant type to persona prompt body that the "
+            "frontend dropdown loads into the answering-prompt field on "
+            "selection. Reference data only, so it carries no provenance entry."
+        )
+    )
+    updated_at: str | None = Field(
+        default=None,
+        description=(
+            "ISO-8601 timestamp of the last override write, or null when no "
+            "override row exists."
+        ),
+    )
+    updated_by: str | None = Field(
+        default=None,
+        description=(
+            "User id of the last override author, or null when no override row "
+            "exists."
+        ),
+    )
 
 
 __all__ = [

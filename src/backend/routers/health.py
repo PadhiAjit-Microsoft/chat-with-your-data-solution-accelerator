@@ -52,6 +52,15 @@ async def health(settings: SettingsDep) -> HealthResponse:
         "same health snapshot, but responds 503 when the overall status is "
         "FAIL so traffic is held back until required dependencies recover."
     ),
+    responses={
+        503: {
+            "model": HealthResponse,
+            "description": (
+                "Readiness failed; body is the health snapshot with "
+                "overall status FAIL."
+            ),
+        },
+    },
 )
 async def ready(settings: SettingsDep, response: Response) -> HealthResponse:
     result = run_health_checks(settings)

@@ -53,7 +53,7 @@ from backend.core.providers.credentials import registry as credentials_registry
 from backend.core.providers.embedders import registry as embedders_registry
 from backend.core.settings import AppSettings, get_settings
 from backend.core.types import SearchDocument
-from functions.add_url.handler import AddUrlRequest, add_url_handler
+from functions.add_url.handler import AddUrlRequest, AddUrlResponse, add_url_handler
 from functions.core.exception_mapping import map_function_exceptions
 from functions.core.http import json_response
 from functions.core.parsers import registry as ingestion_parsers_registry
@@ -153,10 +153,10 @@ async def add_url(req: func.HttpRequest) -> func.HttpResponse:
     request = AddUrlRequest.model_validate_json(req.get_body() or b"{}")
     documents = await _execute(request, get_settings())
     return json_response(
-        {
-            "ingestion_job_id": request.ingestion_job_id,
-            "url": request.url,
-            "document_count": len(documents),
-        },
+        AddUrlResponse(
+            ingestion_job_id=request.ingestion_job_id,
+            url=request.url,
+            document_count=len(documents),
+        ).model_dump(),
         HTTPStatus.OK,
     )

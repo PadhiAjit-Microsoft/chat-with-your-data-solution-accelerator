@@ -21,7 +21,7 @@ from azure.core.exceptions import AzureError
 from backend.core.settings import AppSettings, get_settings
 from functions.batch_start import blueprint as bp_module
 from functions.batch_start.blueprint import batch_start
-from functions.batch_start.models import BatchStartRequest
+from functions.batch_start.models import BatchStartRequest, BatchStartResponse
 from functions.core.contracts import BatchPushQueueMessage
 from functions.function_app import app
 
@@ -119,6 +119,7 @@ async def test_happy_path_returns_200_with_ingestion_summary(
         "enqueued_count": 2,
         "filenames": ["a.pdf", "b.pdf"],
     }
+    assert BatchStartResponse.model_validate(payload).model_dump() == payload
 
 
 @pytest.mark.asyncio

@@ -11,6 +11,10 @@ Functions-only helper module that owns:
   ``func.HttpResponse`` with ``mimetype="application/json"`` and a
   JSON-encoded body, so wire format stays consistent across all
   blueprints and exception paths.
+* :class:`ErrorEnvelope` -- the frozen model whose
+  ``model_dump(exclude_none=True)`` output is the ``{"error": ...}`` /
+  ``{"error": ..., "details": [...]}`` JSON body emitted by the
+  Functions HTTP exception mapper.
 
 HTTP status codes come from the stdlib :class:`http.HTTPStatus`
 ``IntEnum`` -- callers reference ``HTTPStatus.OK``,
@@ -28,9 +32,10 @@ runtime helper" rule.
 import json
 from enum import StrEnum
 from http import HTTPStatus
-from typing import Final
+from typing import Any, Final
 
 import azure.functions as func
+from pydantic import BaseModel, ConfigDict
 
 _JSON_MIMETYPE: Final[str] = "application/json"
 
@@ -41,6 +46,15 @@ class ErrorType(StrEnum):
     VALIDATION_ERROR = "validation_error"
     UPSTREAM_STORAGE_ERROR = "upstream_storage_error"
     INTERNAL_SERVER_ERROR = "internal_server_error"
+
+
+class ErrorEnvelope(BaseModel):
+    """JSON error body emitted by the Functions HTTP exception mapper."""
+
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+    error: ErrorType
+    details: list[dict[str, Any]] | None = None  # errors() boundary shape, per Hard Rule #15(a)
 
 
 def json_response(payload: dict[str, object], status_code: HTTPStatus) -> func.HttpResponse:

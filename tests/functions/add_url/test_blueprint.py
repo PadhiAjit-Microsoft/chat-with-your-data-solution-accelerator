@@ -20,7 +20,7 @@ from backend.core.settings import AppSettings, get_settings
 from backend.core.types import SearchDocument, SearchResult
 from functions.add_url import blueprint as bp_module
 from functions.add_url.blueprint import _parser_key_for_url, add_url
-from functions.add_url.handler import AddUrlRequest
+from functions.add_url.handler import AddUrlRequest, AddUrlResponse
 from functions.core import search_resolution
 from functions.function_app import app
 
@@ -127,6 +127,7 @@ async def test_happy_path_returns_200_with_ingestion_summary(
         "url": "https://example.invalid/page",
         "document_count": 2,
     }
+    assert AddUrlResponse.model_validate(payload).model_dump() == payload
 
 
 @pytest.mark.asyncio
