@@ -1,21 +1,17 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
 
-name: chat-with-your-data-solution-accelerator
+name: chat-with-your-data-v2
 metadata:
-   template: chat-with-your-data-solution-accelerator@1.7.0
-
+  template: chat-with-your-data-v2@0.1.0
 requiredVersions:
-  azd: '>= 1.18.0 != 1.23.9'
+  azd: ">= 1.18.0 != 1.23.9"
+
+infra:
+  provider: bicep
+  path: infra
+  module: main
 
 hooks:
-  postprovision:
-    # run: ./infra/prompt-flow/create-prompt-flow.sh
-    posix:
-      shell: sh
-      run: chmod +x ./scripts/parse_env.sh && ./scripts/parse_env.sh
-    windows:
-      shell: pwsh
-      run: ./scripts/parse_env.ps1
   postdeploy:
     windows:
       shell: pwsh
@@ -28,11 +24,17 @@ hooks:
         Write-Host "1. Login to Azure CLI (required for post-deployment script):" -ForegroundColor Yellow
         Write-Host "   az login" -ForegroundColor Cyan
         Write-Host ""
-        Write-Host "2. Run the post-deployment setup script:" -ForegroundColor Yellow
-        Write-Host "   ./scripts/post_deployment_setup.ps1 -ResourceGroupName `"$env:AZURE_RESOURCE_GROUP`"" -ForegroundColor Cyan
+        Write-Host "2. Run the ACR build/push/update script:" -ForegroundColor Yellow
+        Write-Host "   ./infra/scripts/post-provision/acr_build_push_update.ps1 -ResourceGroupName `"$env:AZURE_RESOURCE_GROUP`"" -ForegroundColor Cyan
         Write-Host ""
         Write-Host "   Or using Bash:" -ForegroundColor Yellow
-        Write-Host "   bash scripts/post_deployment_setup.sh `"$env:AZURE_RESOURCE_GROUP`"" -ForegroundColor Cyan
+        Write-Host "   bash infra/scripts/post-provision/acr_build_push_update.sh `"$env:AZURE_RESOURCE_GROUP`"" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "3. Run the post-deployment setup script:" -ForegroundColor Yellow
+        Write-Host "   ./infra/scripts/post-provision/post_deployment_setup.ps1 -ResourceGroupName `"$env:AZURE_RESOURCE_GROUP`"" -ForegroundColor Cyan
+        Write-Host ""
+        Write-Host "   Or using Bash:" -ForegroundColor Yellow
+        Write-Host "   bash infra/scripts/post-provision/post_deployment_setup.sh `"$env:AZURE_RESOURCE_GROUP`"" -ForegroundColor Cyan
         Write-Host ""
       continueOnError: false
       interactive: true
@@ -47,62 +49,11 @@ hooks:
         echo "1. Login to Azure CLI (required for post-deployment script):"
         echo "   az login"
         echo ""
-        echo "2. Run the post-deployment setup script:"
-        echo "   bash scripts/post_deployment_setup.sh \"$AZURE_RESOURCE_GROUP\""
+        echo "2. Run the ACR build/push/update script:"
+        echo "   bash infra/scripts/post-provision/acr_build_push_update.sh \"$AZURE_RESOURCE_GROUP\""
+        echo ""
+        echo "3. Run the post-deployment setup script:"
+        echo "   bash infra/scripts/post-provision/post_deployment_setup.sh \"$AZURE_RESOURCE_GROUP\""
         echo ""
       continueOnError: false
       interactive: true
-services:
-  web:
-    project: ./code
-    language: py
-    host: appservice
-    dist: ./dist
-    # Use resourceName
-    resourceName: ${SERVICE_WEB_RESOURCE_NAME}
-    hooks:
-      prepackage:
-        windows:
-          shell: pwsh
-          run: ./scripts/package_frontend.ps1
-          interactive: true
-          continueOnError: false
-        posix:
-          shell: sh
-          run: bash ./scripts/package_frontend.sh
-          interactive: true
-          continueOnError: false
-
-  adminweb:
-    project: ./code/backend
-    language: py
-    host: appservice
-    # Use resourceName
-    resourceName: ${SERVICE_ADMINWEB_RESOURCE_NAME}
-    hooks:
-      prepackage:
-        windows:
-          shell: pwsh
-          run: poetry install; poetry export -o requirements.txt
-          continueOnError: false
-        posix:
-          shell: sh
-          run: poetry install; poetry export -o requirements.txt
-          continueOnError: false
-
-  function:
-    project: ./code/backend/batch
-    language: py
-    host: function
-    # Use resourceName
-    resourceName: ${SERVICE_FUNCTION_RESOURCE_NAME}
-    hooks:
-      prepackage:
-        windows:
-          shell: pwsh
-          run: poetry export -o requirements.txt --without-hashes; pip install -r requirements.txt
-          continueOnError: false
-        posix:
-          shell: sh
-          run: poetry export -o requirements.txt --without-hashes; pip install -r requirements.txt
-          continueOnError: false
