@@ -42,24 +42,24 @@ param ingestionTrigger string = 'direct_enqueue'
 
 @minLength(1)
 @description('Optional. Primary chat model deployment name.')
-param gptModelName string = 'gpt-5.1'
+param gptModelName string = 'gpt-5.4-mini'
 
 @description('Optional. Primary chat model version.')
-param gptModelVersion string = '2025-11-13'
+param gptModelVersion string = '2026-03-17'
 
 @description('Optional. SKU for the primary chat model deployment.')
 param gptModelDeploymentType string = 'GlobalStandard'
 
 @minValue(1)
 @description('Optional. Token capacity (thousands of TPM) for the primary chat model.')
-param gptModelCapacity int = 150
+param gptModelCapacity int = 50
 
 @minLength(1)
 @description('Optional. Reasoning model deployment name (surfaced via the SSE reasoning channel).')
-param reasoningModelName string = 'o4-mini'
+param reasoningModelName string = 'gpt-5-mini'
 
 @description('Optional. Reasoning model version.')
-param reasoningModelVersion string = '2025-04-16'
+param reasoningModelVersion string = '2025-08-07'
 
 @description('Optional. SKU for the reasoning model deployment.')
 param reasoningModelDeploymentType string = 'GlobalStandard'
@@ -423,7 +423,7 @@ module virtualNetwork './modules/networking/virtual-network.bicep' = if (enableP
     location: location
     tags: allTags
     addressPrefixes: ['10.0.0.0/20'] // 4096 addresses (enough for 8 /23 subnets or 16 /24)
-    logAnalyticsWorkspaceId: logAnalyticsWorkspaceResourceId
+    logAnalyticsWorkspaceId: (enableMonitoring || useExistingLogAnalytics) ? logAnalyticsWorkspaceResourceId : ''
     resourceSuffix: solutionSuffix
     enableTelemetry: enableTelemetry
   }
@@ -1025,7 +1025,7 @@ module containerRegistry './modules/compute/container-registry.bicep' = {
     publicNetworkAccess: enablePrivateNetworking ? 'Disabled' : 'Enabled'
     networkRuleSetDefaultAction: enablePrivateNetworking ? 'Deny' : 'Allow'
     enablePrivateNetworking: enablePrivateNetworking
-    privateEndpointSubnetId: enablePrivateNetworking ? virtualNetwork!.outputs.containerSubnetResourceId : ''
+    privateEndpointSubnetId: enablePrivateNetworking ? virtualNetwork!.outputs.backendSubnetResourceId : ''
     privateDnsZoneResourceIds: enablePrivateNetworking ? [
       privateDnsZoneDeployments[dnsZoneIndex.containerRegistry]!.outputs.resourceId
     ] : []
