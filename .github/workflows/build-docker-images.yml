@@ -68,7 +68,6 @@ jobs:
 
   docker-build:
     needs: check-changes
-    if: needs.check-changes.outputs.should_build == 'true' || github.event_name == 'workflow_dispatch'
     strategy:
       matrix:
         include:
