@@ -68,19 +68,27 @@ jobs:
 
   docker-build:
     needs: check-changes
-    runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
+          # Legacy entries required by branch protection (old check names)
+          - app_name: rag-adminwebapp
+            dockerfile: docker/Admin.Dockerfile
+          - app_name: rag-backend
+            dockerfile: docker/Backend.Dockerfile
+          - app_name: rag-webapp
+            dockerfile: docker/Frontend.Dockerfile
+          # Current entries
           - app_name: rag-frontend
             dockerfile: docker/Dockerfile.frontend
-          - app_name: rag-backend
+          - app_name: rag-backend-v2
             dockerfile: docker/Dockerfile.backend
           - app_name: rag-functions
             dockerfile: docker/Dockerfile.functions
-    steps:
-      - name: Report success (no image build required)
-        run: |
-          echo "Satisfying required check for '${{ matrix.app_name }}' (${{ matrix.dockerfile }})."
-          echo "No image is built or pushed here. Deployment images are built into the"
-          echo "target ACR by infra/scripts/post-provision/acr_build_push_update."
+    uses: ./.github/workflows/build-docker.yml
+    with:
+      new_registry: 'cwydcontainerreg.azurecr.io'
+      app_name: ${{ matrix.app_name }}
+      dockerfile: ${{ matrix.dockerfile }}
+      push: false
+    secrets: inherit
