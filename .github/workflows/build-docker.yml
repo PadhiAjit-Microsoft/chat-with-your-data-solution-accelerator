@@ -18,7 +18,6 @@ on:
 
 jobs:
   docker-build:
-    if: false  # Workflow disabled
     runs-on: ubuntu-latest
     steps:
     # This workflow only exists to satisfy the legacy status-check contexts still
@@ -27,7 +26,7 @@ jobs:
     # image: real deployment images are built into the target ACR by
     # infra/scripts/post-provision/acr_build_push_update, and nothing consumes the
     # legacy cwydcontainerreg images. Reporting success here keeps the required
-    # checks green on every event (PR and push) without ever failing.
+    # checks green on every event (PR and push) without ever failing
     - name: Report success (no image build required)
       run: |
         echo "Satisfying required check for '${{ inputs.app_name }}' (${{ inputs.dockerfile }})."
