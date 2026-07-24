@@ -41,7 +41,7 @@ Before proceeding, ensure your chosen region has all required services available
 
 - [Azure AI Foundry](https://learn.microsoft.com/azure/ai-foundry/)
 - [Azure OpenAI Service](https://learn.microsoft.com/azure/ai-services/openai/)
-- [Azure AI Search](https://learn.microsoft.com/azure/search/)
+- [Azure AI Search](https://learn.microsoft.com/azure/search/) (`cosmosdb` mode only)
 - [Azure Container Apps](https://learn.microsoft.com/azure/container-apps/)
 - [Azure Container Registry](https://learn.microsoft.com/azure/container-registry/)
 - [Azure Functions](https://learn.microsoft.com/azure/azure-functions/)
@@ -115,7 +115,7 @@ Select one of the following options to set up your deployment environment:
 <details>
 <summary><b>Option C: Visual Studio Code (Web)</b></summary>
 
-[![Open in Visual Studio Code (Web)](https://img.shields.io/static/v1?style=for-the-badge&label=Visual%20Studio%20Code%20%28Web%29&message=Open&color=blue&logo=visualstudiocode&logoColor=white)](https://vscode.dev/github/Azure-Samples/chat-with-your-data-solution-accelerator)
+[![Open in Visual Studio Code (Web)](https://img.shields.io/static/v1?style=for-the-badge&label=Visual%20Studio%20Code%20%28Web%29&message=Open&color=blue&logo=visualstudiocode&logoColor=white)](https://vscode.dev/azure/?vscode-azure-exp=foundry&agentPayload=eyJiYXNlVXJsIjogImh0dHBzOi8vcmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbS9BenVyZS1TYW1wbGVzL2NoYXQtd2l0aC15b3VyLWRhdGEtc29sdXRpb24tYWNjZWxlcmF0b3IvcmVmcy9oZWFkcy9tYWluL2luZnJhL3ZzY29kZV93ZWIiLCAiaW5kZXhVcmwiOiAiL2luZGV4Lmpzb24iLCAidmFyaWFibGVzIjogeyJhZ2VudElkIjogIiIsICJjb25uZWN0aW9uU3RyaW5nIjogIiIsICJ0aHJlYWRJZCI6ICIiLCAidXNlck1lc3NhZ2UiOiAiIiwgInBsYXlncm91bmROYW1lIjogIiIsICJsb2NhdGlvbiI6ICIiLCAic3Vic2NyaXB0aW9uSWQiOiAiIiwgInJlc291cmNlSWQiOiAiIiwgInByb2plY3RSZXNvdXJjZUlkIjogIiIsICJlbmRwb2ludCI6ICIifSwgImNvZGVSb3V0ZSI6IFsiYWktcHJvamVjdHMtc2RrIiwgInB5dGhvbiIsICJkZWZhdWx0LWF6dXJlLWF1dGgiLCAiZW5kcG9pbnQiXX0=)
 
 1. Click the badge above (may take a few minutes to load)
 2. Sign in with your Azure account when prompted
@@ -228,16 +228,20 @@ You can customize various deployment settings before running `azd up`, including
 
 See [Parameter Customization Guide](./customizing_azd_parameters.md) for the full list of available parameters and their usage.
 
-`azd up` also accepts the following key parameters at the prompt:
+These key parameters are environment-variable driven (not interactive prompts). Set any of them before running `azd up` with `azd env set <ENV_VAR> <value>`:
 
-| Parameter | Values | Notes |
-|-----------|--------|-------|
-| `databaseType` | `cosmosdb` (default), `postgresql` | Retrieval index and chat history platform. Locked after deployment. |
-| `azureAiServiceLocation` | Azure region | Region for Azure AI Foundry models. Defaults to `eastus2`. |
-| `enableMonitoring` | `true`, `false` | Adds Log Analytics and Application Insights. Defaults to `false`. |
-| `enableScalability` | `true`, `false` | Reliability and scale flag. Defaults to `false`. |
-| `enableRedundancy` | `true`, `false` | Redundancy flag. Defaults to `false`. |
-| `enablePrivateNetworking` | `true`, `false` | Adds a virtual network, private DNS, and a bastion host. Defaults to `false`. |
+| Parameter (env var) | Values | Notes |
+|---------------------|--------|-------|
+| `databaseType` (`DATABASE_TYPE`) | `postgresql` (default), `cosmosdb` | Selects **both** the chat-history backend and the vector index store. `cosmosdb` deploys Cosmos DB + Azure AI Search; `postgresql` deploys PostgreSQL Flexible Server with pgvector (Azure AI Search is not deployed). Locked after deployment. |
+| `ingestionTrigger` (`INGESTION_TRIGGER`) | `direct_enqueue` (default) | Document-ingestion trigger mode for the Functions app. |
+| `azureAiServiceLocation` (`AZURE_AI_SERVICE_LOCATION`) | Azure region | Region for Azure AI Foundry models. Prompted during `azd up` if unset. |
+| `enableMonitoring` (`ENABLE_MONITORING`) | `true`, `false` | Adds Log Analytics and Application Insights. Defaults to `false`. |
+| `enableScalability` (`ENABLE_SCALABILITY`) | `true`, `false` | Higher SKUs and autoscaling. Defaults to `false` (dev) / `true` (production WAF). |
+| `enableRedundancy` (`ENABLE_REDUNDANCY`) | `true`, `false` | Zone/region redundancy. Defaults to `false`. |
+| `enablePrivateNetworking` (`ENABLE_PRIVATE_NETWORKING`) | `true`, `false` | Adds a virtual network, private DNS, and a bastion host. Defaults to `false` (dev) / `true` (production WAF). |
+
+> [!NOTE]
+> The `enable*` flags are wired through the production `main.waf.parameters.json`. When using the default `main.parameters.json` (development/testing), toggling them requires editing that file or switching to the WAF parameters file per [Section 3.1](#31-choose-deployment-type-optional).
 
 </details>
 
@@ -345,29 +349,7 @@ After successful deployment, `azd` prints the application URL in the terminal. Y
 
 ## Step 5: Post-Deployment Configuration
 
-### 5.1 Run post-deployment setup script (Required)
-
-Run the post-deployment script to configure the Function App client key and create the PostgreSQL tables (when `databaseType=postgresql`).
-
-> [!IMPORTANT]
-> The post-deployment script requires **Azure CLI version 2.87.0 or later**. Check your installed version with `az version`. If it is earlier than 2.87.0, upgrade first with `az upgrade`.
-
-**PowerShell (Windows):**
-
-```powershell
-.\infra\scripts\post-provision\post_deployment_setup.ps1 -ResourceGroupName "<your-resource-group-name>"
-```
-
-**Bash (Linux/macOS/WSL):**
-
-```bash
-bash infra/scripts/post-provision/post_deployment_setup.sh "<your-resource-group-name>"
-```
-
-> [!NOTE]
-> The script auto-discovers all resources in the resource group. It handles private networking (WAF) deployments by temporarily enabling public access, performing the setup, then restoring the original state.
-
-### 5.2 Build, push, and update container images (Required)
+### 5.1 Build, push, and update container images (Required)
 
 `azd up` provisions the Container Apps with a temporary placeholder image. Run the combined container workflow to build the application images, push them to your Azure Container Registry, and roll out new revisions to all three Container Apps (frontend, backend, ingestion).
 
@@ -403,18 +385,45 @@ This script builds and pushes the images to your ACR using ACR Tasks (remote bui
 > [!NOTE]
 > If you re-run `azd provision`, run this script again to restore the correct container images.
 
-### 5.3 Configure authentication (Required for chat application)
+### 5.2 Run post-deployment setup script (Required)
 
-Authentication is mandatory for the chat application to be accessible:
+Run the post-deployment script to complete data-plane setup. It auto-discovers the resources in your resource group and, based on `databaseType`:
 
-1. Follow [App Authentication Configuration](./authentication_setup.md)
-2. Wait up to 10 minutes for authentication changes to take effect
+* `postgresql` mode: enables the `vector` (pgvector) extension on the PostgreSQL Flexible Server. Tables are created automatically by the application at runtime.
+* `cosmosdb` mode: creates the Azure AI Search index (`cwyd-index`) and seeds the Foundry IQ knowledge base used for retrieval.
+
+For private-networking (WAF) deployments it temporarily enables public access, performs the setup, then restores the original network state.
+
+> [!IMPORTANT]
+> The post-deployment script requires **Azure CLI version 2.87.0 or later**. Check your installed version with `az version`. If it is earlier than 2.87.0, upgrade first with `az upgrade`.
+
+**PowerShell (Windows):**
+
+```powershell
+.\infra\scripts\post-provision\post_deployment_setup.ps1 -ResourceGroupName "<your-resource-group-name>"
+```
+
+**Bash (Linux/macOS/WSL):**
+
+```bash
+bash infra/scripts/post-provision/post_deployment_setup.sh "<your-resource-group-name>"
+```
+
+> [!NOTE]
+> The script auto-discovers all resources in the resource group. It handles private networking (WAF) deployments by temporarily enabling public access, performing the setup, then restoring the original state.
+
+### 5.3 Configure authentication (Recommended)
+
+The deployed app works without an identity provider, but it then treats every visitor as a single shared default user with no sign-in and no per-user history isolation. Configure authentication to require Microsoft Entra ID sign-in, give each user their own chat history, and control who can reach the admin area.
+
+1. Follow [Set up authentication](./authentication_setup.md).
+2. Allow a few minutes for the authentication changes to take effect.
 
 ### 5.4 Verify deployment
 
 1. Access your application using the URL from Step 4.3
 2. Confirm the application loads successfully
-3. Verify you can sign in with your authenticated account
+3. If you configured authentication in Step 5.3, verify you can sign in with your authenticated account
 
 ### 5.5 Test the application
 
