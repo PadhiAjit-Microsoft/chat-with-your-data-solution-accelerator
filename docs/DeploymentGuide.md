@@ -115,7 +115,7 @@ Select one of the following options to set up your deployment environment:
 <details>
 <summary><b>Option C: Visual Studio Code (Web)</b></summary>
 
-[![Open in Visual Studio Code (Web)](https://img.shields.io/static/v1?style=for-the-badge&label=Visual%20Studio%20Code%20%28Web%29&message=Open&color=blue&logo=visualstudiocode&logoColor=white)](https://vscode.dev/github/Azure-Samples/chat-with-your-data-solution-accelerator)
+[![Open in Visual Studio Code (Web)](https://img.shields.io/static/v1?style=for-the-badge&label=Visual%20Studio%20Code%20%28Web%29&message=Open&color=blue&logo=visualstudiocode&logoColor=white)](https://vscode.dev/azure/?vscode-azure-exp=foundry&agentPayload=eyJiYXNlVXJsIjogImh0dHBzOi8vcmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbS9BenVyZS1TYW1wbGVzL2NoYXQtd2l0aC15b3VyLWRhdGEtc29sdXRpb24tYWNjZWxlcmF0b3IvcmVmcy9oZWFkcy9tYWluL2luZnJhL3ZzY29kZV93ZWIiLCAiaW5kZXhVcmwiOiAiL2luZGV4Lmpzb24iLCAidmFyaWFibGVzIjogeyJhZ2VudElkIjogIiIsICJjb25uZWN0aW9uU3RyaW5nIjogIiIsICJ0aHJlYWRJZCI6ICIiLCAidXNlck1lc3NhZ2UiOiAiIiwgInBsYXlncm91bmROYW1lIjogIiIsICJsb2NhdGlvbiI6ICIiLCAic3Vic2NyaXB0aW9uSWQiOiAiIiwgInJlc291cmNlSWQiOiAiIiwgInByb2plY3RSZXNvdXJjZUlkIjogIiIsICJlbmRwb2ludCI6ICIifSwgImNvZGVSb3V0ZSI6IFsiYWktcHJvamVjdHMtc2RrIiwgInB5dGhvbiIsICJkZWZhdWx0LWF6dXJlLWF1dGgiLCAiZW5kcG9pbnQiXX0=)
 
 1. Click the badge above (may take a few minutes to load)
 2. Sign in with your Azure account when prompted
